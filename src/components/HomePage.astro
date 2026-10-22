@@ -1,0 +1,170 @@
+---
+import ExtensionRow from "@/components/ExtensionRow.astro";
+import Icon from "@/components/Icon.astro";
+import { categoryCounts, entries, officialEntries, platformCount } from "@/lib/catalog";
+import { categoryLabel, t } from "@/lib/i18n";
+import type { Locale } from "@/lib/types";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const prefix = locale === "zh" ? "/zh" : "";
+const featured = officialEntries(4);
+const categories = categoryCounts().slice(0, 8);
+const copy =
+  locale === "zh"
+    ? {
+        title: "找到能完成工作的 Bot 扩展",
+        lead: "在一个可验证的目录中浏览 Grok Bot 与 OpenMausBot 的 Bot、插件、Skill、记忆、调度和附件。先看清来源与依赖，再决定是否采用。",
+        placeholder: "搜索用途、插件或发布者",
+        search: "搜索目录",
+        officialTitle: "官方记录优先",
+        officialHint: "来自 Grok Bot 官方目录的记录始终排在社区内容之前。",
+        index: "目录索引",
+        holdings: "当前收录",
+        grokDetail: `${platformCount("grok-bot", "bot").toLocaleString("zh-CN")} 个 Bot · ${platformCount("grok-bot", "plugin").toLocaleString("zh-CN")} 个插件`,
+        mausDetail: "数据结构已就绪 · 等待首批 PR",
+        keyTitle: "一个目录，保留差异",
+        keyText: "统一搜索和浏览，但保留两个生态原生的文件结构、能力与依赖模型。",
+        featured: "先从可信来源开始",
+        featuredText: "官方条目由受控目录来源识别，不允许通过提交内容自行声明。",
+        categories: "按工作目录查找",
+        categoriesText: "真实目录结构决定分类，而不是凭空制造流行榜单。",
+        platforms: "两个生态，各自保持原貌",
+        grokBody: "浏览包含 Profile、Skills、Memory、Routines 与插件引用的现有 Bot 目录。",
+        mausBody: "面向增强版 Skill 与附件的文件原生扩展格式，Bot 可显式依赖插件。",
+        browseGrok: "浏览 Grok Bot",
+        contributeMaus: "提交 OpenMausBot 扩展",
+      }
+    : {
+        title: "Find the bot extension that does the work",
+        lead: "Browse Grok Bot and OpenMausBot bots, plugins, Skills, Memory, Routines, and attachments in one inspectable catalog. See provenance and dependencies before you adopt anything.",
+        placeholder: "Search by job, plugin, or publisher",
+        search: "Search catalog",
+        officialTitle: "Official records first",
+        officialHint:
+          "Records from the Grok Bot official catalog always precede community content.",
+        index: "Collection index",
+        holdings: "Current holdings",
+        grokDetail: `${platformCount("grok-bot", "bot").toLocaleString("en-US")} bots · ${platformCount("grok-bot", "plugin").toLocaleString("en-US")} plugins`,
+        mausDetail: "Schema ready · awaiting the first pull requests",
+        keyTitle: "One catalog, differences intact",
+        keyText:
+          "Search and browsing are shared while each ecosystem keeps its native files, capabilities, and dependency model.",
+        featured: "Start with a controlled source",
+        featuredText:
+          "Official entries are identified by controlled catalog provenance, never by a claim inside a contribution.",
+        categories: "Browse the working index",
+        categoriesText:
+          "The real catalog structure drives these shelves—no invented popularity rankings.",
+        platforms: "Two ecosystems, kept legible",
+        grokBody:
+          "Browse the existing collection of bots with Profiles, Skills, Memory, Routines, and plugin references.",
+        mausBody:
+          "A file-native extension format for richer Skills and attachments, with explicit bot-to-plugin dependencies.",
+        browseGrok: "Browse Grok Bot",
+        contributeMaus: "Contribute an OpenMausBot extension",
+      };
+---
+
+<section class="home-hero">
+  <div class="hero-main">
+    <h1>{copy.title}</h1>
+    <p class="hero-lead">{copy.lead}</p>
+    <form class="hero-search" action={`${prefix}/extensions/`} method="get" role="search">
+      <span class="icon-wrap"><Icon name="search" size={21} /></span>
+      <input type="search" name="q" placeholder={copy.placeholder} aria-label={copy.placeholder} />
+      <button type="submit">{copy.search}</button>
+    </form>
+    <div class="mini-ledger">
+      <div class="mini-ledger-title">
+        <span>{copy.officialTitle}</span>
+        <span>{featured.length} / {entries.filter((entry) => entry.official).length}</span>
+      </div>
+      {featured.map((entry) => <ExtensionRow entry={entry} locale={locale} />)}
+    </div>
+  </div>
+  <aside class="hero-aside" aria-label={copy.index}>
+    <div class="accession-heading">{copy.index} · {entries.length.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")}</div>
+    <ul class="platform-register">
+      <li>
+        <strong>Grok Bot</strong>
+        <span>{copy.grokDetail}</span>
+      </li>
+      <li>
+        <strong>OpenMausBot</strong>
+        <span>{copy.mausDetail}</span>
+      </li>
+      <li>
+        <strong>{locale === "zh" ? "四种记录类型" : "Four record types"}</strong>
+        <span>{locale === "zh" ? "Grok 与 OpenMausBot 的 Bot / 插件" : "Bots and plugins for Grok and OpenMausBot"}</span>
+      </li>
+    </ul>
+    <div class="collection-key">
+      <p><strong>{copy.keyTitle}</strong></p>
+      <p>{copy.keyText}</p>
+    </div>
+  </aside>
+</section>
+
+<section class="official-strip section">
+  <div class="page-width">
+    <div class="section-heading">
+      <h2>{copy.featured}</h2>
+      <p>{copy.featuredText}</p>
+    </div>
+    <div class="ledger-list">
+      {officialEntries(8).map((entry) => <ExtensionRow entry={entry} locale={locale} />)}
+    </div>
+    <p style="margin: 28px 0 0"><a class="text-link" href={`${prefix}/extensions/?official=true`}>{t(locale, "browse")} <Icon name="arrow" size={16} /></a></p>
+  </div>
+</section>
+
+<section class="section page-width">
+  <div class="section-heading">
+    <h2>{copy.categories}</h2>
+    <p>{copy.categoriesText}</p>
+  </div>
+  <div class="category-grid">
+    {categories.map(({ category, count }) => (
+      <a class="category-link" href={`${prefix}/extensions/?category=${category}`}>
+        <span>{count.toLocaleString(locale === "zh" ? "zh-CN" : "en-US")} {locale === "zh" ? "条记录" : "records"}</span>
+        <strong>{categoryLabel(locale, category)}</strong>
+      </a>
+    ))}
+  </div>
+</section>
+
+<section class="platform-section section">
+  <div class="page-width">
+    <div class="section-heading">
+      <h2>{copy.platforms}</h2>
+    </div>
+    <div class="platform-grid">
+      <article class="platform-card">
+        <h3>Grok Bot</h3>
+        <p>{copy.grokBody}</p>
+        <a class="button-secondary" href={`${prefix}/extensions/?platform=grok-bot`}>{copy.browseGrok}<Icon name="arrow" size={17} /></a>
+      </article>
+      <article class="platform-card">
+        <h3>OpenMausBot</h3>
+        <p>{copy.mausBody}</p>
+        <a class="button-secondary" href="https://github.com/kerm1it/grok-bot-exts#contributing" target="_blank" rel="noreferrer">{copy.contributeMaus}<Icon name="external" size={17} /></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  for (const link of document.querySelectorAll<HTMLAnchorElement>(".extension-row")) {
+    link.addEventListener("click", (event) => {
+      if (reduceMotion || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      link.classList.add("is-departing");
+      window.setTimeout(() => window.location.assign(link.href), 150);
+    });
+  }
+</script>
+

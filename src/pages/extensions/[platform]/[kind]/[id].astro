@@ -1,0 +1,26 @@
+---
+import DetailPage from "@/components/DetailPage.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { entries, entryIdSegment, localized } from "@/lib/catalog";
+import type { CatalogEntry } from "@/lib/types";
+
+export function getStaticPaths() {
+  return entries.map((entry) => ({
+    params: { platform: entry.platform, kind: entry.kind, id: entryIdSegment(entry) },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CatalogEntry;
+}
+const { entry } = Astro.props;
+const name = localized(entry.name, "en");
+const description = localized(entry.summary, "en");
+const alternatePath = `/zh/extensions/${entry.platform}/${entry.kind}/${encodeURIComponent(entryIdSegment(entry))}/`;
+---
+
+<BaseLayout title={`${name} — Bot Extensions`} description={description} locale="en" alternatePath={alternatePath}>
+  <DetailPage entry={entry} locale="en" />
+</BaseLayout>
+

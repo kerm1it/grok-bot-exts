@@ -1,0 +1,140 @@
+---
+import Icon from "@/components/Icon.astro";
+import { entries, entryPath, localized } from "@/lib/catalog";
+import { categoryLabel, kindLabel, platformLabel, t } from "@/lib/i18n";
+import type { CatalogEntry, Locale } from "@/lib/types";
+
+interface Props {
+  entry: CatalogEntry;
+  locale: Locale;
+}
+
+const { entry, locale } = Astro.props;
+const prefix = locale === "zh" ? "/zh" : "";
+const formatter = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+  dateStyle: "medium",
+  timeZone: "UTC",
+});
+const copy =
+  locale === "zh"
+    ? {
+        overview: "简介",
+        count: "项",
+        optional: "可选",
+        required: "必需",
+        files: "文件附件支持",
+        filesText: "OpenMausBot 扩展可将 Skill、引用、脚本和资源作为实体文件提交。",
+      }
+    : {
+        overview: "Overview",
+        count: "items",
+        optional: "Optional",
+        required: "Required",
+        files: "File attachment support",
+        filesText:
+          "OpenMausBot extensions can contribute Skills, references, scripts, and assets as real files.",
+      };
+---
+
+<div class="detail-shell">
+  <nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href={`${prefix}/extensions/`}>{t(locale, "browse")}</a><span>/</span>
+    <a href={`${prefix}/extensions/?platform=${entry.platform}`}>{platformLabel(locale, entry.platform)}</a><span>/</span>
+    <span>{localized(entry.name, locale)}</span>
+  </nav>
+
+  <div class="detail-grid">
+    <article>
+      <header class="record-head">
+        <div class="record-flags">
+          {entry.official && <span class="status-badge"><Icon name="check" size={13} />{t(locale, "official")}</span>}
+          {!entry.official && entry.verified && <span class="status-badge"><Icon name="check" size={13} />{t(locale, "verified")}</span>}
+          <span class="record-code">{entry.id}</span>
+        </div>
+        <h1>{localized(entry.name, locale)}</h1>
+        <p class="record-summary">{localized(entry.summary, locale)}</p>
+        <div class="record-actions">
+          <a class="button" href={entry.sourceUrl} target="_blank" rel="noreferrer">{t(locale, "source")}<Icon name="external" size={17} /></a>
+          {entry.repositoryUrl && entry.repositoryUrl !== entry.sourceUrl && (
+            <a class="button-secondary" href={entry.repositoryUrl} target="_blank" rel="noreferrer">{t(locale, "repository")}<Icon name="code" size={17} /></a>
+          )}
+        </div>
+      </header>
+
+      <section class="record-section">
+        <h2>{copy.overview}</h2>
+        <p class="record-description">{localized(entry.description, locale)}</p>
+      </section>
+
+      <section class="record-section">
+        <h2>{t(locale, "capabilities")}</h2>
+        {entry.capabilities.length ? (
+          <ul class="capability-list">
+            {entry.capabilities.map((capability) => (
+              <li>
+                <span class="capability-type">{capability.type}</span>
+                <span class="capability-copy">
+                  <strong>{capability.name}{capability.count ? ` · ${capability.count} ${copy.count}` : ""}</strong>
+                  {capability.description && <span>{capability.description}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : <p>{locale === "zh" ? "此记录没有公开组件明细。" : "This record does not expose component details."}</p>}
+      </section>
+
+      <section class="record-section">
+        <h2>{t(locale, "dependencies")}</h2>
+        {entry.dependencies.length ? (
+          <ul class="capability-list">
+            {entry.dependencies.map((dependency) => {
+              const target = entries.find((candidate) => candidate.kind === "plugin" && candidate.id.endsWith(`:${dependency.id}`));
+              return (
+                <li>
+                  <span class="capability-type">{dependency.optional ? copy.optional : copy.required}</span>
+                  <span class="capability-copy">
+                    <strong>{target ? <a href={entryPath(target, locale)}>{dependency.name}</a> : dependency.name}</strong>
+                    <span>{dependency.id}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        ) : <p>{t(locale, "noDependencies")}</p>}
+      </section>
+
+      <section class="record-section">
+        <h2>{t(locale, "attachments")}</h2>
+        {entry.attachments.length ? (
+          <ul class="capability-list">
+            {entry.attachments.map((attachment) => (
+              <li>
+                <span class="capability-type">{attachment.mediaType || "file"}</span>
+                <span class="capability-copy"><strong>{attachment.path}</strong></span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div>
+            <p>{t(locale, "noAttachments")}</p>
+            {entry.platform === "openmausbot" && <p><strong>{copy.files}.</strong> {copy.filesText}</p>}
+          </div>
+        )}
+      </section>
+    </article>
+
+    <aside class="record-aside">
+      <h2>{t(locale, "provenance")}</h2>
+      <ul class="provenance-list">
+        <li><span>{t(locale, "platform")}</span><strong>{platformLabel(locale, entry.platform)}</strong></li>
+        <li><span>{t(locale, "type")}</span><strong>{kindLabel(locale, entry.kind)}</strong></li>
+        <li><span>{t(locale, "publisher")}</span><strong>{entry.publisher.name}</strong></li>
+        <li><span>{t(locale, "category")}</span><strong>{categoryLabel(locale, entry.category)}</strong></li>
+        <li><span>{t(locale, "updated")}</span><strong>{formatter.format(new Date(entry.updatedAt))}</strong></li>
+        <li><span>{t(locale, "catalogSource")}</span><strong>{entry.sourceLabel}</strong></li>
+      </ul>
+      <a class="text-link" style="margin-top: 20px" href={`${prefix}/extensions/`}><Icon name="arrow" size={16} />{t(locale, "backToCatalog")}</a>
+    </aside>
+  </div>
+</div>
+

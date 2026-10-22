@@ -1,0 +1,316 @@
+---
+import ExtensionRow from "@/components/ExtensionRow.astro";
+import Icon from "@/components/Icon.astro";
+import { categoryCounts, entries } from "@/lib/catalog";
+import { categoryLabel } from "@/lib/i18n";
+import type { Locale } from "@/lib/types";
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const initial = entries.slice(0, 24);
+const categories = categoryCounts();
+const prefix = locale === "zh" ? "/zh" : "";
+const copy =
+  locale === "zh"
+    ? {
+        title: "扩展目录",
+        lead: "在同一个索引中搜索两个生态；按平台、类型、分类和来源筛选。官方记录始终优先。",
+        filters: "筛选目录",
+        platform: "平台",
+        type: "扩展类型",
+        provenance: "来源",
+        allCategories: "全部分类",
+        officialOnly: "只看官方记录",
+        search: "搜索名称、用途、标签或发布者",
+        loading: "正在载入完整目录…",
+        count: "条记录",
+        more: "加载更多",
+        emptyTitle: "没有匹配的记录",
+        emptyText: "调整筛选条件，或通过 Pull Request 提交第一个 OpenMausBot 扩展。",
+        clear: "清除筛选",
+        bot: "Bot",
+        plugin: "插件",
+        view: "查看详情",
+        official: "官方",
+        community: "社区",
+        failed: "完整目录载入失败；当前显示预先生成的记录。",
+      }
+    : {
+        title: "Extension directory",
+        lead: "Search two ecosystems in one index. Filter by platform, type, category, and provenance; official records always come first.",
+        filters: "Filter the catalog",
+        platform: "Platform",
+        type: "Extension type",
+        provenance: "Provenance",
+        allCategories: "All categories",
+        officialOnly: "Official records only",
+        search: "Search names, jobs, tags, or publishers",
+        loading: "Loading the complete catalog…",
+        count: "records",
+        more: "Load more",
+        emptyTitle: "No records match",
+        emptyText:
+          "Adjust the filters, or contribute the first OpenMausBot extension through a pull request.",
+        clear: "Clear filters",
+        bot: "Bot",
+        plugin: "Plugin",
+        view: "View record",
+        official: "Official",
+        community: "Community",
+        failed: "The complete catalog could not be loaded; showing pre-rendered records.",
+      };
+
+const config = {
+  locale,
+  prefix,
+  copy,
+  categoryLabels: Object.fromEntries(
+    categories.map(({ category }) => [category, categoryLabel(locale, category)]),
+  ),
+};
+---
+
+<header class="directory-header">
+  <div class="page-width">
+    <h1>{copy.title}</h1>
+    <p>{copy.lead}</p>
+  </div>
+</header>
+
+<div class="directory-layout page-width" data-directory>
+  <aside class="filter-panel">
+    <form id="catalog-filters">
+      <div class="filter-title"><Icon name="filter" size={18} />{copy.filters}</div>
+      <div class="filter-group">
+        <fieldset>
+          <legend>{copy.platform}</legend>
+          <div class="filter-options">
+            <label class="check-option"><input type="checkbox" name="platform" value="grok-bot" /> Grok Bot</label>
+            <label class="check-option"><input type="checkbox" name="platform" value="openmausbot" /> OpenMausBot</label>
+          </div>
+        </fieldset>
+      </div>
+      <div class="filter-group">
+        <fieldset>
+          <legend>{copy.type}</legend>
+          <div class="filter-options">
+            <label class="check-option"><input type="checkbox" name="kind" value="bot" /> {copy.bot}</label>
+            <label class="check-option"><input type="checkbox" name="kind" value="plugin" /> {copy.plugin}</label>
+          </div>
+        </fieldset>
+      </div>
+      <div class="filter-group">
+        <label for="category-filter">{copy.provenance}</label>
+        <div class="filter-options">
+          <label class="check-option"><input id="official-filter" type="checkbox" name="official" /> {copy.officialOnly}</label>
+        </div>
+        <select id="category-filter" name="category">
+          <option value="">{copy.allCategories}</option>
+          {categories.map(({ category, count }) => <option value={category}>{categoryLabel(locale, category)} ({count})</option>)}
+        </select>
+      </div>
+    </form>
+  </aside>
+
+  <section aria-labelledby="directory-results-title">
+    <h2 id="directory-results-title" class="visually-hidden">{copy.title}</h2>
+    <div class="directory-toolbar">
+      <label class="directory-search">
+        <Icon name="search" size={19} />
+        <input id="catalog-search" type="search" placeholder={copy.search} autocomplete="off" />
+      </label>
+      <span id="result-count" class="result-count" aria-live="polite">{copy.loading}</span>
+    </div>
+    <div id="catalog-results" class="ledger-list" aria-busy="true">
+      {initial.map((entry) => <ExtensionRow entry={entry} locale={locale} />)}
+    </div>
+    <div id="catalog-empty" class="empty-state" hidden>
+      <h2>{copy.emptyTitle}</h2>
+      <p>{copy.emptyText}</p>
+      <button id="clear-filters" class="button-secondary" type="button">{copy.clear}</button>
+    </div>
+    <button id="load-more" class="load-more" type="button" hidden>{copy.more}</button>
+  </section>
+</div>
+
+<script id="directory-config" type="application/json" set:html={JSON.stringify(config)}></script>
+<script>
+  interface SearchEntry {
+    id: string;
+    platform: "grok-bot" | "openmausbot";
+    kind: "bot" | "plugin";
+    name: string;
+    summary: string;
+    publisher: string;
+    official: boolean;
+    verified: boolean;
+    category: string;
+    tags: string[];
+    updatedAt: string;
+    accent: string;
+  }
+
+  interface DirectoryConfig {
+    locale: "en" | "zh";
+    prefix: string;
+    copy: Record<string, string>;
+    categoryLabels: Record<string, string>;
+  }
+
+  const configNode = document.querySelector<HTMLScriptElement>("#directory-config");
+  const config = JSON.parse(configNode?.textContent || "{}") as DirectoryConfig;
+  const form = document.querySelector<HTMLFormElement>("#catalog-filters");
+  const search = document.querySelector<HTMLInputElement>("#catalog-search");
+  const results = document.querySelector<HTMLElement>("#catalog-results");
+  const resultCount = document.querySelector<HTMLElement>("#result-count");
+  const empty = document.querySelector<HTMLElement>("#catalog-empty");
+  const clear = document.querySelector<HTMLButtonElement>("#clear-filters");
+  const more = document.querySelector<HTMLButtonElement>("#load-more");
+  let catalog: SearchEntry[] = [];
+  let visible = 24;
+
+  function selected(name: string): string[] {
+    return [...document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]:checked`)].map(
+      (input) => input.value,
+    );
+  }
+
+  function pathFor(entry: SearchEntry): string {
+    const id = entry.id.slice(entry.id.indexOf(":") + 1);
+    return `${config.prefix}/extensions/${entry.platform}/${entry.kind}/${encodeURIComponent(id)}/`;
+  }
+
+  function make<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    return element;
+  }
+
+  function createRow(entry: SearchEntry): HTMLAnchorElement {
+    const row = make("a", "extension-row");
+    row.href = pathFor(entry);
+    row.style.setProperty("--entry-accent", entry.accent);
+
+    const mark = make("span", "accession-mark");
+    mark.setAttribute("aria-hidden", "true");
+    const name = make("span", "entry-name");
+    const title = make("strong");
+    title.textContent = entry.name;
+    const publisher = make("span");
+    publisher.textContent = entry.publisher;
+    name.append(title, publisher);
+
+    const summary = make("span", "entry-summary");
+    summary.textContent = entry.summary;
+    const meta = make("span", "entry-meta");
+    const platform = make("span");
+    const platformName = entry.platform === "grok-bot" ? "Grok Bot" : "OpenMausBot";
+    platform.textContent = `${platformName} · ${entry.kind === "bot" ? config.copy.bot : config.copy.plugin}`;
+    const category = make("span");
+    category.textContent = config.categoryLabels[entry.category] || entry.category.replaceAll("-", " ");
+    meta.append(platform, category);
+
+    const action = make("span", "entry-action");
+    if (entry.official) {
+      const badge = make("span", "status-badge");
+      badge.textContent = config.copy.official;
+      action.append(badge);
+    }
+    const actionText = make("span");
+    actionText.textContent = config.copy.view;
+    action.append(actionText);
+    row.append(mark, name, summary, meta, action);
+    return row;
+  }
+
+  function currentMatches(): SearchEntry[] {
+    const query = search?.value.trim().toLocaleLowerCase(config.locale) || "";
+    const platforms = selected("platform");
+    const kinds = selected("kind");
+    const official = document.querySelector<HTMLInputElement>("#official-filter")?.checked;
+    const category = document.querySelector<HTMLSelectElement>("#category-filter")?.value;
+    return catalog.filter((entry) => {
+      if (platforms.length && !platforms.includes(entry.platform)) return false;
+      if (kinds.length && !kinds.includes(entry.kind)) return false;
+      if (official && !entry.official) return false;
+      if (category && entry.category !== category) return false;
+      if (!query) return true;
+      const haystack = [entry.name, entry.summary, entry.publisher, entry.category, ...entry.tags]
+        .join(" ")
+        .toLocaleLowerCase(config.locale);
+      return haystack.includes(query);
+    });
+  }
+
+  function syncUrl(): void {
+    const params = new URLSearchParams();
+    const query = search?.value.trim();
+    if (query) params.set("q", query);
+    for (const value of selected("platform")) params.append("platform", value);
+    for (const value of selected("kind")) params.append("kind", value);
+    if (document.querySelector<HTMLInputElement>("#official-filter")?.checked) params.set("official", "true");
+    const category = document.querySelector<HTMLSelectElement>("#category-filter")?.value;
+    if (category) params.set("category", category);
+    history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
+  }
+
+  function render(reset = true): void {
+    if (!results || !resultCount || !empty || !more) return;
+    if (reset) visible = 24;
+    const matches = currentMatches();
+    results.replaceChildren(...matches.slice(0, visible).map(createRow));
+    results.setAttribute("aria-busy", "false");
+    const formatted = new Intl.NumberFormat(config.locale === "zh" ? "zh-CN" : "en-US").format(matches.length);
+    resultCount.textContent = `${formatted} ${config.copy.count}`;
+    empty.hidden = matches.length > 0;
+    results.hidden = matches.length === 0;
+    more.hidden = visible >= matches.length;
+    syncUrl();
+  }
+
+  function applyUrl(): void {
+    const params = new URLSearchParams(location.search);
+    if (search) search.value = params.get("q") || "";
+    for (const name of ["platform", "kind"]) {
+      const values = params.getAll(name);
+      for (const input of document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)) {
+        input.checked = values.includes(input.value);
+      }
+    }
+    const official = document.querySelector<HTMLInputElement>("#official-filter");
+    if (official) official.checked = params.get("official") === "true";
+    const category = document.querySelector<HTMLSelectElement>("#category-filter");
+    if (category) category.value = params.get("category") || "";
+  }
+
+  applyUrl();
+  form?.addEventListener("change", () => render());
+  search?.addEventListener("input", () => render());
+  clear?.addEventListener("click", () => {
+    form?.reset();
+    if (search) search.value = "";
+    render();
+    search?.focus();
+  });
+  more?.addEventListener("click", () => {
+    visible += 24;
+    render(false);
+  });
+
+  fetch(`/data/catalog.${config.locale}.json`)
+    .then((response) => {
+      if (!response.ok) throw new Error(String(response.status));
+      return response.json() as Promise<SearchEntry[]>;
+    })
+    .then((data) => {
+      catalog = data;
+      render();
+    })
+    .catch(() => {
+      if (resultCount) resultCount.textContent = config.copy.failed;
+      results?.setAttribute("aria-busy", "false");
+    });
+</script>
+

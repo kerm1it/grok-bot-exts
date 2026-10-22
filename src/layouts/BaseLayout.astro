@@ -1,0 +1,56 @@
+---
+import "@fontsource-variable/newsreader";
+import "@fontsource-variable/source-sans-3";
+import "@/styles/global.css";
+import Footer from "@/components/Footer.astro";
+import Header from "@/components/Header.astro";
+import { t } from "@/lib/i18n";
+import type { Locale } from "@/lib/types";
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  alternatePath: string;
+  canonicalPath?: string;
+}
+
+const {
+  title,
+  description,
+  locale,
+  alternatePath,
+  canonicalPath = Astro.url.pathname,
+} = Astro.props;
+const site = Astro.site || new URL("https://bot-extensions.pages.dev");
+const canonical = new URL(canonicalPath, site);
+const alternate = new URL(alternatePath, site);
+---
+
+<!doctype html>
+<html lang={locale === "zh" ? "zh-CN" : "en"}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#132836" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" href={locale === "en" ? canonical : alternate} hreflang="en" />
+    <link rel="alternate" href={locale === "zh" ? canonical : alternate} hreflang="zh-CN" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">{t(locale, "skipToContent")}</a>
+    <div class="site-shell">
+      <Header locale={locale} alternatePath={alternatePath} />
+      <main id="main-content"><slot /></main>
+      <Footer locale={locale} />
+    </div>
+  </body>
+</html>
+
