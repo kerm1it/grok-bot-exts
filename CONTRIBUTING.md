@@ -23,7 +23,7 @@ pnpm test
 pnpm build
 ```
 
-The catalog preparation script retains the committed Grok catalog when local source exports are unavailable and rebuilds contributed OpenMausBot entries from their file-native directories.
+The catalog preparation script retains the committed Grok catalog and rebuilds contributed OpenMausBot entries from their file-native directories. Every production build validates manifests, referenced files, and plugin dependencies before generating the site. Maintainers can explicitly re-import local Grok exports with `pnpm prepare:catalog --import-grok`.
 
 ## Keep pull requests clean
 

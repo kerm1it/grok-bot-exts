@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
+import { readContributions } from "./contributions.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const catalogPath = join(root, "src/data/catalog.json");
@@ -8,6 +9,7 @@ const searchDirectory = join(root, "public/data");
 const botSource = join(root, "bots");
 const pluginSource = join(root, "plugins/plugin-catalog-complete.json");
 const openMausRoot = join(root, "contributions/openmausbot");
+const contributions = readContributions(openMausRoot);
 
 const accents = ["#d24b32", "#1f6f78", "#6555a3", "#33705a", "#a45a24", "#315b86"];
 
@@ -191,29 +193,10 @@ function normalizeGrokPlugins() {
 }
 
 function walkOpenMaus(kind) {
-  const directory = join(openMausRoot, kind === "bot" ? "bots" : "plugins");
-  if (!existsSync(directory)) return [];
-  return readdirSync(directory, { withFileTypes: true })
-    .filter(
-      (entry) => entry.isDirectory() && existsSync(join(directory, entry.name, "extension.json")),
-    )
-    .map((entry) => {
-      const base = join(directory, entry.name);
-      const manifest = readJson(join(base, "extension.json"));
-      const id = text(manifest.id, entry.name);
-      const references = Object.entries(manifest.entrypoints || {}).flatMap(([type, value]) => {
-        const values = Array.isArray(value) ? value : value ? [value] : [];
-        return values.map((file) => ({
-          type,
-          file,
-          absolute: join(base, file.path),
-        }));
-      });
-      for (const reference of references) {
-        if (!existsSync(reference.absolute)) {
-          throw new Error(`Missing attachment ${relative(root, reference.absolute)} for ${id}`);
-        }
-      }
+  return contributions
+    .filter((record) => record.kind === kind)
+    .map(({ base, manifest, references }) => {
+      const id = manifest.id;
       const name = manifest.name || { en: id };
       const summary = manifest.summary || { en: name.en };
       return {
@@ -225,7 +208,7 @@ function walkOpenMaus(kind) {
         summary,
         description: manifest.description || summary,
         publisher: manifest.publisher,
-        official: Boolean(manifest.official),
+        official: false,
         verified: false,
         category: slugify(manifest.category, "other"),
         tags: unique(manifest.tags || []),
@@ -274,7 +257,9 @@ function existingGrokEntries() {
   return readJson(catalogPath).entries.filter((entry) => entry.platform === "grok-bot");
 }
 
-const importedGrok = [...normalizeGrokBots(), ...normalizeGrokPlugins()];
+const importedGrok = process.argv.includes("--import-grok")
+  ? [...normalizeGrokBots(), ...normalizeGrokPlugins()]
+  : [];
 const entries = [
   ...(importedGrok.length ? importedGrok : existingGrokEntries()),
   ...walkOpenMaus("bot"),
@@ -287,7 +272,11 @@ for (const entry of entries) {
   seen.add(entry.id);
 }
 
-const generatedAt = new Date().toISOString();
+const previous = existsSync(catalogPath) ? readJson(catalogPath) : null;
+const generatedAt =
+  previous && JSON.stringify(previous.entries) === JSON.stringify(entries)
+    ? previous.generatedAt
+    : new Date().toISOString();
 writeJson(catalogPath, { schemaVersion: 1, generatedAt, entries });
 
 for (const locale of ["en", "zh"]) {

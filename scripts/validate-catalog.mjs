@@ -2,8 +2,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { readContributions } from "./contributions.mjs";
 
 const root = resolve(import.meta.dirname, "..");
+const contributions = readContributions(join(root, "contributions/openmausbot"));
 const schemasDirectory = join(root, "schemas");
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);
@@ -26,3 +28,4 @@ for (const entry of catalog.entries) {
 }
 
 console.log(`Validated ${catalog.entries.length} catalog entries against the root schemas.`);
+console.log(`Validated ${contributions.length} file-native OpenMausBot contributions.`);
