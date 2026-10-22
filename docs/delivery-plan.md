@@ -18,12 +18,9 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 
 ## Remaining release gates
 
-1. Complete the pending Cloudflare authorization or use an existing authorized Git integration.
-2. Connect the repository and configure automatic production deployment from `main`.
-3. Verify the first Cloudflare build and record its production URL.
-4. Set canonical URLs, sitemap origin, and robots sitemap URL to the actual production origin.
-5. Check deployed English and Chinese routes, search, filters, details, assets, and missing-page behavior.
-6. Verify a subsequent Git push triggers deployment and the latest CI passes.
+1. Connect the repository and configure automatic production deployment from `main`.
+2. Verify a subsequent Git push triggers deployment and the latest CI passes.
+3. Finish verification of the production canonical URLs, sitemap, and missing-page behavior after the origin update deploys.
 
 ## Verification evidence
 
@@ -34,5 +31,9 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 - Biome: passed.
 - Production build: 11,577 pages.
 - Local browser suite: English/Chinese navigation, search, filters, details, empty states, mobile overflow, and accessibility checks.
+- Cloudflare OAuth login and initial deployment succeeded.
+- Production URL: https://bot-extensions.kermitlx.workers.dev.
+- Deployed browser suite: 9 passed, 1 desktop-only skip for a mobile-only assertion.
+- Production origin configured in Astro canonical URLs, sitemap, and robots metadata.
 
-Cloudflare publication and online verification remain incomplete until supported by a successful deployment and live checks. Local tests do not establish production availability.
+Automatic GitHub deployment remains a release gate. The initial production deployment was performed with Wrangler from the local checkout.

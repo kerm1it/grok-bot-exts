@@ -4,7 +4,7 @@ An inspectable, bilingual marketplace for **Grok Bot** and **OpenMausBot** exten
 
 Bot Extensions puts bots and plugins in one searchable catalog without hiding the differences between their ecosystems. Every record shows its platform, publisher, provenance, capabilities, dependencies, and current source before sending visitors elsewhere.
 
-[中文说明](README.zh-CN.md) · [Architecture](docs/marketplace-architecture.md) · [Contributing](CONTRIBUTING.md)
+[Browse the marketplace](https://bot-extensions.kermitlx.workers.dev) · [中文说明](README.zh-CN.md) · [Architecture](docs/marketplace-architecture.md) · [Contributing](CONTRIBUTING.md)
 
 ## What is included
 

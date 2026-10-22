@@ -4,7 +4,7 @@
 
 它把 Bot 和插件放进同一个可搜索目录，同时保留两个生态各自的文件结构和能力差异。每条记录都会先展示平台、发布者、来源、包含内容和依赖，再引导用户前往原始来源。
 
-[English](README.md) · [架构说明（英文）](docs/marketplace-architecture.md) · [贡献指南（英文）](CONTRIBUTING.md)
+[浏览扩展市场](https://bot-extensions.kermitlx.workers.dev/zh/) · [English](README.md) · [架构说明（英文）](docs/marketplace-architecture.md) · [贡献指南（英文）](CONTRIBUTING.md)
 
 ## 首版能力
 
