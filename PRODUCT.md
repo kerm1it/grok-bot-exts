@@ -26,15 +26,15 @@ The catalog unifies two bot ecosystems while preserving their differences. It sh
 
 ## Operating Context
 
-Catalog content is maintained in GitHub. Existing Grok Bot exports are normalized at build time; new OpenMausBot entries use file-native directories that can include Skill attachments. Contributors submit changes through pull requests. Cloudflare builds and serves the static site from the main branch.
+Catalog content is maintained in GitHub under `extensions/<platform>/bots|plugins/`. Existing Grok Bot exports are normalized at build time; OpenMausBot entries use file-native directories that can include Skill attachments. Contributors submit changes directly to those canonical directories through pull requests; there is no separate contribution staging area. GitHub Actions builds and verifies the static site, then deploys the tested artifact from `main` to Cloudflare Workers Static Assets.
 
 ## Capabilities and Constraints
 
 - The catalog contains Grok Bot bots, Grok Bot plugins, OpenMausBot bots, and OpenMausBot plugins.
 - The interface supports English and Simplified Chinese. Stable routes and IDs do not change with locale.
-- Official entries rank before featured and community entries.
+- Official entries rank before verified and other community entries.
 - Each extension has one current state. Git history provides audit and rollback; there is no public multi-version model.
-- OpenMausBot bots may depend on OpenMausBot plugins and may contain file-based Skills, references, scripts, assets, Memory, Routines, and optional Playbooks.
+- OpenMausBot bots may depend on OpenMausBot plugins and may contain file-based Skills, references, scripts, assets, Memory, and Routines.
 - Presets are not a marketplace type.
 - The first release is browse-only. It has no account system, ratings, comments, web upload, installation, artifact distribution, database, or runtime API.
 - Submitted data and generated catalog output are validated against schemas stored in the root `schemas/` directory.
@@ -48,7 +48,7 @@ The permanent product name and domain are open decisions. Until they are chosen,
 ## Evidence on Hand
 
 - The local snapshot contains more than five thousand complete Grok Bot exports with profiles, Skills, Memory, Routines, and plugin references.
-- `plugins/plugin-catalog-complete.json` contains the current Grok plugin catalog and component metadata.
+- `extensions/grok-bot/plugins/<id>/plugin.json` contains each current Grok plugin record and its component metadata and upstream references.
 - The architecture and accepted scope are recorded in `docs/marketplace-architecture.md`.
 - There are no verified download counts, ratings, customer logos, testimonials, or usage claims. The interface must not fabricate them.
 

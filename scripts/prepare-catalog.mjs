@@ -9,7 +9,7 @@ const searchDirectory = join(root, "public/data");
 const grokRoot = join(root, "extensions/grok-bot");
 const botSource = join(grokRoot, "bots");
 const pluginSource = join(grokRoot, "plugins");
-const openMausRoot = join(root, "contributions/openmausbot");
+const openMausRoot = join(root, "extensions/openmausbot");
 const contributions = readContributions(openMausRoot);
 
 const accents = ["#d24b32", "#1f6f78", "#6555a3", "#33705a", "#a45a24", "#315b86"];

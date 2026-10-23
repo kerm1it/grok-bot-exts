@@ -5,7 +5,7 @@ Bot Extensions uses pull requests as its only contribution channel in the first 
 ## Before opening a pull request
 
 1. Keep one current state for each extension. Update an existing directory instead of adding a versioned copy.
-2. Put OpenMausBot bots in `contributions/openmausbot/bots/<id>/` and plugins in `contributions/openmausbot/plugins/<id>/`.
+2. Put OpenMausBot bots in `extensions/openmausbot/bots/<id>/` and plugins in `extensions/openmausbot/plugins/<id>/`. Grok resources remain in the matching `extensions/grok-bot/bots/` and `extensions/grok-bot/plugins/` directories, preserving their native format.
 3. Name the manifest `extension.json` and follow the matching schema in `schemas/`.
 4. Keep every `entrypoints` path relative to the extension directory. Commit the referenced Skill, script, reference, and asset files.
 5. A bot dependency must identify a plugin and mark whether it is optional.
@@ -23,7 +23,7 @@ pnpm test
 pnpm build
 ```
 
-The catalog preparation script rebuilds Grok entries from the committed resources in `extensions/grok-bot/` and OpenMausBot entries from their file-native contribution directories. Every production build validates native records, manifests, referenced files, and plugin dependencies before generating the site.
+The catalog preparation script rebuilds both platforms from their committed resources under `extensions/<platform>/`. There is no separate contribution staging directory: a merged pull request updates the canonical extension files directly. Every production build validates native records, manifests, referenced files, and plugin dependencies before generating the site.
 
 ## Keep pull requests clean
 

@@ -12,6 +12,7 @@ for (const file of readdirSync(schemaRoot).filter((name) => name.endsWith(".json
 }
 
 export function readContributions(root) {
+  if (!existsSync(root)) throw new Error(`Missing extension root: ${root}`);
   const records = [];
   for (const kind of ["bot", "plugin"]) {
     const directory = join(root, `${kind}s`);

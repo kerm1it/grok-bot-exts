@@ -33,6 +33,11 @@ afterEach(() => {
 });
 
 describe("file-native contributions", () => {
+  it("rejects a missing extension root instead of silently dropping a platform", () => {
+    const { root } = fixture();
+    expect(() => readContributions(join(root, "missing"))).toThrow(/Missing extension root/);
+  });
+
   it("loads a Skill and supporting attachment", () => {
     const { root } = fixture();
     expect(readContributions(root)[0].references).toHaveLength(2);

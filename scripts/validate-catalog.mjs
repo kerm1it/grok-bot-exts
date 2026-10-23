@@ -6,7 +6,7 @@ import addFormats from "ajv-formats";
 import { readContributions } from "./contributions.mjs";
 
 const root = resolve(import.meta.dirname, "..");
-const contributions = readContributions(join(root, "contributions/openmausbot"));
+const contributions = readContributions(join(root, "extensions/openmausbot"));
 const schemasDirectory = join(root, "schemas");
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 addFormats(ajv);

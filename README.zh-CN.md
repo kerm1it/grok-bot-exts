@@ -36,7 +36,7 @@ pnpm dev
 
 ## 提交扩展
 
-OpenMausBot 扩展放在 `contributions/openmausbot/`。Skill 的引用、脚本、资源和其他附件都以真实文件提交，并在 `extension.json` 中声明相对路径。每个扩展只保留一个当前状态，更新时直接修改原目录，历史由 Git 保留。
+所有扩展统一放在 `extensions/<平台>/bots|plugins/`，PR 是提交方式，不另设待审核资源目录。OpenMausBot 扩展位于 `extensions/openmausbot/`；Skill 的引用、脚本、资源和其他附件都以真实文件提交，并在 `extension.json` 中声明相对路径。每个扩展只保留一个当前状态，更新时直接修改原目录，历史由 Git 保留。
 
 详细要求见 [CONTRIBUTING.md](CONTRIBUTING.md)。请勿提交抓取日志、临时快照、凭据或无关的原始导出文件。
 

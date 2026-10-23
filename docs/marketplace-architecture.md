@@ -23,6 +23,24 @@ Platform-native files remain the source of truth. `extensions/grok-bot/bots/` re
 
 All JSON Schemas live in `schemas/`. `catalog.schema.json` is the public build contract. Platform schemas validate future pull-request submissions and imported source snapshots.
 
+## Resource layout and contribution lifecycle
+
+```text
+extensions/
+  grok-bot/
+    bots/<share-id>/
+    plugins/<plugin-id>/
+  openmausbot/
+    bots/<id>/
+    plugins/<id>/
+schemas/
+src/data/catalog.json
+```
+
+The hierarchy distinguishes platform first and extension kind second, never import method or submission status. Imported and community-authored resources use the same canonical `extensions/` root. A contribution is a pull request against an extension directory, not a second copy waiting in another directory. CI validates the proposed files; merging updates the one current resource and triggers the production pipeline.
+
+Grok exports retain their existing native file structure. OpenMausBot uses `extension.json` plus real referenced files, including Skill attachments. Both adapters normalize their platform-specific inputs into the shared catalog; this unifies storage without forcing the two formats to be identical. Generated catalog and search indexes are derived artifacts, not independently maintained inputs. There are currently no OpenMausBot submissions, so its empty catalog state is intentional. A missing platform root is an error rather than silently producing an empty catalog.
+
 ## Build and delivery
 
 Astro generates a fully static site. The build emits localized HTML detail routes and compact locale-specific search indexes. Native extension resources are committed to Git. Fetch scripts, logs, failed exports, and redundant temporary snapshots are excluded from Git. Raw resource files are not copied into the production artifact; the site links to their GitHub directory for inspection.
