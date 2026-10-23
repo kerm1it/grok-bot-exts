@@ -6,7 +6,7 @@ Production: https://bot-extensions.kermitlx.workers.dev
 
 1. Open a pull request. CI validates native resources and schemas, checks types and formatting, runs unit tests, builds the static site, and runs browser tests.
 2. Merge to `main`. The same checks run again for the exact production commit.
-3. The `deploy` job downloads the verified `production-site` artifact and runs `pnpm deploy`; it does not rebuild the site.
+3. The `deploy` job downloads the verified `production-site` artifact and runs `pnpm run deploy`; it does not rebuild the site. The explicit `run` avoids pnpm's unrelated built-in `deploy` command.
 4. Production smoke checks verify English and Chinese pages, the sitemap, and a missing route returning 404.
 
 Production runs are serialized and are not cancelled midway by newer pushes. Pull requests do not deploy or receive the deployment token in their verification steps. Cloudflare Workers Builds is not connected, avoiding duplicate releases and its broad default token.
@@ -32,4 +32,4 @@ The initial token expires on **January 21, 2027**. Rotate it before expiry. Expi
 
 ## Manual recovery
 
-With an authorized Cloudflare login or the dedicated token supplied securely through the environment, run `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm deploy` from a known-good commit. Re-run `PLAYWRIGHT_BASE_URL=https://bot-extensions.kermitlx.workers.dev pnpm test:e2e` after recovery. Do not bypass a failed validation job for routine releases.
+With an authorized Cloudflare login or the dedicated token supplied securely through the environment, run `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm run deploy` from a known-good commit. Re-run `PLAYWRIGHT_BASE_URL=https://bot-extensions.kermitlx.workers.dev pnpm test:e2e` after recovery. Do not bypass a failed validation job for routine releases.

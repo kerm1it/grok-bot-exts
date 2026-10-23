@@ -41,7 +41,7 @@ GitHub Actions validates every pull request and main-branch update. A successful
 
 Configure the repository secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`. Use an account-owned token with **Individual Workers Editor** access to `bot-extensions` only; no KV, R2, D1, or zone permissions are required. See [deployment and token rotation](docs/deployment.md).
 
-`wrangler.jsonc` defines the static site. For a manual deployment, run `pnpm build && pnpm deploy` with appropriate Cloudflare credentials.
+`wrangler.jsonc` defines the static site. For a manual deployment, run `pnpm build && pnpm run deploy` with appropriate Cloudflare credentials.
 
 ## Contributing
 
