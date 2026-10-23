@@ -20,8 +20,8 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 
 ## Remaining release gates
 
-1. Connect the repository and configure automatic production deployment from `main`.
-2. Verify a subsequent Git push triggers deployment and the latest CI passes.
+1. Verify the GitHub Actions deployment job succeeds after all verification checks on a push to `main`.
+2. Confirm the dedicated single-Worker Editor token deploys successfully and production smoke checks pass.
 
 ## Verification evidence
 
@@ -40,4 +40,4 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 - Native resource publication: commit `7bf0fff6`; the complete GitHub tree confirms 21,300 bot files and 461 plugin records.
 - Resource-backed production deployment: `1044b3e5-e290-4b5d-b772-7348a48ff2ad`; deployed browser suite passed again.
 
-Automatic GitHub deployment remains a release gate. The initial production deployment was performed with Wrangler from the local checkout.
+Automatic deployment uses GitHub Actions, not Cloudflare Workers Builds. The account-owned token is limited to Individual Workers Editor for `bot-extensions` and expires on January 21, 2027. The initial production deployment was performed with Wrangler from the local checkout; verification of the new automatic deployment remains a release gate.

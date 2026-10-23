@@ -27,7 +27,7 @@ All JSON Schemas live in `schemas/`. `catalog.schema.json` is the public build c
 
 Astro generates a fully static site. The build emits localized HTML detail routes and compact locale-specific search indexes. Native extension resources are committed to Git. Fetch scripts, logs, failed exports, and redundant temporary snapshots are excluded from Git. Raw resource files are not copied into the production artifact; the site links to their GitHub directory for inspection.
 
-GitHub is the source of truth. Continuous integration validates schemas and catalog data, type-checks the site, runs unit and end-to-end tests, and builds the production artifact. Cloudflare Workers Static Assets deploys the `dist/` directory from the main branch.
+GitHub is the source of truth. Continuous integration validates schemas and catalog data, type-checks the site, runs unit and end-to-end tests, and builds the production artifact. After verification succeeds on a push to `main`, a separate GitHub Actions job deploys that same `dist/` artifact to Cloudflare Workers Static Assets. Pull requests have no deployment job. The deployment token has Individual Workers Editor access to `bot-extensions` only; Cloudflare Workers Builds is intentionally not connected.
 
 ## Trust and ordering
 

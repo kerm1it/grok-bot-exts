@@ -30,6 +30,10 @@ pnpm dev
 
 使用 `pnpm build` 生成生产文件。单元测试运行 `pnpm test`；安装 Playwright Chromium 后可运行 `pnpm test:e2e`。
 
+## 自动发布
+
+合并到 `main` 后，GitHub Actions 会先完成校验和浏览器测试，再将同一份构建产物发布到 Cloudflare。PR 不部署。部署令牌仅能编辑本站 Worker，配置与轮换方式见 [部署文档](docs/deployment.md)。
+
 ## 提交扩展
 
 OpenMausBot 扩展放在 `contributions/openmausbot/`。Skill 的引用、脚本、资源和其他附件都以真实文件提交，并在 `extension.json` 中声明相对路径。每个扩展只保留一个当前状态，更新时直接修改原目录，历史由 Git 保留。

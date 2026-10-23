@@ -37,14 +37,11 @@ There is one current state per extension. Update it in place through a pull requ
 
 ## Deploy
 
-The repository is ready for Cloudflare Workers Builds:
+GitHub Actions validates every pull request and main-branch update. A successful push to `main` deploys the **same tested `dist/` artifact** to Cloudflare Workers Static Assets, followed by production smoke checks. Pull requests never deploy.
 
-- build command: `pnpm build`
-- deploy command: `pnpm deploy`
-- output directory: `dist`
-- production branch: `main`
+Configure the repository secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`. Use an account-owned token with **Individual Workers Editor** access to `bot-extensions` only; no KV, R2, D1, or zone permissions are required. See [deployment and token rotation](docs/deployment.md).
 
-`wrangler.jsonc` contains the static-assets configuration. GitHub Actions runs the complete validation and browser suite for every pull request and main-branch update.
+`wrangler.jsonc` defines the static site. For a manual deployment, run `pnpm build && pnpm deploy` with appropriate Cloudflare credentials.
 
 ## Contributing
 
