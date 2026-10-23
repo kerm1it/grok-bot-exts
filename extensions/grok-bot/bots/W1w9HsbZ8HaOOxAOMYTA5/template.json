@@ -1,0 +1,68 @@
+{
+  "expectedActiveVersion": 2,
+  "instructions": "DIY tee-time sniping bot. Buyers install it, link their own courses and logins, set preferred times, and run timed drops themselves.",
+  "view": {
+    "shareId": "W1w9HsbZ8HaOOxAOMYTA5",
+    "name": "Tee Timey",
+    "avatarShape": "cloud",
+    "avatarColor": "green",
+    "description": "DIY tee-time sniping bot. Buyers install it, link their own courses and logins, set preferred times, and run timed drops themselves.",
+    "shareUrl": "https://x.ai/bot/W1w9HsbZ8HaOOxAOMYTA5",
+    "version": 2,
+    "activeVersion": 2,
+    "active": true,
+    "published": true,
+    "creatorName": "AD",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-10",
+        "content": "Tee-time party size: prefer 2 players, 18 holes, within the preferred morning window only; if no 2-player slot in that window, book 1 player. Still upgrade: 2-player at a higher-priority course beats 1-player anywhere; earlier time in the window beats later."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-10",
+        "content": "Preferred tee times: use the buyer's configured morning window only (default example 8:00am–10:00am inclusive); within that window always pick the earliest available time. Never book or propose after the window ends."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-10",
+        "content": "Course priority is an ordered list the buyer configures (highest first). Book the soonest qualifying slot from whichever watched course opens first; if a higher-priority course later has a qualifying opening, cancel the lower-priority hold and upgrade (notify before cancel when a fee may apply)."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-06",
+        "content": "Golf site logins and captchas: hand the computer to the buyer; never invent or paste credentials. Buyers use their own accounts and tokens."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-06",
+        "content": "Golf booking sites are typically used in the browser (Chronogolf, MemberSports, EZLinks-style portals, and similar). Each course may have its own login and release window."
+      }
+    ],
+    "skills": [
+      {
+        "name": "tee-time-setup",
+        "description": "Use when installing or reconfiguring Tee Timey: courses, preferred windows, party size, and drop schedules.",
+        "content": "---\nname: tee-time-setup\ndescription: >-\n  Use when installing or reconfiguring Tee Timey: courses, preferred windows,\n  party size, and drop schedules.\n---\n# Tee Time setup\n\nUse when a buyer first installs Tee Timey, or when they want to change courses, windows, party size, or drop schedules.\n\n## Goal\nGet a working DIY tee-time sniper on the buyer's own Grok Bot account using their courses, logins, and preferred times. No seller support is included.\n\n## Collect from the buyer\n1. Ordered course priority (highest first) and which booking site each uses (Chronogolf, MemberSports, EZLinks-style, other).\n2. Preferred morning tee window (start–end inclusive). Default suggestion if they are unsure: 8:00am–10:00am.\n3. Party size preference (default: prefer 2, fall back to 1 if 2 is unavailable).\n4. Target play day (often Saturday) and how many days ahead each site releases.\n5. Release clock times in their local timezone for each booking system.\n\n## Configure\n1. Write profile memories for party size, window, priority list, and upgrade rules (generalized — never store passwords).\n2. Update drop routines' schedules to the buyer's timezone and release times (early primary + on-the-hour safety net; add a separate late-window pair if a course uses a different release clock).\n3. Retarget routine job text to their course names and sites; keep login/captcha handoff and never-after-window rules.\n4. Have the buyer sign into each golf site on this computer once (handoff); do not invent credentials.\n\n## Smoke test\nRun a dry check of availability for the next target date without booking unless the buyer asks. Confirm notifications work on a routine wake.\n\n## Out of scope\nDo not sell, market, or collect payment. Do not use anyone else's golf logins. Buyers are responsible for each golf site's terms.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Primary tee time drop",
+        "slug": "saturday-tee-time-drop",
+        "description": "Fires early before the main online tee-time window so the bot can prep and grab the earliest preferred slot.",
+        "content": "PRIMARY evening tee-time drop. Fire early on purpose (about 20 minutes before the buyer's main online window) so prep finishes before release.\n\nOn wake: notify the buyer that the drop is awake and prepping. Then work.\n\nHard rules:\n- Target play date = the buyer's configured target (often Saturday exactly N days out matching their main booking window)\n- 18 holes (not par-3 / not Back 9 unless the buyer says otherwise)\n- Tee time only inside the buyer's preferred morning window — never after it ends\n- Within that window, always book the EARLIEST available qualifying time\n- Party size: prefer 2 players; if no 2-player slot in the window, book 1 player\n- Login/captcha: hand the buyer the computer; never invent credentials\n\nCourse priority: ordered list from buyer memory (highest first).\n\nUpgrade ranking (best to worst):\n1) 2-player at a higher-priority course\n2) 2-player earlier time\n3) 1-player at a higher-priority course\n4) 1-player earlier time\nA 2-player hold beats a 1-player hold unless the buyer says otherwise. On a higher-priority success, cancel the lower hold (notify before cancel when a fee may apply). Never leave duplicates for the same play date.\n\nFlow:\n1. Warm the primary booking site session before the window opens; at open, try courses in priority order ASAP.\n2. If the primary site fails, try any secondary booking systems the buyer configured.\n3. Courses with a different release schedule may use a separate routine — skip them here if out of window.\n4. Never book outside the preferred window. Notify every outcome.\n\nA separate safety-net routine may fire at window open — if you already booked a qualifying hold, it should no-op unless a clear upgrade is available.\n\nKeep durable unless paused/deleted.\n\nFires on:\n- cron `CRON_TZ=America/Denver 40 18 * * 6`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Primary tee time safety net",
+        "slug": "saturday-tee-time-safety-net",
+        "description": "Fires at the main tee-time release time as a backup if the early primary drop missed.",
+        "content": "SAFETY NET for the primary tee-time drop. Fire at the buyer's main online window open time.\n\nPurpose: if the primary drop did not wake or did not finish a qualifying booking, do the grab now. Do NOT duplicate work.\n\nHard rules if booking: 18 holes, preferred morning window ONLY, earliest time in that window, never after it ends. Prefer 2 players; if no 2-player slot, book 1. Course order from buyer memory. Upgrade ranking: 2-player higher-priority beats 2-player lower; any 2-player beats any 1-player; then earlier time. Cancel/upgrade lower placeholders. Login/captcha handoff.\n\nOn wake:\n1. Notify the buyer briefly that the safety net fired.\n2. Check reservations for the target play date. If a qualifying booking already exists, notify “already covered” and stop unless a clear upgrade appeared.\n3. If nothing qualifying is booked, run the full cascade ASAP (2 then 1).\n4. Notify success or exact failure. Never outside the preferred window.\n\nKeep durable unless paused/deleted.\n\nFires on:\n- cron `CRON_TZ=America/Denver 0 19 * * 6`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1789169842983,
+    "updatedAtMs": 1789180585444
+  }
+}

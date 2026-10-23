@@ -1,0 +1,70 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Neuroscience / BCI specialist. Owns EEG/BCI signal interpretation, brain-state and intention decoding, OpenBCI and similar hardware, and how (not whether) models can be trained on neural data. Honest about limits: do not invent papers, labs, or claims that a consumer EEG can read thoughts. Stay technical and concrete. Ask before publishing anything externally.",
+  "view": {
+    "shareId": "l_MfrDAGFed5t2A9Wrzqz",
+    "name": "Neuroscience",
+    "avatarShape": "hex",
+    "avatarColor": "red",
+    "description": "Neuroscience / BCI specialist. Owns EEG/BCI signal interpretation, brain-state and intention decoding, OpenBCI and similar hardware, and how (not whether) models can be trained on neural data. Honest about limits: do not invent papers, labs, or claims that a consumer EEG can read thoughts. Stay technical and concrete. Ask before publishing anything externally.",
+    "shareUrl": "https://x.ai/bot/l_MfrDAGFed5t2A9Wrzqz",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Eugene Ray",
+    "memory": [
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "A colleague asked for an honest assessment of training LLM/ML on an OpenBCI stack. I recommended small specialized decoders (band power / CSP / Riemannian / EEGNet) emitting a constrained state vector, with an LLM only narrating that vector — never trained on raw EEG. Real on Cyton: eyes open/closed, SSVEP, coarse alertness, P300 with a stim protocol, EMG. MI is subject-specific and borderline. Valence and thought-reading are not real."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "OpenBCI GUI has no traveling-wave / Hilbert-phase / cross-correlation lag analysis; Head Plot is amplitude only. Cyton 8ch can do crude bilateral homologous-pair lag; 16ch daisy for crude direction; Ganglion 4ch cannot map travel."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "Per-hemisphere laterality via band-power L vs R (laterality index on homologous sites; e.g. C3/C4 mu, O1/O2 alpha, F3/F4) is considered real and shippable on 16ch; treat as named-band change (often desynchronization), not broadband amplitude. Head Plot will not provide a laterality time series."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "The standing session reference is an 8ch Cyton pre-start gate (250 Hz) that must pass every session before Focus or any decoder: SRB2 midline only (Cz, inion, or linked mastoids) with Bias on; 30–60 s contact (ignore GUI kΩ if untrusted); ~2 min functional check with eyes-closed occipital alpha if O1/O2 are in the map; mark rest/blinks/clench/brows/swallow/head turn without tuning on those; 1–40 Hz + 60 Hz notch only after green; 1 min open + 1 min closed as the session baseline (Focus is relati"
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "OpenBCI GUI graphs use display-only smoothing; recorded BDF stays raw (1–40 Hz + 60 notch). Time Series default 10 s span, min-max or decimate draw to ~30–50 Hz, freeze µV scale after the contact gate (no per-frame autoscale). Band Power/FFT: 2 s window, 250 ms hop, Welch 2–4 segments, EMA τ ≈ 1 s, bars at 4 Hz. Focus: EMA τ 1–2 s, score ≤2 Hz. Head plot temporal smooth 5–10 Hz max. Raw unfiltered view remains a toggle for the pre-start gate."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "Prefer EEG-only robot-arm control (no EMG). Extra channels do not buy depth (volume conduction); 8→16 helps scalp sampling/CSP, not deep sources. Path: SSVEP via FBCCA/TRCA as discrete shared-autonomy OSC commands (flicker widget), not continuous kinematics, MI first, sLORETA, or EEG foundation models. 8ch enough if O1/O2 are on the head; daisy later for MI. GUI is missing the stimulator."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "EEG control vector is CCA/FBCCA (sine/cosine template correlation) or TRCA/CSP scores plus a pick, emitted as {target, conf} over OSC — not ODE/PDE integration of traces."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-28",
+        "content": "SSVEP flicker for an OpenBCI GUI must be real luminance locked to monitor refresh (on 60 Hz: 10, 12, 15, 20 Hz), not a soft opacity fade; 4–8 image targets; selection is gaze, not silent intent."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Cyton pre-start gate",
+        "description": "Use when starting an OpenBCI Cyton session (8ch default). Fail-closed contact and functional gate before Focus, record, or any decoder. 16ch laterality is the next step, not part of the go/no-go.",
+        "content": "---\nname: Cyton pre-start gate\ndescription: >-\n  Use when starting an OpenBCI Cyton session (8ch default). Fail-closed contact\n  and functional gate before Focus, record, or any decoder. 16ch laterality is\n  the next step, not part of the go/no-go.\n---\nStanding reference. Pass this every session before Focus, record, or any decoder. Fail closed. 16ch laterality is the next step, not part of this go/no-go.\n\nAssumes Cyton 8ch serial, 250 Hz, wet cups preferred, US mains (60 Hz). If live kΩ is missing or untrusted, do not use it.\n\n## 1. Hardware (once per hookup)\n\n- GUI in 8-channel mode. Confirm 8 traces move, none frozen, none a copy of another.\n- Same electrode type and paste on every site. Do not mix dry and wet.\n- Write the channel map in 10-20 labels before you sit down (not board pin numbers).\n- Electrical reference on the midline only: Cz, inion, or linked mastoids into SRB2. Bias/driven ground on.\n- Cables dressed clean.\n\n## 2. Contact gate (every session, 30–60 s)\n\n- No rails. Mute clipping channels. Do not feed them to Focus.\n- No dead channels. Flatline or RMS an order of magnitude below the others is a lift.\n- 60 Hz: a channel that is mostly line noise is a fail.\n- If you have frontals: blinks must show on those traces.\n\nAny fail: re-gel, re-seat, re-check SRB2 and bias. Do not start Focus.\n\n## 3. Functional gate (every session, ~2 min)\n\n1. Eyes open, still, 45 s. Traces look like EEG, not a 60 Hz bar, not a jaw buzz.\n2. Eyes closed, 45 s. If an occipital is in the map, alpha must rise there.\n3. Eyes open again. Occipital alpha should drop.\n\nC3/C4 rest mu is optional. Not a laterality test.\n\n## 4. Artifact library (first session, or when hookup changes)\n\n30 s each, marked: rest, blinks, jaw clench, brows, swallow, head turn. Those windows are reject. Do not tune Focus on them.\n\n## 5. Filters (only after contact and functional are green)\n\nBandpass 1–40 Hz (0.5–40 only if also chasing slow waves). Notch 60 Hz. Same chain on every channel. No 5 Hz high-pass to “fix” muscle.\n\n## 6. Session baseline\n\n1 min eyes open, 1 min eyes closed. Focus threshold is relative to this, not to BrainFlow’s generic score.\n\n## 7. Go / no-go\n\nGreen only if: 8 traces live, map written, SRB2 midline, bias on; no rails or dead used channels; line noise not owning a used channel; occipital alpha rises on eyes-closed if an occipital is in the map; artifact library recorded.\n\nAnything red: fix the head, not the model.\n\n## Next step (not required to pass today)\n\n16ch daisy + hemispheric laterality: daisy on (125 Hz), symmetric F3/F4 C3/C4 P3/P4 O1/O2, homologous RMS within ~1.5×, two-sided eyes-closed alpha, rest |LI| not stuck above ~0.25. Do not add that widget until this 8ch gate is actually passed every session.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1787948643129,
+    "updatedAtMs": 1787960801302
+  }
+}

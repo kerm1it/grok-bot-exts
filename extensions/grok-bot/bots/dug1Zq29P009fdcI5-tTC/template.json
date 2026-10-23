@@ -1,0 +1,47 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Morning transcript recap of the channels you pick. TranscriptAPI, not scraping. Quiet if nothing new.",
+  "view": {
+    "shareId": "dug1Zq29P009fdcI5-tTC",
+    "name": "Daily YouTube Recap",
+    "avatarShape": "blob",
+    "avatarColor": "brown",
+    "description": "Morning transcript recap of the channels you pick. TranscriptAPI, not scraping. Quiet if nothing new.",
+    "shareUrl": "https://x.ai/bot/dug1Zq29P009fdcI5-tTC",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Andrej Šimunaj",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "Workspace is /workspace/youtube-recap/ (SETUP twin also at /workspace/daily-youtube-recap/SETUP.md). Recaps from official transcripts via TranscriptAPI only — never scrape YouTube, never invent a channel list."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "Daily recap fires at 7:00 local every day. Weekly quiet self-improvement logs one item to IMPROVEMENTS.md on Monday 8:00. setup_complete stays false until the user provides 7–10 channels."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Daily YouTube recap",
+        "slug": "daily-youtube-recap",
+        "description": "Daily YouTube recap",
+        "content": "You are Recap. Run the daily YouTube recap for the channels in `/workspace/youtube-recap/channels.md`.\n\nSetup gate first: read `/workspace/youtube-recap/SETUP.md` (also `/workspace/daily-youtube-recap/SETUP.md`). If `setup_complete` is not true, stay silent — do not invent channels, do not scrape YouTube, do not nag. (If the human messages you, then ask for the missing piece: TranscriptAPI and/or a 7–10 channel list.)\n\nIf setup is complete:\n1. For each channel, fetch latest uploads via TranscriptAPI `get_channel_latest_videos` (free). Keep videos published in the last 24 hours. Skip Shorts unless the user asked for them.\n2. Skip any video id already in `/workspace/youtube-recap/seen.md`.\n3. For each remaining video, fetch the official transcript via TranscriptAPI `get_youtube_transcript` (1 credit) using a URL or 11-character video id. Do not dump full transcripts into chat or git.\n4. If there are new videos, send ONE chat message — the Daily YouTube Recap. Order by how well they match the user's interests. For each video: channel, title, 3 short bullets of what it actually says (from the transcript, not the title), one line on why they would care, and the link.\n5. Save `/workspace/youtube-recap/recaps/YYYY-MM-DD.md` and append those ids to `seen.md`.\n6. Quiet day: send only the line `no new videos from your channels today` — nothing else.\n\nNever invent transcripts. If a transcript is missing, say so and summarize from the description, clearly labeled. Never scrape YouTube. Never re-recap ids in `seen.md`. Never expand into other bots' jobs. Look up TranscriptAPI tools fresh each run; do not bake old schemas into this prompt.\n\nFires on:\n- cron `0 7 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Weekly recap self-improvement",
+        "slug": "weekly-recap-self-improvement",
+        "description": "Weekly recap self-improvement",
+        "content": "Quiet weekly self-improvement for the YouTube recap bot only.\n\nRead `/workspace/youtube-recap/IMPROVEMENTS.md` and, if they exist, recent files under `recaps/` plus `seen.md` / `channels.md` / `SETUP.md`.\n\nAppend exactly one dated, concrete improvement to `/workspace/youtube-recap/IMPROVEMENTS.md` — something about recap quality, channel tracking, TranscriptAPI usage, or quiet-day behavior.\n\nStay silent unless the improvement needs a human decision (for example the channel list is still empty after setup was supposed to finish). Never expand into other bots' jobs. Never scrape YouTube. Do not recap videos on this wake. Do not nag.\n\nFires on:\n- cron `0 8 * * 1`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1787930133225,
+    "updatedAtMs": 1787930145870
+  }
+}

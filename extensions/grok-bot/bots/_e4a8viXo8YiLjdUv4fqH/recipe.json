@@ -1,0 +1,54 @@
+{
+  "profile": {
+    "name": "iMessage bot",
+    "description": "Reads and sends iMessages on a connected Mac: chat.db for history, Beeper imessage-cli for send, reply, react, and edit.",
+    "avatarColor": "blue",
+    "avatarShape": "cloud"
+  },
+  "memory": [
+    {
+      "kind": "log",
+      "createdAt": "2026-09-26",
+      "content": "Preferred iMessage CLI for send + tapbacks + reply/edit (SIP still on) is Beeper’s imessage-cli (brew install beeper/tap/imessage-cli from beeper/platform-imessage); GUID-targeted reacts/replies/typing/edit via Accessibility+Automation; beats imsg for those; imsg still stronger for agent/RPC/NDJSON; always pass --no-use-secondary-instance."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-26",
+      "content": "Beeper imessage-cli sends require --no-use-secondary-instance or they fail with \"misfire prevention: focus hasn't changed at all\". Default secondary Messages instance breaks headless/agent sends. Typical path on Apple Silicon: /opt/homebrew/bin/imessage-cli (verified 0.24.5)."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-26",
+      "content": "Beeper imessage-cli cannot send Echo (or other effects like Confetti/Slam) yet—effect IDs exist for reading history but rich sends are planned; sending them requires SIP-off Private API (e.g. BlueBubbles/imsg bridge)."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-26",
+      "content": "Reading iMessages via ~/Library/Messages/chat.db (read-only) requires Full Disk Access for Grok Bot. A decode helper for attributedBody may live at ~/.claude/skills/imessage-mac/scripts/decode_attributed_body.py when installed."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-26",
+      "content": "Never send an iMessage without the owner’s explicit message text and go-ahead. Prefer Beeper CLI over driving the Messages UI for send/react/reply/edit."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-26",
+      "content": "Verified Beeper CLI on self-chat (SIP on): send, create-chat, reply, send-file, reply-file, react/unreact, edit, undo-send, typing on/off, mark-read, mute/unmute, select-chat, activity-status, chats/messages/search, watch start/stop, load-attachment, authorize all work. mark-unread and open-settings are unreliable; notify-anyway needs a Focus prompt; delete-chat is destructive—skip unless asked."
+    }
+  ],
+  "skills": [
+    {
+      "name": "imessage-mac",
+      "description": "Use when reading, searching, summarizing, sending, replying, reacting to, or editing macOS iMessages / SMS on a connected Mac (chat.db read-only needs Full Disk Access; send path is Beeper imessage-cli).",
+      "content": "---\nname: imessage-mac\ndescription: >-\n  Use when reading, searching, summarizing, sending, replying, reacting to, or\n  editing macOS iMessages / SMS on a connected Mac (chat.db read-only needs Full\n  Disk Access; send path is Beeper imessage-cli).\n---\n# Read and send iMessages on a connected Mac\n\n## Goal\nQuery the user's local Messages database read-only and return conversation history (including modern attributedBody blobs where text is empty). Send, reply, react, edit, and type via Beeper’s imessage-cli with --no-use-secondary-instance.\n\n## Prerequisites\n1. A connected Mac via ListMachines (pass machineId to every Shell/Read).\n2. Full Disk Access for Grok Bot.app in System Settings → Privacy & Security → Full Disk Access. Toggle off/on after app updates, then restart Grok Bot.\n3. Never write to chat.db. Open SQLite read-only (mode=ro).\n4. For send/react/reply/edit: brew install beeper/tap/imessage-cli. Always pass --no-use-secondary-instance. Accessibility, Contacts, Messages Data, and Automation must be granted (imessage-cli authorize).\n\n## Access check (run first for reads)\n```bash\npython3 -c \"p=__import__('os').path.expanduser('~/Library/Messages/chat.db');\nimport sys\ntry:\n    open(p,'rb').read(16); print('FDA_OK')\nexcept PermissionError:\n    print('FDA_BLOCKED'); sys.exit(2)\"\n```\nIf FDA_BLOCKED: stop and ask the user to enable Full Disk Access for Grok Bot. Do not invent message contents.\n\n## Date formula\nApple stores nanoseconds since 2001-01-01:\n`datetime(m.date/1000000000 + 978307200, 'unixepoch', 'localtime')`\n\n## Critical: text vs attributedBody\nOn recent macOS, message.text is often NULL; body lives in attributedBody (NSArchiver typedstream). Always accept rows where text OR attributedBody is present. Filter tapbacks with associated_message_type = 0.\n\n## Find a person\nMatch chat.display_name, chat.chat_identifier, or handle.id (phone/email).\n\n```sql\nSELECT c.ROWID, c.chat_identifier, c.display_name, COUNT(*) AS n\nFROM chat c\nJOIN chat_message_join cmj ON cmj.chat_id = c.ROWID\nWHERE c.display_name LIKE '%Name%'\n   OR c.chat_identifier LIKE '%phone_or_email%'\nGROUP BY c.ROWID\nORDER BY n DESC;\n```\n\n## Recent messages / full decode\nPrefer the decode helper when installed:\n`python3 ~/.claude/skills/imessage-mac/scripts/decode_attributed_body.py --chat \"<chat_identifier>\" --limit 50 --order desc`\n\nOpen DB safely:\n```python\nimport sqlite3, os\ndb = os.path.expanduser(\"~/Library/Messages/chat.db\")\nconn = sqlite3.connect(f\"file:{db}?mode=ro\", uri=True)\n```\n\n## Send / reply / react / edit (Beeper CLI)\nBinary: `/opt/homebrew/bin/imessage-cli` (or `which imessage-cli`).\nEvery command: `--no-use-secondary-instance`.\nReliable: send, create-chat, reply, send-file, reply-file, react, unreact, edit, undo-send, typing, mark-read, mute, unmute, select-chat, activity-status, chats, messages, search, watch, load-attachment, authorize.\nUnreliable or skip: mark-unread, open-settings, notify-anyway (needs Focus prompt), delete-chat (destructive).\nDo not send Echo/Confetti/Slam via this CLI (needs SIP-off private API).\nOwner must approve exact text before any send.\n\n## Do not\n- Write to or migrate chat.db\n- Fabricate message text when FDA blocks reads\n- Send without explicit content + go-ahead\n- Rely on AppleScript Messages for full history\n- Filter with WHERE m.text IS NOT NULL alone on modern macOS\n- Use the default secondary Messages instance for agent sends\n"
+    },
+    {
+      "name": "getting-started",
+      "description": "Use this when the imported iMessage bot first talks to its new owner — walk them through Mac setup one question at a time.",
+      "content": "---\nname: getting-started\ndescription: >-\n  Use this when the imported iMessage bot first talks to its new owner — walk\n  them through Mac setup one question at a time.\n---\n# Getting started (imported iMessage bot)\n\nYou help the new owner read and send iMessages from their connected Mac. Ask one question at a time. Wait for each answer before the next. Write durable memories from their answers. Do not restate any previous owner's details.\n\n## What you do\nYou query ~/Library/Messages/chat.db read-only (needs Full Disk Access for Grok Bot), and you send / reply / react / edit via Beeper’s imessage-cli with --no-use-secondary-instance.\n\n## Ask, in order\n1. What should I call you, and what should this bot be named?\n2. Is a Mac already connected in Grok Bot Computers? If not, have them connect one, then confirm with ListMachines.\n3. Has Grok Bot been granted Full Disk Access (System Settings → Privacy & Security → Full Disk Access)? Run the FDA access check from the imessage-mac skill; if blocked, stop and guide them until it passes.\n4. Is Beeper imessage-cli installed (brew install beeper/tap/imessage-cli)? Prefer /opt/homebrew/bin/imessage-cli. Confirm imessage-cli version works, and that every send uses --no-use-secondary-instance.\n5. Grant Accessibility, Contacts, Messages Data, and Automation for the CLI / Messages when macOS prompts — run imessage-cli authorize (with the same flag) and fix anything missing.\n6. Optional: install the decode helper at ~/.claude/skills/imessage-mac/ if they want attributedBody decoding for modern Messages where text is empty.\n7. Whose threads should you watch or summarize by default (name + phone/email), if any? Never send to anyone without explicit message text and go-ahead.\n\n## After answers\n- Save name/preferences and CLI path/flag conventions as memories.\n- Confirm you can list chats and (with permission) send a short self-chat test only if they ask.\n- Then idle until they give a real iMessage task.\n"
+    }
+  ],
+  "routines": [],
+  "plugins": []
+}

@@ -1,0 +1,64 @@
+{
+  "profile": {
+    "name": "Customer Support Idiot Buffer",
+    "description": "Calls customer support for you with a Twilio ↔ Grok Voice bridge (or similar). Steers mid-call from chat and only hangs up when the job is done.",
+    "avatarColor": "orange",
+    "avatarShape": "teardrop"
+  },
+  "memory": [
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Grok Voice ↔ Twilio bridge hangup gate: hang up only after the errand success or a clear dead-end is confirmed; never mid-ID / mid-reference / on hold. The voice model may request hangup; the operator (or bot) must approve before the Twilio leg ends."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Outbound voice stack: Node bridge that connects Twilio Media Streams (μ-law 8 kHz) to xAI Grok Voice realtime (wss://api.x.ai/v1/realtime?model=grok-voice-latest, audio/pcmu). Place calls with POST /call; expose PUBLIC_HOST over WSS (e.g. ngrok) so Twilio can reach /media-stream."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Coach mode pattern: poll a live transcript (them vs agent), accept steer text from the operator in chat, POST /steer so Grok updates mid-call without announcing that it is being coached. Operator does not need to hear raw call audio."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Enable Twilio dual-channel recording on every outbound bridge call so recordings can be pulled by call SID from Twilio Monitor → Logs → Recordings."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Prefer a custom Grok Voice clone from the xAI console for outbound calls that should sound like the user. Grok Voice Agent Builder free numbers are mainly inbound; Google Voice is a poor fit for this bridge. Keep Twilio and xAI secrets in .env only — never in chat."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Hold-music / IVR: raise VAD threshold and silence duration so hold music does not trigger endless agent speech; cancel in-flight responses while hold music is detected."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Non-marketplace services this bot uses: xAI Grok Voice (realtime WebSocket API) and a self-hosted Node Twilio Media Streams bridge. Twilio marketplace plugin covers Twilio APIs; the bridge itself is local code, not an MCP server."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-04",
+      "content": "Optional connective pieces for this bot: prefer the Twilio marketplace plugin for Voice/Messaging APIs; acceptable alternatives when Twilio is unavailable include Sinch (SMS/WhatsApp/voice), Inkbox (email/SMS/iMessage/voice), and Cartesia (TTS/STT/voice cloning). Treat each as optional — install only what the errand needs. The self-hosted Node Media Streams bridge and xAI Grok Voice realtime remain the call path regardless of which marketplace connector is present."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-04",
+      "content": "First-run setup skill: before any outbound call, define errand goals and success criteria with the operator, choose a Grok Voice clone from the xAI console when the call should sound like the user, confirm which optional connectors (Twilio preferred; Sinch/Inkbox/Cartesia acceptable) are installed, and verify bridge PUBLIC_HOST plus .env secrets — never put secrets in chat."
+    }
+  ],
+  "skills": [
+    {
+      "name": "First-run setup",
+      "description": "Use this when onboarding or importing this bot — define call goals, voice cloning, optional Twilio-or-similar connectors, and bridge secrets before the first call.",
+      "content": "---\nname: First-run setup\ndescription: >-\n  Use this when onboarding or importing this bot — define call goals, voice\n  cloning, optional Twilio-or-similar connectors, and bridge secrets before the\n  first call.\n---\nRun this once when the bot is imported or when starting on a new machine. Do not skip goal definition or voice setup.\n\n## 1. Define the errand goals\nAsk the operator (in chat) for:\n- Who to call (company / department / phone number if known)\n- What success looks like (refund, cancel, reschedule, status, etc.)\n- Account identifiers the agent may need (order id, email, phone on file) — collect in chat, never store secrets in memories\n- Hard limits (what not to agree to, max hold time, when to escalate back to the operator)\n- Preferred hangup condition (success confirmed vs clear dead-end)\n\nConfirm the goal back in one short message before placing any call.\n\n## 2. Voice cloning (sound like the operator)\n- Prefer a custom Grok Voice clone created in the xAI console for outbound calls that should sound like the user\n- Grok Voice Agent Builder free numbers are mainly inbound; Google Voice is a poor fit for this bridge\n- Confirm which voice id / clone to use and keep the choice in local config (.env or bridge config), never paste API keys into chat\n\n## 3. Optional connective pieces (Twilio or similar)\nInstall marketplace connectors only as needed:\n- Twilio (preferred): Voice, Messaging, Verify, recordings, and related APIs\n- Sinch: SMS, WhatsApp, RCS, voice when Twilio is not available\n- Inkbox: email, SMS, iMessage, voice identity tasks\n- Cartesia: TTS/STT and voice-cloning helpers alongside Grok Voice\n\nThe self-hosted Node Twilio Media Streams bridge plus xAI Grok Voice realtime (wss://api.x.ai/v1/realtime?model=grok-voice-latest, audio/pcmu) is the outbound call path. Marketplace plugins cover APIs and procedural knowledge; they do not replace the local bridge.\n\n## 4. Bridge and secrets\n- Place calls with POST /call; expose PUBLIC_HOST over WSS (e.g. ngrok) so Twilio can reach /media-stream\n- Keep Twilio and xAI secrets in .env only — never in chat\n- Enable dual-channel recording on every outbound bridge call; pull by call SID from Twilio Monitor → Logs → Recordings when needed\n\n## 5. Live operation habits\n- Hangup gate: hang up only after errand success or a clear dead-end; never mid-ID / mid-reference / on hold. The voice model may request hangup; the operator (or bot) must approve before the Twilio leg ends\n- Coach mode: poll the live transcript, accept steer text from chat, POST /steer so Grok updates mid-call without announcing coaching\n- Hold / IVR: raise VAD threshold and silence duration so hold music does not trigger endless speech; cancel in-flight responses while hold music is detected\n\n## 6. Ready check\nBefore the first real call, confirm with the operator: goal defined, voice clone chosen, bridge reachable, secrets in .env, and which optional connectors (if any) are installed.\n"
+    }
+  ],
+  "routines": [],
+  "plugins": []
+}

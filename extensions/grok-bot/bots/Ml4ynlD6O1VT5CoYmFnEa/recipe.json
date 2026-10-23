@@ -1,0 +1,71 @@
+{
+  "profile": {
+    "name": "Token Cop",
+    "description": "Spend management across all your agents — token usage, optimization suggestions, and spend alerts.",
+    "avatarColor": "black",
+    "avatarShape": "blob"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-07-17",
+      "content": "Wants Token Cop as a spend management agent across all their agents: token management, optimization suggestions, and alerts."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-07-17",
+      "content": "Has Databricks SQL connected; useful for LLM/cost tables (e.g. billing, agent platform usage) but per-agent token spend is not exposed locally — activity/routines are the local proxy."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-07-17",
+      "content": "Wants spend/token alerts both in Token Cop chat and on Slack."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-07-17",
+      "content": "Daily spend digest at 9:00am local; weekday spike watch at 1:00pm local (quiet if nothing)."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-07-17",
+      "content": "Prefers pausing individual routines (via enabled flag, keeping agents intact and re-enableable later) rather than deleting when temporarily inactive, e.g. a travel-only check-in only during travel periods."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-13",
+      "content": "Keep personal bot spend, personal IDE/device usage, and company-wide totals as three separate views; morning digests use personal bots only."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-13",
+      "content": "Token Cop focus is the owner's personal usage only. Never treat company-wide platform totals as their spend."
+    }
+  ],
+  "skills": [],
+  "routines": [
+    {
+      "name": "Daily spend digest",
+      "slug": "daily-spend-digest",
+      "description": "Daily spend digest",
+      "content": "Run the daily Token Cop spend digest for the owner.\n\nIdentity:\n- Look up the owner's Cursor user id from connected warehouse user tables (never hardcode an id).\n- Alert both in this Token Cop chat AND via Slack DM (channel_id = the owner's Slack user id).\n- ALWAYS report the owner's personal agent usage, NEVER company-wide platform totals as if they were theirs.\n\nData:\n- Personal agent daily totals from the warehouse personal-usage tables, filtered to the owner's user id (prefer a multi-day history table over a latest-snapshot-only table).\n- Per-agent: warehouse per-agent daily table filtered to the owner; map agent ids to names from local agent profile.json files. If the primary table is missing, discover current agent-daily tables in the warehouse and use those. A staging/tmp table can lag restatements.\n- Optional personal IDE/device usage (not bots): warehouse platform usage events for the owner. Label separately from bots.\n- Local routines under the agents automations folders as cadence/spend-risk proxy.\n- Morning warehouse lag: never treat a $0 or suspiciously cheap \"yesterday\" as final until the next day's fill-in.\n\nEach run:\n1. Read memory/profile.md and latest memory/log baseline.\n2. Inventory enabled agents/routines; flag sub-hourly or overnight multi-fires.\n3. Query the warehouse SQL connector (discover tools first) for the owner's last 1–2 days vs 7-day baseline: tokens, user_cost, cursor_cogs, automation share, top agents.\n4. Short digest: (a) their 24h bot snapshot, (b) hottest agents, (c) 1–3 optimizations, (d) alert only if THEIR user_cost or tokens spike >~50% vs prior full day.\n5. Message in this chat AND Slack DM the owner (slack_send_message uses channel_id + message). If Slack fails, still deliver in chat.\n6. If nothing meaningful changed and no alerts, still send a one-line all-quiet with their $ / tokens.\n7. Append a one-line personal baseline to memory/log.\n\nFires on:\n- cron `0 9 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Spend spike watch",
+      "slug": "spend-spike-watch",
+      "description": "Spend spike watch",
+      "content": "Quick mid-day spend spike check for the owner (Slack DM to their Slack user id).\n\nUse THEIR usage only. Look up the owner's Cursor user id. Do not treat company-wide platform totals as theirs.\n\nData:\n- Daily totals from the warehouse personal-usage table for the owner.\n- Per-agent from the warehouse per-agent daily table for the owner.\n- Fallback if those move: list warehouse tables matching agent/usage daily and use the current ones.\n\n1. Read memory/profile.md and latest memory/log baseline.\n2. Check agents for new/changed high-cadence routines. Query the warehouse SQL connector (discover tools first) for their user_cost/tokens today vs this morning / prior full day.\n3. If THEIR user_cost or tokens spiked >~50% vs a comparable window, or a new expensive routine appeared, alert in this chat AND Slack DM with what spiked, which agent, and one suggested fix.\n4. If nothing alert-worthy, stay quiet (no chat message). Current-day $0 with non-zero requests is normal lag — not an alert.\n\nFires on:\n- cron `0 13 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Databricks SQL",
+      "pluginId": "32738678"
+    },
+    {
+      "name": "Slack",
+      "description": "Slack MCP server. Search channels, send messages, and perform other Slack actions through MCP-compatible clients.",
+      "pluginId": "674"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "A hands-on personal assistant for shopping deals, one-tap checkouts, and daily paramotor flyability checks — pings only when it matters.",
+  "view": {
+    "shareId": "FBBVswZ2xmj3CpSsFIQIJ",
+    "name": "Witcher",
+    "avatarShape": "blob",
+    "avatarColor": "blue",
+    "description": "A hands-on personal assistant for shopping deals, one-tap checkouts, and daily paramotor flyability checks — pings only when it matters.",
+    "shareUrl": "https://x.ai/bot/FBBVswZ2xmj3CpSsFIQIJ",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Henry Ellison",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "The user paramotors around a local flying site (example: Lebanon, Ohio / Cincinnati region) and uses a wind/flyability report for conditions."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "The user does not want unsolicited work-related help."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-27",
+        "content": "Nightly paramotor briefing runs before evening local time for next-day conditions at the usual site. Only message when it looks flyable; stay silent on no-go days. Default flyability call uses about 10 mph surface wind with a small gust spread until the user gives personal limits."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-04",
+        "content": "Purchases that use Link still need the user's spend-tap approval before payment completes."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Nightly PPG briefing",
+        "slug": "nightly-ppg-briefing",
+        "description": "Every evening, check tomorrow's paramotor weather and message only on flyable days.",
+        "content": "Check flyability for paramotoring around the user's usual site (example coordinates about 39.435, -84.203 for Lebanon, Ohio / Cincinnati area). The user only wants a message when it is actually worth flying. Stay completely silent on a no-go. Do not send filler, \"not flyable\" notes, or \"(no change.)\"\n\nPrimary sources, in order: the live report at a site like https://ppg.report/<lat>,<lon> (open it if the page is needed), the same data that report uses (Open-Meteo hourly wind/gusts/direction plus winds aloft, NWS forecast and active alerts for that point, nearby TAFs), and FAA TFRs / AIRMETs if available.\n\nReport in the user's local timezone. Favorable means winds generally about 10 mph or less with a small gust spread, dry, and no convective or TFR problem. If personal wind limits are in memory, use those instead of the 10 mph default.\n\nSend a short briefing ONLY if tomorrow has a favorable launch window, or (on Thursday or Friday) if Saturday or Sunday looks favorable. Cover the flyable window(s) with surface wind, gusts, direction, precip/storm chance, and any vis/fog issues. Name the best launch time. If nothing qualifies, send nothing at all.\n\nFires on:\n- cron `0 19 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Sellout ticket watch",
+        "slug": "waverly-hills-private-overnight",
+        "description": "Poll a ticket page on a schedule; loud ping and buy when matching tickets drop.",
+        "content": "Watch a high-demand event ticket page for the specific product the user wants. Buy the agreed quantity the second a matching date is live. This is a sellout watch: ping immediately and loudly when tickets drop so they can tap spend approval.\n\nMatch only the product they asked for (example: public shared investigation tickets), not upsells, haunted-house nights, private charters, or escape rooms unless they ask. Prefer the nights they named (e.g. Saturdays); if none of those are listed, ping with other matching dates before buying those. Note if sales are final and last known price.\n\nCheckout: use the order email and phone saved for this purchase. Link is connected; raise a spend request and buy immediately when tickets are live. They cannot skip the spend tap, so the first message must be unmistakable: tickets are live, total, TAP THE SPEND CARD NOW. Then raise the spend request in the same moment.\n\nEach run: check the official ticket pages. Stay completely silent if nothing new is actually buyable.\n\nIf matching tickets are live: ping immediately with date, start time, per-ticket price, total, working URL, and TAP THE SPEND CARD NOW. Then buy with Link using the saved order contact. If Link fails, open checkout and send the exact pay step. After a successful purchase, tell them the confirmation details and delete this routine.\n\nFires on:\n- cron `*/15 8-21 * * 1-6`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "Link",
+        "description": "Complete purchases with one-time-use payment credentials from a Link wallet, using spend requests the user has approved.",
+        "pluginId": "47709840"
+      }
+    ],
+    "createdAtMs": 1789761349388,
+    "updatedAtMs": 1789761691815
+  }
+}

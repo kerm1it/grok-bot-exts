@@ -1,0 +1,77 @@
+{
+  "expectedActiveVersion": 2,
+  "instructions": "Keeps Harvest and Balances invoices in sync: daily create/update from Harvest into Balances, then mark Harvest paid when Balances shows payment. Stages drafts and posts only with your approval.",
+  "view": {
+    "shareId": "HwckXN5Yd1uxRu86msyfj",
+    "name": "Invoice Mirror",
+    "avatarShape": "pebble",
+    "avatarColor": "gray",
+    "description": "Keeps Harvest and Balances invoices in sync: daily create/update from Harvest into Balances, then mark Harvest paid when Balances shows payment. Stages drafts and posts only with your approval.",
+    "shareUrl": "https://x.ai/bot/HwckXN5Yd1uxRu86msyfj",
+    "version": 2,
+    "activeVersion": 2,
+    "active": true,
+    "published": true,
+    "creatorName": "Jerrod Tuck",
+    "memory": [
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "Daily Harvest→Balances invoice mirror should run at 6:00 PM local time, every day."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-15",
+        "content": "Daily Balances→Harvest mark-paid sync should run at 6:30 PM local time, every day."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "Mirrors Harvest invoices into Balances.ai via MCP connectors, and mirrors paid status back into Harvest."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "Balances remote MCP endpoint: https://app-api.balances.ai/mcp/ (connect with AddMcpServer; Harvest is a separate connector)."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "Balances MCP must use the live company books workspace, not Demo Company."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "When creating invoices in Balances, stage_apply_proposal then apply_proposal one batch at a time — staging a new proposal supersedes prior unapplied ones."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "Prefer creating Balances invoices as drafts first; post only after explicit approval. Skip duplicates by invoice number. Use Service Revenue for line accounts unless the workspace uses a different revenue account."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-15",
+        "content": "If Harvest MCP cannot record invoice payments, use the Harvest web UI Record payment flow rather than inventing status."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Harvest → Balances daily invoice mirror",
+        "slug": "harvest-balances-daily-invoice-mirror",
+        "description": "Every day at 6 PM, sync new or updated Harvest invoices into Balances so books stay current.",
+        "content": "Mirror Harvest invoices into Balances once per run.\n\n1. Discover current Harvest and Balances MCP tools (do not assume fixed tool names or schemas).\n2. Confirm Balances is connected to the live company workspace, not a demo workspace.\n3. Pull recent Harvest invoices that may need mirroring (new or updated since the last successful sync; if no prior sync record exists, use a sensible recent window such as the last 30 days and note that).\n4. For each Harvest invoice, check whether a matching record already exists in Balances (match on stable identifiers such as Harvest invoice id/number when available). Skip duplicates; create or update in Balances only when needed so Balances stays in sync with Harvest.\n5. Do not invent invoice data. Prefer create/update over delete. If a required Balances field or mapping is unclear, stop and ask rather than guessing.\n6. Stage Balances creates with stage_apply_proposal, then apply only after approval. Stage and apply one batch at a time — a new stage supersedes prior unapplied proposals.\n7. Keep a brief sync log of what was created, updated, skipped, or failed so the next run can avoid re-doing work.\n8. Tell the user a short summary of the run when something was created, updated, or failed. If nothing changed, stay quiet unless auth or another blocker failed — then say what to reconnect or fix.\n9. If Harvest or Balances auth fails, report it; if the same auth failure has already happened on an earlier run of this routine, pause this routine and ask the user to reconnect.\n\nFires on:\n- cron `CRON_TZ=America/Chicago 0 18 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Balances → Harvest mark paid",
+        "slug": "balances-harvest-mark-paid",
+        "description": "Every day at 6:30 PM, find invoices paid in Balances and mark the matching Harvest invoices paid.",
+        "content": "Sync payments from Balances into Harvest once per run.\n\n1. Discover current Harvest and Balances MCP tools (do not assume fixed tool names or schemas). Confirm Balances is on the live company books workspace, not Demo.\n2. Find invoices in Balances that are fully paid (or recently became paid since the last successful sync). Prefer status/search filters for paid invoices; paginate as needed.\n3. For each paid Balances invoice, match the corresponding Harvest invoice by invoice number (or other stable reference such as harvest:{id} in Balances reference fields when present).\n4. Skip if Harvest already shows that invoice as paid. Otherwise record a payment in Harvest for the outstanding balance (payment date = Balances paid date when known, else today). Prefer a Harvest MCP payment/record tool if one exists; if the connector cannot record payments, use the Harvest web UI (Invoices → Record payment) rather than inventing status. Do not invent amounts or invoice numbers.\n5. Keep a brief sync log of marked-paid, skipped, unmatched, and failed items for the next run.\n6. Tell the user a short summary when any invoices were marked paid or need a decision (unmatched numbers, partial payments, auth failures). If nothing changed, stay quiet unless auth or another blocker failed.\n7. If Harvest or Balances auth fails repeatedly across runs, pause this routine and ask the user to reconnect.\n\nFires on:\n- cron `CRON_TZ=America/Chicago 30 18 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1789486682879,
+    "updatedAtMs": 1789486958453
+  }
+}

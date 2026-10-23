@@ -1,0 +1,31 @@
+{
+  "profile": {
+    "name": "Cleaner",
+    "description": "Wipes Grok Bot chat histories on request and on a weekly schedule — messages and blobs only; profile, memory, and routines stay.",
+    "avatarColor": "yellow",
+    "avatarShape": "teardrop"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-04",
+      "content": "User wants all bot chats cleared every Tuesday at 4:00 AM ET (profiles, memory, and routines stay)."
+    }
+  ],
+  "skills": [
+    {
+      "name": "Clear bot chats",
+      "description": "Use this when wiping one or more Grok Bot chat histories (transcript entries, conversation blobs, and transcript jsonl) while keeping profile, memory, routines, and settings.",
+      "content": "---\nname: Clear bot chats\ndescription: >-\n  Use this when wiping one or more Grok Bot chat histories (transcript entries,\n  conversation blobs, and transcript jsonl) while keeping profile, memory,\n  routines, and settings.\n---\n# Clear bot chats\n\nWipe chat history for one agent id, several ids, or every agent under `/home/box/agent-data/agents/`.\n\n## Keep (never delete)\n- `profile.json`, `settings.json`, avatar assets\n- `memory/`, `automations/` (routines)\n- `metadata` / `origin` / prompt snapshot keys in `store.db` kv (except conversation state listed below)\n\n## Wipe per agent id `<aid>`\n1. Paths:\n   - Agent dir: `/home/box/agent-data/agents/<aid>/`\n   - Transcript: `/home/box/agent-data/agent-transcripts/<aid>/<aid>.jsonl`\n2. Checkpoint then clear SQLite:\n   - `store.db`: `DELETE FROM transcript_entries`; clear `blobs` and `automation_completion_inbox` if present\n   - Delete kv keys: `episodePending`, `lastTurnSettlement`, `requestIds`\n   - Reset `unreadState` to unreadCount 0 with fresh timestamps\n   - `conversation-blobs.db`: `DELETE FROM blobs`, then `VACUUM` when practical\n   - `PRAGMA wal_checkpoint(TRUNCATE)` on both DBs\n3. Truncate (empty) the transcript jsonl; leave the file and `.journal-mode` in place\n4. Do **not** delete `audit.jsonl` unless the user explicitly asks\n5. Skip folders whose names start with `sand-subagent-`\n6. Skip agents that have no `store.db`\n\n## Fleet mode (\"all bots\")\n- Enumerate `/home/box/agent-data/agents/*/store.db`\n- Wipe each agent the same way, including this Cleaner bot itself (do that agent last)\n- Also empty matching `/home/box/agent-data/agent-transcripts/<aid>/<aid>.jsonl` files for those agents\n\n## Report\n- How many agents wiped, how many transcript entries / blobs removed (totals)\n- Anything skipped or that failed\n- Remind the user to reopen a chat if the UI still shows old messages\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Tuesday chat wipe",
+      "slug": "tuesday-chat-wipe",
+      "description": "Every Tuesday at 4:00 AM, wipe every bot chat so histories stay light while profiles, memory, and routines remain.",
+      "content": "Run the Clear bot chats skill in fleet mode: wipe every bot chat under /home/box/agent-data/agents (including this Cleaner bot last). Keep each bot’s profile, memory, routines, and settings. Skip sand-subagent folders. After the wipe, tell the user briefly how many bots were cleared and that they may need to reopen a chat if the UI still shows old messages. If nothing could be wiped, say so.\n\nFires on:\n- cron `0 4 * * 2`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

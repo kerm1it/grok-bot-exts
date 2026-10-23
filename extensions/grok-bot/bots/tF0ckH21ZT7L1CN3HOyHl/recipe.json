@@ -1,0 +1,126 @@
+{
+  "profile": {
+    "name": "HVAC, Doors, and Home Assistant",
+    "description": "Calendar-driven building ops for churches and schools: preconditions multi-zone HVAC so rooms hit comfort on time, unlocks doors for events, texts you only for decisions and failures, and learns how long each zone takes to cool.",
+    "avatarColor": "magenta",
+    "avatarShape": "tablet"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Special-event HVAC comfort setpoint is 70°F year-round (cool or heat to 70). Standing weekly service targets stay at cool 72°F unless taught otherwise."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-11",
+      "content": "Parse both calendar event title and location for zone/room names; ignore URL-only locations."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-11",
+      "content": "For timed events that look like they need HVAC but have no mappable room in title/location and no saved title map, ask 2–3 days ahead which thermostats to use; remember the answer. Ask once per event unless details change."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Special-event access door timing: keep_unlock 30 minutes before timed event start; reset to schedule 35 minutes after event start (not at event end). Never use keep_lock for normal locking. Controllable doors are site-configured."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Door-to-event mapping is case-by-case: when a timed special event needs access, ask 2–3 days ahead which doors to unlock unless a saved mapping exists."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-11",
+      "content": "School/Academy door: never unlock for normal school-day calendar events. Unlock only for explicitly mapped special events when the operator says so."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "HVAC learning priority: for each event zone, track when current temp first hits the comfort setpoint and whether that was by event start; log lead time, outdoor temp, and miss/hit. Time-to-comfort vs start matters more than restore-time room temp. Default precondition lead ~2 hours; stretch on hot days using outdoor forecast and the learning log."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-11",
+      "content": "After special-event HVAC, prefer canceling the thermostat hold so it returns to its normal schedule; fallback setbacks are 90°F in warmer months and 55°F in cooler months."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Building alerts via messaging: send morning building plans only when that day has planned HVAC or door actions; also send look-ahead asks, weather lead bumps, cancelled-event notices, failures, and offline/recovery alerts. Do NOT message post-event wrap-ups, successful restores, or learning digests."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-11",
+      "content": "Standing weekly service HVAC: precondition main auditorium zones plus foyer and cafe for comfort by Sunday morning and midweek evening service times; skip midweek when that day is a no-service or outdoor-service exception; restore seasonal setbacks after service."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-11",
+      "content": "School HVAC overrides: on no-school/closed/field-trip days, turn Academy zones off early morning and restore seasonal setback mid-afternoon; on half days, shut Academy zones off at noon and restore mid-afternoon. Normal school days leave thermostat schedules alone. Watch the local public school district for weather closings and treat full closures like no-school days."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Calendar location Conference Room maps to Office HVAC."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-11",
+      "content": "This bot controls multi-zone thermostats and access doors through Home Assistant (use the Home Assistant connector plus REST when Assist exposure is limited). Connect Google Calendar for the building and school calendars, and a messaging connector (e.g. Inkbox iMessage) for operator alerts."
+    }
+  ],
+  "skills": [],
+  "routines": [
+    {
+      "name": "Building HVAC calendar watcher",
+      "slug": "church-hvac-calendar-watcher",
+      "description": "Hourly daytime scan of building calendars to plan HVAC and door one-shots.",
+      "content": "Scan the configured building and school Google calendars for upcoming timed events.\n\nFor each event:\n- Parse title and location for zone/room names using saved maps; ignore URL-only locations.\n- If HVAC is needed but the room is unmapped, ask the operator once 2–3 days ahead which thermostats (and doors) to use; remember the answer.\n- Create or update one-shot routines to precondition mapped zones to the comfort setpoint with weather-adaptive lead time (default ~2h; stretch on hot days using outdoor forecast and the learning log), then restore/cancel hold after.\n- For doors with a saved or answered mapping: keep_unlock 30 minutes before start; reset to schedule 35 minutes after start. Never keep_lock.\n- Skip series the operator marked as disregarded.\n- Handle standing weekly service targets and school no-school/half-day/weather-closing overrides per memory.\n- Persist planner state; stay quiet unless an ask or failure needs messaging.\n\nFires on:\n- cron `CRON_TZ=America/New_York 34 5-22 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Morning building plan",
+      "slug": "morning-building-plan",
+      "description": "Daily 7am summary of planned HVAC and door actions for the day.",
+      "content": "At ~7:00 local time, read planner state and today's calendars.\n\nIf this day has planned HVAC adjusts or door unlock/reset actions, send a short morning plan to the operator via messaging (actions, times, zones/doors).\n\nIf there are no HVAC/door actions today, stay completely quiet — do not send filler.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 7 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Doorbell assist",
+      "slug": "doorbell-assist",
+      "description": "Periodic check for doorbell rings; notify and re-assert unlock only in event windows.",
+      "content": "Every ~15 minutes during daytime hours, check Home Assistant doorbell ring events for controllable doors.\n\nOn a new ring: notify the operator with which door rang and whether an event unlock window is active.\n\nDuring an active special-event unlock window only, re-assert keep_unlock if the lock rule drifted. Outside windows, do not force unlock.\n\nDeduplicate via a small state file; do not spam.\n\nFires on:\n- cron `CRON_TZ=America/New_York */15 7-21 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "HA offline watcher",
+      "slug": "ha-offline-watcher",
+      "description": "Watch Home Assistant integrations/devices and alert on new offline or recovery.",
+      "content": "Periodically check Home Assistant for config-entry failures and critical climate/access entities going unavailable.\n\nOn a new failure group (e.g. Protect, thermostats, unlock buttons), message the operator once. On recovery, message once.\n\nDeduplicate via state file; group noisy camera entities under their parent integration.\n\nFires on:\n- cron `CRON_TZ=America/New_York 19,49 7-21 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Building empty night check",
+      "slug": "building-empty-night-check",
+      "description": "Evening pass to confirm setbacks when the building should be empty.",
+      "content": "In the evening, if no events remain today and the building should be empty, verify key zones are at seasonal setback (or off per site rules). Fix drifted holds quietly when safe; message only on unexpected failures.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 22 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Weekly HVAC energy dig",
+      "slug": "weekly-hvac-energy-dig",
+      "description": "Weekly review of learning log for miss/hit patterns and lead-time tweaks.",
+      "content": "Once a week, read the HVAC learning log. Summarize which zones missed comfort by event start, outdoor conditions, and whether lead times should stretch. Keep the dig in chat/log — do not message the operator a learning digest unless they ask.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 20 * * 0`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Google Calendar",
+      "description": "Search events and schedule meetings.",
+      "pluginId": "45893411"
+    },
+    {
+      "name": "Inkbox",
+      "description": "Give Cursor an Inkbox identity for email, SMS, iMessage, voice calls, contacts, notes, and agent-to-agent tasks.",
+      "pluginId": "57102943"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "profile": {
+    "name": "BeTree",
+    "description": "Compiles a multi-agent plan into a live behavior-tree graph. Built for people who run work across several bots and want a shared status board with owners, timings, and automatic cleanup of finished sequences.",
+    "avatarColor": "red",
+    "avatarShape": "wedge"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "The user does not want BT PNG snapshots stacking in Grok Bot chat. They want a live realtime Flask site opened in a browser tab on this bot's VM, and they will look at the VM screen when they want the BT graph."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "BeTree shows start and last-update times on every BT node plus an overall task start, always in the user's local timezone, on the Flask board rather than stacking chat PNGs."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "The user does not want PNG images on the BeTree Flask webpage; the BT graph must be built in-page as inline pydot SVG so zoom stays vector-sharp, or with TypeScript/JavaScript if that fails."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "BeTree prunes sequence nodes from the live BT graph: SUCCESS sequences are removed more than 10 minutes after they finished; FAILURE sequences are kept at least 30 minutes after they failed, and the user is informed in the Grok Bot 1:1 chat that the sequence failed. RUNNING nodes and sequences are never removed."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "The BT source of truth is a shared JSON store on the VM (task id, title, owner, status, started, updated, notes) with atomic writes via a helper library. Bots start/succeed/fail/wait their own nodes; the coordinator writes plan nodes; Flask watches that file and live-updates the graph."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "The user wants BeTree to update the shared JSON BT graph before other bots start work whenever the coordinator assigns a sequence."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-29",
+      "content": "BeTree live Flask BT chart supports mouse-wheel zoom toward the cursor, drag-to-pan, and double-click to reset."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-29",
+      "content": "BeTree live board must re-paint the SVG at the new size (full re-render, not a stretched cached bitmap) on browser resize and on mouse-wheel zoom of the BT graph."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-29",
+      "content": "BeTree visualizes each BT node with the assigned bot's picture and name, task name, status, initial start time, and last status-update time, plus the overall task start, in the user's local timezone on the live Flask site on the VM."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-29",
+      "content": "BeTree live board redraws the SVG graph every 15 seconds and the header line is `graph refreshed HH:MM:SS`."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-29",
+      "content": "BT node status can be updated via PATCH `/node/<id>` as well as the store helper library."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-29",
+      "content": "Live-board avatars are 256×256 transparent pictures embedded as data URIs in the SVG so a public tunnel serves one self-contained graph."
+    }
+  ],
+  "skills": [],
+  "routines": [
+    {
+      "name": "BT sequence prune",
+      "slug": "bt-sequence-prune",
+      "description": "BT sequence prune",
+      "content": "Check the live Behavior Tree and prune finished sequences, then notify the user in the 1:1 Grok Bot chat about failures.\n\nRules (strict):\n- SUCCESS sequences: remove from the graph when current time is more than 10 minutes after they finished (use updated_at / updated).\n- FAILURE sequences: keep at least 30 minutes after they failed, then remove. Never remove earlier than 30 minutes.\n- Never remove RUNNING or WAITING nodes or sequences, or anything with a RUNNING/WAITING descendant.\n- Do not prune the root overall-task node.\n- Do not independently strip leaf action nodes; they leave with their parent sequence.\n\nHow to do it:\n- Prefer the live Flask app: POST /prune then GET /failure-alerts.\n- Shared store (source of truth) is the JSON file the board watches. If Flask is down, load that file, prune, write back with an atomic replace.\n- Look up current tool schemas with GetDynamicTools before calling connectors.\n- For each FAILURE sequence that is newly visible or newly pruned, if it has not already been notified (failure_alerts.notified is false), message the user in the 1:1 chat: name of the sequence, assigned bot if any, and when it failed (user's local timezone). One short message per failure, or one message listing them. Then POST /failure-alerts/ack with those paths (or mark notified in the store).\n- Stay quiet if nothing was pruned and there are no new failure alerts. Do not send filler like \"no change\".\n- If Flask is down and you cannot prune, say so once; if the same auth/server failure repeats on later runs, pause this routine.\n\nThis board is used whenever multi-agent work is running, including evenings and weekends, which is why this check is not weekday-office-only.\n\nFires on:\n- cron `*/5 8-22 * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

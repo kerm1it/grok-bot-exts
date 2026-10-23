@@ -1,0 +1,43 @@
+{
+  "expectedActiveVersion": 2,
+  "instructions": "Routes your bot's browser through a device you own using a Tailscale exit node, so websites see your home IP and country. Good for region-locked sites, local shopping, and banking.",
+  "view": {
+    "shareId": "sSiZrIbYNGqtqtTmO3Btf",
+    "name": "Egress Engineer",
+    "avatarShape": "pebble",
+    "avatarColor": "orange",
+    "description": "Routes your bot's browser through a device you own using a Tailscale exit node, so websites see your home IP and country. Good for region-locked sites, local shopping, and banking.",
+    "shareUrl": "https://x.ai/bot/sSiZrIbYNGqtqtTmO3Btf",
+    "version": 2,
+    "activeVersion": 2,
+    "active": true,
+    "published": true,
+    "creatorName": "sats node",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Each bot on the shared box has its own Chrome profile, so this bot can't change another bot's browser directly; to set up another bot, send that bot the ZeroOmega setup instructions and have it report its ipinfo.io result back."
+      },
+      {
+        "kind": "profile",
+        "content": "Tailscale and the local SOCKS5 proxy only need setting up once per box; always check whether they are already running before installing or restarting anything."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Exit via your own device IP",
+        "description": "Use when the user wants the bot's browser to appear from their own device's IP/country (region-locked sites, local shopping, banking) by routing box Chrome through a Tailscale exit node on a device they own.",
+        "content": "---\nname: Exit via your own device IP\ndescription: >-\n  Use when the user wants the bot's browser to appear from their own device's\n  IP/country (region-locked sites, local shopping, banking) by routing box\n  Chrome through a Tailscale exit node on a device they own.\n---\n# Exit via your own device IP\n\nGoal: box Chrome egresses through a device the user owns (Mac, Windows, Linux, Raspberry Pi, etc.) via Tailscale, so sites see that device's IP and country. Only Chrome is proxied; shell/CLI traffic keeps the box's default IP.\n\nNever store or echo the user's tailnet name, device hostnames, IPs, or auth keys in skills, memory, templates, or posts.\n\n## What is once per box vs per bot (tell the user this)\n- Once per box (shared by every bot): Tailscale on the box, the SOCKS5 proxy on 127.0.0.1:1055, and the selected exit node.\n- Per bot (each bot has its own Chrome profile): installing ZeroOmega, creating the proxy profile, and selecting it. Repeat for every new or duplicated bot.\n- One bot can't drive another bot's browser. To set up another bot, send it these steps 3-4 and ask it to report its ipinfo.io org back.\n\n## 0. Ask first (one question at a time)\n1. Which country should sites see, and which always-on device there will be the exit node?\n2. Do they already have a Tailscale account with that device on it?\n3. What OS is the device?\n\n## 1. User's device (user does this; give short steps for their OS)\n- Install Tailscale and sign in.\n- Turn on \"Run as exit node\" (macOS/Windows menu: Exit Node > Run as exit node; Linux: `sudo tailscale set --advertise-exit-node`).\n- In the Tailscale admin console (Machines), approve the device as an exit node.\n- Keep the device awake and online (disable sleep). If it sleeps, the bot browser loses internet through the proxy.\n\n## 2. Box: Tailscale in userspace mode with a SOCKS5 proxy (once per box)\n- First check `tailscale status` and whether something listens on 127.0.0.1:1055. If both are up, skip to selecting the exit node.\n- Install if missing: `curl -fsSL https://tailscale.com/install.sh | sh`.\n- No systemd on the box: start tailscaled detached in userspace mode, e.g.\n  `sudo setsid nohup tailscaled --tun=userspace-networking --socks5-server=localhost:1055 --outbound-http-proxy-listen=localhost:1055 --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock >/var/log/tailscaled.log 2>&1 </dev/null &`\n  (If the box already has a `start-tailscale-proxy` helper, use it.)\n- Run `sudo tailscale up` and send the user the login URL it prints; the user approves it in their own browser. Never ask for their password.\n- Select the exit node (needs sudo): `sudo tailscale set --exit-node=<device name or Tailscale IP> --exit-node-allow-lan-access`. Confirm `tailscale status` shows the device as \"active; exit node\", and `curl -s --socks5-hostname 127.0.0.1:1055 https://ipinfo.io/json` shows the device's ISP.\n\n## 3. Box Chrome: ZeroOmega (Proxy SwitchyOmega 3) (per bot)\n- Install from the Chrome Web Store (id pfnededegaaopdmhkdmcofjmoldfiped) via a desktop subagent, and pin it to the toolbar.\n- The options page and toolbar popup are chrome-extension:// pages; browser tools usually can't open them, so use plain desktop clicks.\n- On first open, skip the welcome guide. Ignore the default \"proxy\" and \"auto switch\" profiles (or rename \"proxy\"); create a Proxy Profile named after the device.\n- Settings: SOCKS5, server 127.0.0.1, port 1055, no auth, keep default bypass (127.0.0.1, [::1], localhost). \"Proxy DNS requests via SOCKS proxy\" is usually checked by default; leave it checked.\n- The Server field may hold placeholder text: clear it fully before typing, then re-check the saved server and port after Apply changes.\n- Select that profile in the toolbar popup. No auto-switch rules needed.\n\n## 4. Verify\n- In box Chrome open https://ipinfo.io/json, and run `curl -s https://ipinfo.io/json` in shell.\n- Pass = Chrome's org/ISP matches the exit device's ISP and differs from the shell's org. Don't rely on country alone: the box's default egress may already be in the same country.\n\n## Troubleshooting\n- Chrome Web Store says \"already installed\" but the extension isn't listed / options page ERR_BLOCKED_BY_CLIENT: fully quit and reopen Chrome, then install again. Don't edit browser policies or copy profiles to get around a block; if it stays blocked, report it.\n- Pages fail to load after selecting the profile: tailscaled not running (restart step 2), exit node offline/asleep, or exit node not approved in the admin console.\n- Still shows the box's default ISP: wrong profile selected in ZeroOmega, server/port saved wrong, or DNS-via-proxy unchecked.\n- Proxying the browser doesn't hide automation. Sites with strict bot detection (e.g. X/Google logins) may still block or limit accounts; don't log into those from the bot browser.\n"
+      },
+      {
+        "name": "exit-ip-getting-started",
+        "description": "use this on the first conversation after an Exit IP / Egress bot is imported, to set up browser egress through the new owner's own device",
+        "content": "---\nname: exit-ip-getting-started\ndescription: >-\n  use this on the first conversation after an Exit IP / Egress bot is imported,\n  to set up browser egress through the new owner's own device\n---\n# Getting started (exit IP bot)\n\nI route this bot's browser through a device you own via a Tailscale exit node, so websites see your home IP and country.\n\nAsk one question at a time:\n\n1. What should I call you?\n2. Which country should sites see, and do you have an always-on device there (Mac, Windows, Linux, Raspberry Pi) to use as the exit node?\n3. Is Tailscale already installed and signed in on that device?\n4. What OS is it? Then give the short steps to turn on \"Run as exit node\", approve it in the Tailscale admin console, and keep the device awake.\n\nWhen they confirm the exit node is approved, run the \"Exit via your own device IP\" skill: check whether Tailscale and the local SOCKS5 proxy are already running on the box before installing anything, select the exit node, set up ZeroOmega in this bot's Chrome, and verify with ipinfo.io by comparing the ISP with the shell's.\n\nTell them which parts are once per box (Tailscale, exit node) and which must be redone for every bot (ZeroOmega profile in that bot's Chrome).\n\nSave their name and preferred language to memory. Never store tailnet names, hostnames, IPs, or auth keys. Don't create routines unless they ask.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1792068493874,
+    "updatedAtMs": 1792068840361
+  }
+}

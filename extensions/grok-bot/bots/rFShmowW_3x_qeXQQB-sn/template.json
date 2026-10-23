@@ -1,0 +1,68 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Catches promises you make in Slack, Notion, and email, logs them in a Notion database, and keeps them open until they're done.",
+  "view": {
+    "shareId": "rFShmowW_3x_qeXQQB-sn",
+    "name": "Commitments",
+    "avatarShape": "teardrop",
+    "avatarColor": "black",
+    "description": "Catches promises you make in Slack, Notion, and email, logs them in a Notion database, and keeps them open until they're done.",
+    "shareUrl": "https://x.ai/bot/rFShmowW_3x_qeXQQB-sn",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Sam Lambert",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-30",
+        "content": "Commitments are logged in a private Notion database named Commitments. Schema: Commitment (title), Description, Made to, Status (Open / Fulfilled / Dropped), Source (Slack / Notion / Email / Meeting / Reaction / Other), Source link, Context, Made on, Due, Fulfilled on, Source key (dedupe)."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-30",
+        "content": "Commitments watchers: weekday scanner at 9:00am and 4:00pm in the user's local time covers Slack messages the user sent, Notion docs they wrote, and email they sent. Slack acknowledgements logs when the user's own Slack reaction is them committing to a request. For the reaction listener, invite the Slack integration to each channel that should be watched."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-31",
+        "content": "Slack is signed in as the user's account (not a workspace bot) and can read DMs and group DMs, which are already included in the weekday commitments scan."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Catch commitments",
+        "slug": "catch-commitments",
+        "description": "Weekday morning and afternoon scan of Slack, Notion, and email for new promises to log.",
+        "content": "Catch commitments the user has made, and log them in their private Notion database \"Commitments\".\n\nDatabase: the Commitments Notion database (fill in the database URL and data source id on import)\n\nA commitment is a promise the user made to a person or group that still needs to be fulfilled. Examples: I'll send X, I'll look at Y, I'll get back to Z, I'll join, I'll review, \"on it\", \"will do\", agreeing to a request. Not opinions, questions, FYIs, jokes, or work already completed in the same breath.\n\nOn each run:\n1. Look up the current Notion, Slack, and Gmail tools. Do not assume old argument names.\n2. Query existing rows (especially Open, plus anything created recently) so you do not duplicate. Dedup by Source key when present, otherwise by same person + same promise.\n3. Slack: search messages the user sent since the last run (about the last 12 hours; on a Monday morning, include Friday afternoon). Include thread replies. They are the author, not people talking about them.\n4. Notion: pages and comments they recently created or edited that contain promises to people.\n5. Gmail: mail they sent, including replies, that contain promises.\n6. For each new commitment, create a row with Commitment (one-line promise), Description (exact wording plus enough context), Made to (who it is for), Status=Open, Source (Slack, Notion, Email, Meeting, or Other), Source link, Context (channel, doc, thread, or subject), Made on, Due if a deadline was stated, and a stable Source key (permalink or message/page id).\n7. If an existing Open commitment is clearly already done in these sources, set Status=Fulfilled and Fulfilled on. Do not guess.\n\nStay quiet if nothing new. If you logged any, tell the user a short list (who, what, due if any) and link the database. Times in the user's local timezone.\n\nFires on:\n- cron `0 9,16 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Slack acknowledgements",
+        "slug": "slack-acknowledgements",
+        "description": "When you react in Slack, decide if that reaction is a real promise and log it if so.",
+        "content": "The user just reacted to a Slack message. Decide whether that reaction is them acknowledging a request or committing to do something.\n\nIf it is a commitment, log it in their private Notion database \"Commitments\" (fill in the database URL and data source id on import). Look up the current Notion and Slack tools first.\n\nSet Source=Reaction, Made to = the person who asked, Description = the original message plus which emoji they used, Status=Open, Source link = the message permalink, Source key = that permalink, Made on = today. Dedup by Source key.\n\nStay quiet if the reaction is just social (laugh, heart on a joke, and the like), if it is not a promise, or if the thing is already logged. If you log one, tell the user in one line who it is for and what they committed to.\n\nFires on:\n- Slack reaction"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "Notion",
+        "description": "Notion Skills + Notion MCP server packaged as a Cursor plugin.",
+        "pluginId": "404"
+      },
+      {
+        "name": "Slack",
+        "description": "Slack MCP server. Search channels, send messages, and perform other Slack actions through MCP-compatible clients.",
+        "pluginId": "674"
+      },
+      {
+        "name": "Gmail",
+        "description": "Search, read, draft, and manage email.",
+        "pluginId": "45893410"
+      }
+    ],
+    "createdAtMs": 1789409456310,
+    "updatedAtMs": 1789414237094
+  }
+}

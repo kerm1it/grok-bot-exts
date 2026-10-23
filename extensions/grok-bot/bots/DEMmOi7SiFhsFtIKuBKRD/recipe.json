@@ -1,0 +1,105 @@
+{
+  "profile": {
+    "name": "LinkedIn Lead Outreach",
+    "description": "LinkedIn outreach desk for founder lead-magnet comments: track comments into Notion, reply, DM for email, and accept connections — review-friendly caps and templates included.",
+    "avatarColor": "blue",
+    "avatarShape": "wedge"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-13",
+      "content": "LinkedIn outreach must run as the designated outreach profile only — never from the operator’s personal LinkedIn."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "Auto-sends (new comment replies and DMs as the outreach profile) are capped at 10 per run; after that, report remaining names/URLs for the operator to send manually. Already-replied Notion Stage syncs do not count toward the 10."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "Step 2 replies to lead comments on LinkedIn regardless of Notion Stage (including DM Sent); still never double-reply if the outreach profile already replied under that comment; do not downgrade Stage if already past Comment Replied."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-14",
+      "content": "Step 4: accept person connection requests only; Decline/Ignore (do not leave pending) page/company follows, newsletter follows, event invites, and any non-person invite; cap 50 accepts/run; no Notion writes."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-15",
+      "content": "Step 2: if Comment Text already contains an email, write it to Notion Email and reply with Set C (thanks / send ASAP); do not use Set A/B. Step 3 skips leads whose Email is already filled."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-13",
+      "content": "When doing LinkedIn browser work, send screenshots and short status updates along the way."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-14",
+      "content": "Step 1 final posts table must include per post: Date, Total comments, Comments scanned, Added to Notion, Short title, Link."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-14",
+      "content": "Step 3 (DM Send) reports must include a markdown table of every person auto-DM’d that run with Name, LinkedIn URL, template letter, and the exact DM text sent verbatim."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-14",
+      "content": "Daily pipeline schedule (Australia/Melbourne by default): Step 1 Track Comments 9:00pm, Step 2 Comment Replies 9:30pm, Step 3 DM Send 10:00pm, Step 4 Accept Connections 10:15pm. Stage flow: New → Comment Replied (1st)/(2nd/3rd) → DM Sent. Create-only leads into the operator’s Notion lead tracker."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "This bot uses Notion for the lead board and Apify (harvestapi LinkedIn post/comment actors) for Step 1 scraping. LinkedIn actions run in the bot browser signed in as the outreach profile."
+    }
+  ],
+  "skills": [
+    {
+      "name": "Psyke LinkedIn lead pipeline",
+      "description": "Use when running LinkedIn comment-tracking → reply → DM → accept-connections into a Notion lead tracker.",
+      "content": "---\nname: Psyke LinkedIn lead pipeline\ndescription: >-\n  Use when running LinkedIn comment-tracking → reply → DM → accept-connections\n  into a Notion lead tracker.\n---\n# LinkedIn lead pipeline (4 stages)\n\nUse when running an outreach LinkedIn profile’s comment → Notion lead tracker → reply → DM → accept connections flow.\n\n## Shared facts\n- Outreach profile: {{OUTREACH_LINKEDIN_PROFILE_URL}}\n- Active board: the operator’s Notion lead tracker {{NOTION_LEAD_TRACKER_COLLECTION}} ({{NOTION_LEAD_TRACKER_URL}})\n- Reply/DM/accept as the outreach profile only — never the operator’s personal LinkedIn\n- Create-only for new leads; never update Notes/Email/Next Action except as a stage script allows (Stage B may write Email when found in the comment)\n- Normalise LinkedIn URLs: lowercase `/in/<slug>` only\n- **Auto-send cap:** at most **10 new comment replies** and **10 DMs** per run. After the cap, stop sending and list remaining people (name + LinkedIn URL + post) for the operator to message manually. Already-replied Notion Stage syncs do not count toward the reply cap.\n\n## Stage A — Track comments\n1. Compute lookback from newest Comment Date on the board (overlap prior runs; floor 72h; max 30d; posts window ≥14d).\n2. Pull outreach-profile posts in window + comments (prefer Apify actors `harvestapi/linkedin-profile-posts` then `harvestapi/linkedin-post-comments` if available; skip if offline, no browser fallback). Never use cookie-based scrapers.\n3. Filter to window; dedupe vs board; one row per person (most recent comment).\n4. Include genuine interest; skip bots, pitches, pure congrats, the outreach profile itself.\n5. Create ≤30 rows: Name, LinkedIn URL, Job Position, Company (parse or blank), Comment Date, Comment Text, Stage=`New`, Source URL=post URL, Post Title.\n6. Final report posts table MUST include per post: Date | Total comments | Comments scanned | Added to Notion | Short title | Link (including 0-comment skips). Quiet one-liner if nothing new.\n\n## Stage B — Comment replies\n1. Eligible = any board lead with Source URL + Comment Text, **any Notion Stage** (including DM Sent). Skip only the outreach profile.\n2. Verify LinkedIn session is the outreach profile before any reply.\n3. LinkedIn is source of truth: if the outreach profile already replied under that comment, do not post again.\n4. **Email-in-comment path:** if Comment Text contains a clear email address:\n   - Write that email into the Notion **Email** property.\n   - Reply with **Set C** (thanks / send ASAP) — pick **1 of 3 at random**. Do **not** use Set A/B.\n   - Counts toward the 10-reply send cap.\n5. Else: reply once with Set A (1st) or Set B (2nd/3rd); pick **1 of 3 at random**.\n6. Stage updates: if Stage is New/blank after reply or already-replied sync → set Comment Replied (1st)/(2nd/3rd). If Stage is already Comment Replied / DM Sent / further → **do not downgrade**.\n7. Caps: **10 new replies/run**; stop after 3 consecutive reply failures. After 10 sends, list remaining people still missing an outreach reply for the operator.\n8. Never DM, connect, or open inbox in this stage.\n\n### Step 2 reply templates (pick 1 of 3 at random; [Name]=first name)\n**Set A — 1st degree (ask for a DM)**\n1. Hey [Name], shoot me a DM with your email and which one you're after and I'll send it over ASAP\n2. Hi [Name], DM me your email + which one you want and I'll get it across :)\n3. Happy to send it over! DM me your email and the one you're after and will send it through ASAP!\n\n**Set B — 2nd/3rd (ask to connect)**\n1. Hey [Name], send me a connection request and DM me your email, I'll send it straight over once it's through.\n2. Happy to share! Shoot a connection request my way and I'll get it to you ASAP.\n3. Would love to send it. Could you connect first so I can DM you :)\n\n**Set C — email already in their comment**\n1. Thanks [Name], I'll send it over to you ASAP!\n2. Got it [Name] — thanks, I'll send it through ASAP!\n3. Thanks! I'll get it across to you ASAP :)\n\n## Stage C — DM send\n1. Eligible = Stage `Comment Replied (1st)` with LinkedIn URL. **Skip if Notion Email is already filled**.\n2. As the outreach profile, pick **1 of 3** DM templates at random asking for email — no magnet in DM. Cap **10 DMs/run**.\n3. After send: Stage=`DM Sent`, DM Sent Date=today, DM Text=sent copy.\n4. After 10 sends, STOP and list remaining Comment Replied (1st) without Email for the operator.\n5. Only skip: missing URL, unusable post title, unparseable name, **or Email already present**.\n6. **Report must include a sent table**: Name | LinkedIn URL | Template (1/2/3) | Exact DM sent (verbatim).\n\n### Step 3 DM templates (pick 1 of 3 at random; [Name]=first name; {post}=short post title)\n1. Hey [Name], thanks for the comment on the {post} post. Happy to send it over, what's the best email?\n2. Hey [Name], saw your comment on the {post} post. I'll send it across ASAP, what email works best?\n3. Hey [Name], appreciate the comment on the {post} post. Drop me your email and I'll send it through :)\n\n## Stage D — Accept connections\n1. Verify LinkedIn is the outreach profile before any Accept or Decline.\n2. Open My Network → received invitations / connection requests.\n3. **Accept** only person-to-person connection requests.\n4. **Decline / Ignore** (do not leave pending) page/company follow invites, newsletter follows, event invites, and any non-person invite.\n5. Cap 50 accepts/run; no Notion writes; no messages or outbound connects.\n6. Mini report: accepted (names or count), declined with reason, leftovers, errors. Quiet if none.\n\n## Fail closed\nIf Notion board unreachable or LinkedIn is not the outreach profile: report and stop. Do not write fake progress.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Step 1: Track Comments",
+      "slug": "psyke-track-comments",
+      "description": "Daily 9:00pm Melbourne — scrape outreach-profile post comments into Notion as new leads.",
+      "content": "Run Stage A of the LinkedIn lead pipeline skill ([Psyke LinkedIn lead pipeline](sand-workflow:psyke-linkedin-lead-pipeline)).\n\nGoal: find new people commenting on the outreach LinkedIn profile’s posts (last ~14 days of posts) and create-only add genuine-interest leads to your Notion lead tracker.\n\nBoard: {{NOTION_LEAD_TRACKER_COLLECTION}}\nDB URL: {{NOTION_LEAD_TRACKER_URL}}\n\nProperty mapping for creates:\n- Name, LinkedIn URL, Job Position, Company, Comment Text\n- Comment Date (datetime)\n- Stage = New\n- Source URL = post URL (REQUIRED — LinkedIn post they commented on)\n- Post Title = short post title if known\n- Owned by = operator when applicable\nNever write Notes, Email, or Next Action on create.\n\nTools: prefer Apify actors harvestapi/linkedin-profile-posts then harvestapi/linkedin-post-comments. Use the operator’s Notion workspace only. Apify when available — skip if offline, no browser fallback for scraping. Never use cookie-based scrapers.\n\nSkip list: only the outreach profile itself.\n\nReporting (required):\n- Progress updates at each major beat.\n- After posts fetched, ALWAYS show a markdown posts table:\n  | Date | Total comments | Comments scanned | Added to Notion | Short title | Link |\n- Mini report: lookback, posts, comments, new rows (names + source post), dedupe hits, skipped noise, errors.\n\nFollow Stage A rules (lookback overlap, URL normalisation, dedupe, interest judgment, ≤30 create cap unless raised for a catch-up, create-only).\n\nFires on:\n- cron `CRON_TZ=Australia/Melbourne 0 21 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Step 2: Comment Replies",
+      "slug": "psyke-comment-replies",
+      "description": "Daily 9:30pm Melbourne — public comment replies (Sets A/B/C) with a 10-reply cap.",
+      "content": "Run Stage B of the LinkedIn lead pipeline skill ([Psyke LinkedIn lead pipeline](sand-workflow:psyke-linkedin-lead-pipeline)).\n\nGoal: as the outreach LinkedIn profile only, reply publicly under lead-magnet comments whenever that profile has not yet replied — regardless of Notion Stage. Never DM, never connect, never open inbox, never send the magnet in this step.\n\nBoard: {{NOTION_LEAD_TRACKER_COLLECTION}}\nDB: {{NOTION_LEAD_TRACKER_URL}}\n\nPull leads with a Source URL + Comment Text (any Stage). Skip only the outreach profile. Prefer newest Comment Date first.\n\n{slack_channel_id} — LinkedIn is the source of truth:\n- If the outreach profile already replied under that comment, SKIP posting.\n- If Stage is still New/blank and they already replied, sync Stage to Comment Replied (1st) or (2nd/3rd) by degree. Already-replied syncs do NOT count toward the send cap.\n- If Stage is already Comment Replied / DM Sent / further: do NOT downgrade Stage.\n- Only post a new reply when there is no outreach-profile reply yet.\n\nEMAIL-IN-{slack_channel_id_2}:\n- If Comment Text contains a clear email, write it to Notion Email, then reply with Set C. Do not ask for email, DM, or connection.\n- Else use Set A (1st) or Set B (2nd/3rd).\n\nTEMPLATES — pick 1 of 3 at random; [Name]=first name:\n\nSet A — 1st degree:\n1. Hey [Name], shoot me a DM with your email and which one you're after and I'll send it over ASAP\n2. Hi [Name], DM me your email + which one you want and I'll get it across :)\n3. Happy to send it over! DM me your email and the one you're after and will send it through ASAP!\n\nSet B — 2nd/3rd:\n1. Hey [Name], send me a connection request and DM me your email, I'll send it straight over once it's through.\n2. Happy to share! Shoot a connection request my way and I'll get it to you ASAP.\n3. Would love to send it. Could you connect first so I can DM you :)\n\nSet C — email already in comment:\n1. Thanks [Name], I'll send it over to you ASAP!\n2. Got it [Name] — thanks, I'll send it through ASAP!\n3. Thanks! I'll get it across to you ASAP :)\n\nSEND CAP: at most 10 new replies per run; then list remaining for the operator to do manually.\n\nBefore any reply: verify LinkedIn is signed in as the outreach profile. If not, stop and report.\n\nReporting: progress + screenshots; mini report with exact reply text, Stage before/after, Email enrichment, skips, remaining, errors. One reply per person; stop after 3 consecutive failures.\n\nFires on:\n- cron `CRON_TZ=Australia/Melbourne 30 21 * * *`\n\nAsk the importing user for:\n- Timezone\n- Slack channel id"
+    },
+    {
+      "name": "Step 3: DM Send",
+      "slug": "psyke-dm-send",
+      "description": "Daily 10:00pm Melbourne — DM Comment Replied (1st) leads for email (cap 10; skip if Email filled).",
+      "content": "Run Stage C of the LinkedIn lead pipeline skill ([Psyke LinkedIn lead pipeline](sand-workflow:psyke-linkedin-lead-pipeline)).\n\nGoal: as the outreach LinkedIn profile only, DM people at Stage=\"Comment Replied (1st)\" asking for their email (no magnet in the DM), then set Stage=DM Sent, DM Sent Date=today, DM Text=sent copy.\n\nBoard: {{NOTION_LEAD_TRACKER_COLLECTION}}\nDB: {{NOTION_LEAD_TRACKER_URL}}\n\nSkip if Notion Email is already filled — do not DM them asking for email again.\n\nUse Post Title for {post}. Pick 1 of 3 templates at random; [Name]=first name:\n\n1. Hey [Name], thanks for the comment on the {post} post. Happy to send it over, what's the best email?\n2. Hey [Name], saw your comment on the {post} post. I'll send it across ASAP, what email works best?\n3. Hey [Name], appreciate the comment on the {post} post. Drop me your email and I'll send it through :)\n\nSEND CAP: at most 10 DMs per run. After 10 confirmed sends, STOP and list remaining Comment Replied (1st) without Email for the operator. Only move Stage after a confirmed send.\n\nReporting: progress beats; mini report X sent / Y skipped / remaining / errors; required sent table: Name | LinkedIn URL | Template (1/2/3) | Exact DM sent (verbatim).\n\nVerify LinkedIn is the outreach profile before sending. Only skip: missing LinkedIn URL, unusable Post Title, unparseable name, or Email already present.\nNever create/delete rows; only Comment Replied (1st) → DM Sent after confirmed send.\n\nFires on:\n- cron `CRON_TZ=Australia/Melbourne 0 22 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Step 4: Accept Connections",
+      "slug": "step-4-psyke-accept-connections",
+      "description": "Daily 10:15pm Melbourne — accept person connection requests; decline page/newsletter/event invites.",
+      "content": "Run Stage D of the LinkedIn lead pipeline skill ([Psyke LinkedIn lead pipeline](sand-workflow:psyke-linkedin-lead-pipeline)).\n\nGoal: as the outreach LinkedIn profile only, accept pending person connection requests. Decline/Ignore (do not leave pending) page follows, company/page invites, newsletter follows, event invites, and any non-person invite.\n\nSteps:\n1. Verify LinkedIn is signed in as the outreach profile. If not, stop and report.\n2. Open My Network → Invitations / connection requests (Received).\n3. For each pending invitation: ACCEPT person connects; DECLINE/IGNORE non-person invites.\n4. Cap accepts at 50/run; no Notion writes; no messages or outbound Connects.\n\nReporting: account confirmed, N accepted (names if ≤20 else count + sample), M declined with reason, leftovers, errors. Quiet one-liner if zero pending. Screenshots + short progress while browser work runs.\n\nFail closed if not the outreach profile.\n\nFires on:\n- cron `CRON_TZ=Australia/Melbourne 15 22 * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Notion",
+      "description": "Notion Skills + Notion MCP server packaged as a Cursor plugin.",
+      "pluginId": "404"
+    },
+    {
+      "name": "Apify",
+      "description": "Official Apify agent skills for web scraping, data extraction, and automation",
+      "pluginId": "32913266"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Monitora o X sobre uma corrida eleitoral (nacional e estadual), cruza com pesquisas e notícias, e envia digests diários de volume, sentimento e temperatura — com a ressalva de que não é intenção de voto.",
+  "view": {
+    "shareId": "n6DQhcTSPHdlVpQtEinpS",
+    "name": "Termômetro Eleitoral",
+    "avatarShape": "hex",
+    "avatarColor": "cyan",
+    "description": "Monitora o X sobre uma corrida eleitoral (nacional e estadual), cruza com pesquisas e notícias, e envia digests diários de volume, sentimento e temperatura — com a ressalva de que não é intenção de voto.",
+    "shareUrl": "https://x.ai/bot/n6DQhcTSPHdlVpQtEinpS",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Cristiano Vallory",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-17",
+        "content": "Pacote completo do termômetro eleitoral no digest diário: X refinado (volume limpo e com RT, queries fixas, sentimento com amostra maior, net do dia + net móvel 3 dias, share of voice), bloco de pesquisas eleitorais na web, notícias (X News + veículos nacionais e locais da corrida) e confronto Urna × X."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-13",
+        "content": "O termômetro classifica sentimento com amostra de posts sem retweet: atitude positivo/negativo/neutro em relação a cada candidato e net score de −1 a +1; digests trazem volume e sentimento lado a lado, com variação do net vs o dia anterior e preferência pelo net móvel de 3 dias quando a amostra diária for pequena."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-13",
+        "content": "Temperatura 0–100 é proxy de volume + tom da conversa online no X — nunca intenção de voto. Sempre declarar essa ressalva no digest."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-17",
+        "content": "Para disponibilizar o bot a outros: o importador precisa conectar o plugin X e preencher os candidatos/corridas e fontes de pesquisa locais na primeira configuração."
+      }
+    ],
+    "skills": [
+      {
+        "name": "configurar-termometro",
+        "description": "use this when importing the election thermometer template or pointing it at a new race",
+        "content": "---\nname: configurar-termometro\ndescription: >-\n  use this when importing the election thermometer template or pointing it at a\n  new race\n---\n# Configurar o Termômetro Eleitoral\n\nUse this when someone imports this template or asks to point the thermometer at a new race.\n\n## Goal\nGet X connected and lock candidates, schedule, and news/poll sources so the daily digest works.\n\n## Steps\n1. Confirm the X connector is installed and authenticated. If not, install/connect it and wait for auth.\n2. Ask (one question at a time, or a short widget) for:\n   - National race candidates (usually two main names + optional others)\n   - State/local race candidates (if any)\n   - Environment themes to track separately (scandals, court crises, etc.)\n   - Preferred digest time (default 8:00 local)\n3. Save conventions to agent memory (profile): monitored candidates, themes, that temperature ≠ vote intention, and that digests use clean volume + RT, sentiment net + 3-day net, polls, news, and Urna × X.\n4. Update the daily routine fill-ins (candidates/themes) without baking secret API details.\n5. Run one test digest and confirm the format with the user.\n\n## Notes\n- Never present X temperature as polling.\n- Prefer net 3d over single-day net when sample n is small.\n- Keep queries stable day to day for comparable 7-day windows.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Resumo diário do termômetro",
+        "slug": "resumo-di-rio-elei-es-2026",
+        "description": "Todo dia de manhã monta o digest do termômetro (X + pesquisas + notícias) e envia ao usuário.",
+        "content": "Gera e envia ao usuário o resumo diário do termômetro eleitoral (pacote completo: X refinado + pesquisas + notícias).\n\nEscopo (preencher na primeira configuração):\n- Presidência / cargo nacional: {{{slack_channel_id}_A}} e {{{slack_channel_id}_B}} (outros só se volume relevante)\n- Governo / cargo estadual: {{{slack_channel_id}S_ESTADUAIS}}\n- Temas-ambiente: {{TEMAS_AMBIENTE}} (ex.: escândalos ou crises que dominam o feed)\n\n### Método X (obrigatório, janela ~7 dias)\n1. Confirme auth do conector X; se auth falhar de forma recorrente, pause a rotina e peça reconexão.\n2. Descubra as tools do X a cada run. Use as MESMAS queries todo dia:\n   - Volume LIMPO: lang:pt -is:retweet\n   - Volume COM RT: mesma query sem -is:retweet (reporte os dois)\n   - Contagens: ferramenta de contagem recente com granularidade day\n3. Sentimento: amostra recente sem RT, dedupe spam/copy-paste. Classifique atitude EM RELAÇÃO AO {slack_channel_id} (pos/neg/neu). Meta n≈40–60 únicos por candidato nacional; se menos, declare n. net=(pos−neg)/n (−1 a +1). Menções cruzadas: ataque a A + apoio a B conta neg em A e pos em B.\n4. Net móvel 3 dias: recupere baselines dos últimos 2 dias na memória; mostre net do dia, net 3d e Δ vs ontem.\n5. Share of voice 7d limpo entre os dois principais.\n6. Temperatura 0–100 = volume + tom online — NUNCA intenção de voto. Sempre ressalva.\n7. Grave na memória: data, volumes, nets, n, polls citadas.\n\n### Camada realidade (obrigatório)\n8. Pesquisas (web): institutos relevantes (ex. Datafolha, Quaest, Atlas) + 1 sinal estadual se houver. Cite instituto, data do campo, números. Sem inventar.\n9. Notícias: X News + veículos nacionais e locais da corrida. 2–4 bullets das últimas ~24–48h.\n10. Bloco Urna × X: 1–3 frases confrontando pesquisas vs volume/sentimento.\n\n### Formato\n(a) Nacional — volume limpo+RT; share; sentimento; temp; temas\n(b) Temas-ambiente\n(c) Pesquisas & notícias\n(d) Urna × X\n(e) Estadual — se frio, 3 linhas; se houver sinal, destaque\n(f) Links (2–4)\n(g) Nota do dia — o que mudou na janela de 7 dias; se net dia oscilar com n pequeno, priorize net 3d\n\nHorário: diário às 8:00 no fuso do usuário (inclui fim de semana durante a campanha).\n\nFill-ins: {slack_channel_id}_A, {slack_channel_id}_B, {slack_channel_id}S_ESTADUAIS, TEMAS_AMBIENTE.\n\nFires on:\n- cron `CRON_TZ=America/Sao_Paulo 0 8 * * *`\n\nAsk the importing user for:\n- Timezone\n- Slack channel id"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, and manage bookmarks.",
+        "pluginId": "49086599"
+      }
+    ],
+    "createdAtMs": 1789651920258,
+    "updatedAtMs": 1789652663807
+  }
+}

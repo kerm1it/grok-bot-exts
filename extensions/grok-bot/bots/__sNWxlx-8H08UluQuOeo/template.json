@@ -1,0 +1,78 @@
+{
+  "expectedActiveVersion": 2,
+  "instructions": "Scrapes Contra's For you feed every 6 hours, archives listings in Notion, closed-checks open leads, and emails an HTML digest only when something new or newly closed appears.",
+  "view": {
+    "shareId": "__sNWxlx-8H08UluQuOeo",
+    "name": "Contra Job Sniper",
+    "avatarShape": "teardrop",
+    "avatarColor": "orange",
+    "description": "Scrapes Contra's For you feed every 6 hours, archives listings in Notion, closed-checks open leads, and emails an HTML digest only when something new or newly closed appears.",
+    "shareUrl": "https://x.ai/bot/__sNWxlx-8H08UluQuOeo",
+    "version": 2,
+    "activeVersion": 2,
+    "active": true,
+    "published": true,
+    "creatorName": "Srujal Shah",
+    "memory": [
+      {
+        "kind": "log",
+        "createdAt": "2026-08-13",
+        "content": "Contra is signed in on this computer's browser. Jobs live at https://contra.com/jobs. Free dashboard is the For you tab (3 listings); All tab is Pro-gated."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-13",
+        "content": "Contra listing URLs are https://contra.com/opportunity/{8-char-id}-{slug}. Cards on /jobs have no href; open the job (or Apply without submitting) to get the permalink. Never delete old Notion rows."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-13",
+        "content": "The user wants a recurring scrape of Contra jobs (contra.com/jobs / independent/opportunities) because free accounts only see 3 listings at a time. Archive is the Notion database \"Contra Jobs\". Dedup by Job ID or Listing URL. Each run, recheck still-open rows and mark Closed if the listing is gone (never delete). Ping this chat when new jobs appear or listings close; stay quiet if nothing changed."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-13",
+        "content": "Contra job email alerts go via Gmail (not Resend) to the stored Contra alert addresses, plus this chat. Include title, client, budget, skills, listing URL, and the Notion database link at the top. Format new jobs as a table with each row linking to the Contra listing and its Notion page. Quiet if nothing changed."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-15",
+        "content": "Contra Jobs Notion DB has a multi-select Category column with options Branding, UI/UX, Development, Marketing, Video, Sales. New sniper rows must set Category from title+skills."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-01",
+        "content": "Contra Jobs SQL dumps: compact SQL (job IDs, status, on_dashboard, listing URL) can return all rows, but SELECT * truncates and OFFSET pagination is unstable; if SQL is plan-limited, fall back to view mode with a small page size and paginate until done. Do not rely on SQL OFFSET."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Contra job sniper",
+        "description": "Use this when scraping Contra job listings and archiving ones that roll off the free dashboard. Listing URL is required; recheck open leads; email new jobs as an HTML table with Notion page links; never delete old leads.",
+        "content": "---\nname: Contra job sniper\ndescription: >-\n  Use this when scraping Contra job listings and archiving ones that roll off\n  the free dashboard. Listing URL is required; recheck open leads; email new\n  jobs as an HTML table with Notion page links; never delete old leads.\n---\nUse this when scraping Contra freelance listings and archiving ones that roll off the free dashboard.\n\n## Goal\n\nVisit Contra's For you feed, capture every visible listing **including the listing URL**, upsert them into the archive, recheck previously open leads and mark them Closed if gone, and notify in chat plus Gmail when something changes. Never delete old leads.\n\n## Steps\n\n1. Open `https://contra.com/jobs` (For you tab) in the signed-in browser.\n2. If redirected to login, stop and report that Contra auth is needed.\n3. For each card, extract title, client, budget/rate, skills, description, listing URL.\n4. Look up the Notion database \"Contra Jobs\". Fetch schema first. Dedup by Job ID or Listing URL.\n5. Never delete existing rows. Update last-seen for matches. Insert new rows with Status New. Keep the returned Notion page URL for each row.\n6. Closed-check every run: open listing URLs for non-Closed rows; mark Closed if gone.\n7. Notify only on change, in this chat AND Gmail to the stored Contra alert addresses.\n\n## Email format\n\n- Link the Notion database at the top of every email.\n- Put **new** jobs in an HTML table: Title, Client, Budget, Skills, Listing, Notion (the specific Notion page for that row).\n- Include a plain-text fallback with the same links.\n- Newly closed jobs: a second table or short list, each with listing URL and Notion page URL.\n- Do not send empty \"no change\" emails. Do not use Resend.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Contra job sniper",
+        "slug": "contra-job-sniper",
+        "description": "Every 6 hours, scrape Contra For you jobs, archive new ones in Notion, closed-check open leads, and email a digest only when something changes.",
+        "content": "Scrape Contra freelance job listings and archive any new ones. NEVER delete existing rows in the archive.\n\nOpen https://contra.com/jobs (For you tab) in the signed-in browser. Extract every visible listing.\n\nTHE LISTING URL IS REQUIRED. Cards on /jobs often have no href. Prefer reading the page's embedded Relay/store payload for each job's slug, then verify by opening https://contra.com/opportunity/{slug}. If that fails, click the job title/card (or Apply without filling or submitting) until the address bar is https://contra.com/opportunity/{id}-{slug}. Copy that URL and the 8-char job id. Then go back to /jobs before the next job. Do not Dismiss jobs. Do not Upgrade to Pro. A row without a Listing URL is incomplete.\n\nIf you hit a login wall: this is an auth failure. A first failure: tell the user Contra needs a re-login. If the same auth block is recurring, pause this routine and tell the user. Do not keep pinging every run.\n\nQuery the Notion database \"Contra Jobs\". Fetch schema first. Dedup by Job ID or Listing URL (or title+client if those are missing). NEVER delete or archive old leads.\n\nFor existing matches: update Last seen, On dashboard, and fill Listing URL / Job ID / Category if those were empty. For new listings: create a row with Name, Client, Budget, Skills, Listing URL, Job ID, Category, First seen (today), Last seen (today), On dashboard checked, Status = New. Put a short description in the page body. If a listing page says the job is completed / no longer accessible, set Status = Closed even on first capture.\n\n{slack_channel_id} (required on every new row): set the multi-select Category from title + skills. Use only these options, and pick every that applies: Branding, UI/UX, Development, Marketing, Video, Sales.\n- Branding: brand identity, brand designer, brand strategist, visual identity\n- UI/UX: product/UI/UX design, Framer design, web design (visual), Figma-led design\n- Development: engineering, iOS/web/app build, Kajabi/Webflow/Framer implementation, no-code build\n- Marketing: SEO, email/automation, ads creatives, funnels, Kajabi marketing systems\n- Video: video editing, motion, animation\n- Sales: SDR, outbound, business development\nA job can have more than one (e.g. Framer redesign = UI/UX + Development).\n\nCLOSED-CHECK (required every run): After capturing the current For you listings, query Notion for rows whose Status is not Closed (New, Applied, Passed, or blank). For each of those that has a Listing URL, open that URL. If the page says the job is completed, no longer accessible, taken down, or 404, set Status = Closed and note why. Do not delete the row. Do not change Status if the listing is still live. Skip rows that already have Status = Closed.\n\nLook up Notion tools before writing. Look up Gmail tools before sending email. Do not use Resend.\n\nNOTIFY (when new jobs were added OR any existing open leads were newly marked Closed):\n1. Send a chat message with those changes (title, client, budget, skills, category, listing URL, Notion row URL, and whether it is new or now closed), plus the Notion database link.\n2. ALSO email the stored Contra alert addresses via Gmail.\n   Email MUST include:\n   - A clear link to the Notion database at the top\n   - NEW jobs in an HTML table with columns: Title, Client, Budget, Skills, Category, Listing, Notion. Title can link to the listing URL. Notion column is the specific Notion page URL for that row, so they can open that lead in Notion.\n   - Newly closed jobs in a second simple table or short list, each with listing URL and Notion page URL.\n   - htmlBody for the table plus a plain-text body fallback that still includes every Notion and listing URL.\n   If Gmail auth fails: a first failure, tell the user in this chat that Gmail needs reconnecting; if the same auth block is recurring, pause this routine and tell the user.\n\nIf nothing new and nothing newly closed, stay completely quiet. Do not send an empty email.\n\nThis is a standing watch. Do not delete this routine.\n\nFires on:\n- cron `0 */6 * * *`\n\nAsk the importing user for:\n- Timezone\n- Slack channel id"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "Notion",
+        "description": "Notion Skills + Notion MCP server packaged as a Cursor plugin.",
+        "pluginId": "404"
+      },
+      {
+        "name": "Gmail",
+        "description": "Search, read, draft, and manage email.",
+        "pluginId": "45893410"
+      }
+    ],
+    "createdAtMs": 1787943799733,
+    "updatedAtMs": 1787943849051
+  }
+}

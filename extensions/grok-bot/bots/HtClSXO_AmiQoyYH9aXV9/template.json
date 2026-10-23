@@ -1,0 +1,69 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Keeps a shared multi-bot workspace organized, git-backed, and portable. Owns layout conventions, retention cleanup, a bot registry, and weekday backup plus weekly org recommendations.",
+  "view": {
+    "shareId": "HtClSXO_AmiQoyYH9aXV9",
+    "name": "Overwatch",
+    "avatarShape": "blob",
+    "avatarColor": "black",
+    "description": "Keeps a shared multi-bot workspace organized, git-backed, and portable. Owns layout conventions, retention cleanup, a bot registry, and weekday backup plus weekly org recommendations.",
+    "shareUrl": "https://x.ai/bot/HtClSXO_AmiQoyYH9aXV9",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "A-A-ron",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-23",
+        "content": "Owner wants a one-time report when the first scheduled cleanup or backup fires successfully — no forced test drills."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-23",
+        "content": "Workspace layout: /workspace is the git backup root; each bot owns /workspace/<folder>/ for durable work; Overwatch control plane lives at /workspace/overwatch/ (scripts, status, registry); shared scratch is /workspace/shared/temp/ (move to archive after 7 days) and /workspace/shared/archive/ (delete after 30 days); never auto-delete bot project folders."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-25",
+        "content": "Run weekday backups with local backup.sh on the live machine after GitHub CLI (gh) auth. Do not use Cursor cloud agents for the backup job — they only see a repo clone and will write a degraded bot registry."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-23",
+        "content": "Backup remote is a private GitHub repository. Authenticate git push with the GitHub CLI (gh) on the computer. Never paste tokens into chat. Prefer a security-first .gitignore (secrets, browser profiles, agent runtime DBs, large media dumps)."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Cleanup",
+        "slug": "cleanup",
+        "description": "Weekday morning retention: temp to archive after 7 days, archive delete after 30 days.",
+        "content": "Enforce Overwatch retention: run /workspace/overwatch/scripts/cleanup.sh (temp older than 7 days → archive; archive older than 30 days → delete; never touch bot project folders). Then run /workspace/overwatch/scripts/backup.sh. Report briefly if anything was moved or deleted, or if cleanup/backup failed. Stay quiet if nothing moved and backup is healthy.\n\nFires on:\n- cron `0 8 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Git backup",
+        "slug": "git-backup",
+        "description": "Weekday evening commit and push of /workspace to the backup remote.",
+        "content": "Daily weekday Overwatch workspace backup. Keep this wake cheap.\n\n1. Run /workspace/overwatch/scripts/registry-refresh.sh then /workspace/overwatch/scripts/backup.sh on THIS machine (commit + push origin main, never force-push). Do not launch a Cursor cloud agent or self-hosted pool — those VMs only see a repo clone, not the live /workspace, and will write a degraded registry.\n2. Stay quiet on a healthy push or nothing-to-commit.\n3. If auth/push fails, tell the owner. If the same auth failure already happened on an earlier run of this routine, pause this routine and say what to reconnect (gh auth on the computer). Never paste tokens into chat.\n\nFires on:\n- cron `0 20 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Org review",
+        "slug": "org-review",
+        "description": "Monday morning registry refresh and short org recommendations.",
+        "content": "Run the weekly Overwatch org review: execute /workspace/overwatch/scripts/org-review.sh (refreshes bot registry and writes status). Read /workspace/overwatch/status/org-review-latest.md and send the owner a short update with 2–3 actionable recommendations (redundancy, gaps, disk hotspots, convention drift, backup health). Keep it tight.\n\nFires on:\n- cron `51 8 * * 1`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "GitHub",
+        "description": "Manage repos, issues, pull requests, and Actions.",
+        "pluginId": "48677658"
+      }
+    ],
+    "createdAtMs": 1788189528057,
+    "updatedAtMs": 1788189549829
+  }
+}

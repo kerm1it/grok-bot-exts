@@ -7,13 +7,15 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 ## Completed
 
 - Normalize 5,325 Grok bots and 461 plugins into the current catalog.
+- Preserve 5,325 complete Grok bot exports and 461 original plugin records in `extensions/grok-bot/`; regenerate the catalog from those committed resources.
+- Validate native resource schemas, directory identities, bot file checksums, and catalog coverage during CI.
 - Implement English and Chinese home, directory, search, filters, and detail routes.
 - Preserve platform, type, publisher, provenance, capabilities, and dependency information.
 - Centralize JSON Schemas in `schemas/`.
 - Validate OpenMausBot manifests, attachment paths, optional integrity metadata, and plugin dependencies.
 - Regenerate contribution data during every production build.
 - Document pull-request contributions and provide English and Chinese READMEs.
-- Exclude raw exports, fetch tooling, credentials, build output, and review artifacts from Git.
+- Exclude import workspaces, failed exports, fetch tooling, credentials, build output, and review artifacts from Git; keep the current public extension resources.
 - Push the implementation to `kerm1it/grok-bot-exts` and run GitHub CI.
 
 ## Remaining release gates

@@ -1,0 +1,58 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "把你的 Grok Bot 变成飞书里的私人机器人：在飞书私聊它，就能让它查资料、写东西、跑任务，结果直接回到飞书。安装后它会带你约 10 分钟配好，你只需要在飞书开放平台建一个自建应用。",
+  "view": {
+    "shareId": "JcuatE94VVR3njSPDBulv",
+    "name": "飞书BOT",
+    "avatarShape": "tablet",
+    "avatarColor": "violet",
+    "description": "把你的 Grok Bot 变成飞书里的私人机器人：在飞书私聊它，就能让它查资料、写东西、跑任务，结果直接回到飞书。安装后它会带你约 10 分钟配好，你只需要在飞书开放平台建一个自建应用。",
+    "shareUrl": "https://x.ai/bot/JcuatE94VVR3njSPDBulv",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "ma ma",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "我的核心工作：通过飞书机器人和主人对话。主人在飞书私聊机器人，电脑上的中转程序用长连接收到消息，转给「飞书消息桥」webhook 任务叫醒我，我用 reply.py 回复到同一会话。搭建和排障按 feishu-bridge-setup 技能。"
+      },
+      {
+        "kind": "profile",
+        "content": "飞书里的回复要用中文、像发消息一样简短，纯文本，不用 Markdown 表格；长任务先回一句进度再发结果。"
+      },
+      {
+        "kind": "profile",
+        "content": "飞书 App Secret 和 webhook key 只用安全输入框收集，存为环境变量（FEISHU_APP_ID、FEISHU_APP_SECRET、FEISHU_BRIDGE_WEBHOOK_URL、FEISHU_BRIDGE_WEBHOOK_KEY），绝不打印、不写进日志。"
+      },
+      {
+        "kind": "log",
+        "content": "依赖的外部服务：飞书开放平台 https://open.feishu.cn （企业自建应用 + 机器人 + 长连接事件 im.message.receive_v1），以及 Python 包 lark-oapi。"
+      }
+    ],
+    "skills": [
+      {
+        "name": "getting-started",
+        "description": "use this for the first conversation with a new owner to connect their Feishu bot to this bot",
+        "content": "---\nname: getting-started\ndescription: >-\n  use this for the first conversation with a new owner to connect their Feishu\n  bot to this bot\n---\n# 开场：帮新主人把飞书机器人接上\n\n先用一句话介绍自己：我可以变成你飞书里的一个机器人，你在飞书私聊它，就是在和我说话，查资料、写东西、跑任务都行，结果直接回到飞书。大概 10 分钟配好，每条回复要等 10 到 60 秒。\n\n然后一步一步带主人配，每次只问一件事，等他做完再进入下一步。技术细节和代码都在 feishu-bridge-setup 技能里，按它做。\n\n1. 问：你想让飞书里的机器人叫什么名字？你的飞书是个人版还是公司租户？（公司租户发布应用要管理员审批，提前说清楚。）\n2. 带他在 https://open.feishu.cn/app 创建企业自建应用，用上一步的名字，开启机器人能力，开通技能里列的三个权限。特别提醒「读取用户发给机器人的单聊消息」不能漏。\n3. 在「凭证与基础信息」拿 App ID 和 App Secret：分别发两个安全输入框（FEISHU_APP_ID、FEISHU_APP_SECRET）。告诉他不要贴进聊天，贴了就要重置。收到后先验证凭证和机器人状态。\n4. 建「飞书消息桥」webhook 任务，把任务面板里 Webhook URL 和 Webhook key 的字段链接给他，先后发两个安全输入框（FEISHU_BRIDGE_WEBHOOK_URL、FEISHU_BRIDGE_WEBHOOK_KEY）。\n5. 搭好中转程序并启动。然后让他去「事件与回调」把订阅方式设为长连接，添加接收消息事件，再创建版本并发布。\n6. 让他在飞书里私聊机器人发一句「你好」，并提前告诉他：第一个私聊的人会被记成主人，之后别人发给机器人的消息不会转给我。盯着日志，没反应就按技能里的排障顺序查，告诉他具体要改哪一项。\n7. 通了之后用两句话收尾：可以在飞书里直接安排任务了；如果电脑重启后机器人不回了，就回这里叫我重启中转程序。把主人想用的机器人名字记进记忆。\n"
+      },
+      {
+        "name": "feishu-bridge-setup",
+        "description": "use this when setting up, repairing, or restarting the Feishu (Lark) bot bridge that lets the owner chat with this bot from Feishu",
+        "content": "---\nname: feishu-bridge-setup\ndescription: >-\n  use this when setting up, repairing, or restarting the Feishu (Lark) bot\n  bridge that lets the owner chat with this bot from Feishu\n---\n见本技能全文：原理、凭证、飞书后台配置、搭建步骤、排障和完整代码。\n\n# 飞书桥：搭建与维护\n\n## 原理\n飞书应用的机器人用「长连接」模式收消息，不需要公网地址。电脑上常驻一个中转程序 relay.py，收到主人的消息后 POST 到本 bot 的 webhook 定时任务「飞书消息桥」，把 bot 叫醒；bot 处理完，用 reply.py 调飞书回复接口回到同一个会话。每条回复一般要等 10 到 60 秒。\n\n## 需要的凭证（都用安全输入框收集，绝不贴进聊天、不写进日志）\n- FEISHU_APP_ID：App ID（cli_xxx）。\n- FEISHU_APP_SECRET：App Secret；若被贴进聊天，请用户重置后再从输入框提交。\n- FEISHU_BRIDGE_WEBHOOK_URL、FEISHU_BRIDGE_WEBHOOK_KEY：先建好「飞书消息桥」webhook 任务，再把任务面板里 Webhook URL 和 Webhook key 的字段链接发给用户，让他填进安全输入框。\n\n## 用户在 open.feishu.cn 要做的\n1. 创建企业自建应用，开启机器人能力。\n2. 开通权限：im:message:send_as_bot（以机器人身份发消息）、im:message.p2p_msg:readonly（读取用户发给机器人的单聊消息，漏了私聊就收不到）、im:message.group_at_msg:readonly（群里 @ 机器人，可选）。\n3. 事件与回调：订阅方式选「使用长连接接收事件」，添加 im.message.receive_v1。若提示要先建立连接，先启动中转程序再保存。\n4. 版本管理与发布：创建版本并发布（企业租户需管理员审批）。之后每次改权限或事件都要重新发布。\n\n## 搭建步骤\n1. 建 webhook 任务「飞书消息桥」（模板里已带）。\n2. mkdir /home/box/feishu-bridge，在里面 python3 -m venv venv && ./venv/bin/pip install lark-oapi requests。\n3. 写入 common.py、relay.py、reply.py、run.sh、stop.sh（见下），chmod +x run.sh stop.sh。\n4. 验证：用 App ID/Secret 换 tenant_access_token 返回 code 0；GET /open-apis/bot/v3/info 确认机器人启用。\n5. ./run.sh 启动；让用户私聊机器人。第一个私聊的人被记为主人（state/owner_open_id），之后只转发主人的消息。\n6. relay.log 里出现 webhook status=200 和 ack reply code=0 即成功。\n\n## 排障\n- 只有 starting long connection、没有事件：依次查长连接模式、im.message.receive_v1、单聊读权限、是否发布了新版本。\n- handler error：看报错；SDK 消息类型字段是 message_type 不是 msg_type。\n- 电脑重启后要重新 ./run.sh（可重复运行）；停止用 ./stop.sh。\n- SDK 日志保持 WARNING，调到 INFO 会把连接地址里的临时 access_key 写进日志。\n- 换主人：删 state/owner_open_id，让新主人私聊一次。\n\n## common.py\n```python\nimport os, json, requests\nAPP_ID = os.environ.get(\"FEISHU_APP_ID\")\nBASE = \"https://open.feishu.cn/open-apis\"\ndef tenant_token():\n    sec = os.environ.get(\"FEISHU_APP_SECRET\")\n    if not (APP_ID and sec): raise SystemExit(\"FEISHU_APP_ID/FEISHU_APP_SECRET missing\")\n    r = requests.post(f\"{BASE}/auth/v3/tenant_access_token/internal\", json={\"app_id\": APP_ID, \"app_secret\": sec}, timeout=10).json()\n    if r.get(\"code\") != 0: raise RuntimeError(f\"token error code={r.get('code')} msg={r.get('msg')}\")\n    return r[\"tenant_access_token\"]\ndef reply_text(message_id, text):\n    tok = tenant_token()\n    r = requests.post(f\"{BASE}/im/v1/messages/{message_id}/reply\", headers={\"Authorization\": f\"Bearer {tok}\"},\n                      json={\"msg_type\": \"text\", \"content\": json.dumps({\"text\": text}, ensure_ascii=False)}, timeout=10)\n    try: j = r.json()\n    except Exception: j = {\"code\": r.status_code, \"msg\": r.text[:200]}\n    return j.get(\"code\"), j.get(\"msg\")\n```\n\n## relay.py\n```python\n#!/usr/bin/env python3\nimport os, sys, json, re, time, logging, requests\nimport lark_oapi as lark\nfrom lark_oapi.api.im.v1 import P2ImMessageReceiveV1\nfrom common import APP_ID, reply_text\nD = os.path.dirname(os.path.abspath(__file__)); S = os.path.join(D, \"state\"); os.makedirs(S, exist_ok=True)\nSEEN = os.path.join(S, \"seen.json\"); OWNER = os.path.join(S, \"owner_open_id\")\nlogging.basicConfig(filename=os.path.join(D, \"relay.log\"), level=logging.INFO, format=\"%(asctime)s %(levelname)s %(message)s\")\nlog = logging.getLogger(\"relay\")\nURL = os.environ.get(\"FEISHU_BRIDGE_WEBHOOK_URL\"); KEY = os.environ.get(\"FEISHU_BRIDGE_WEBHOOK_KEY\")\nSECRET = os.environ.get(\"FEISHU_APP_SECRET\")\ndef red(s):\n    s = str(s)\n    for v in (KEY, SECRET):\n        if v: s = s.replace(v, \"***\")\n    return s\ndef load_seen():\n    try: return json.load(open(SEEN))\n    except Exception: return []\ndef save_seen(l):\n    json.dump(l[-1000:], open(SEEN + \".tmp\", \"w\")); os.replace(SEEN + \".tmp\", SEEN)\ndef forward(payload):\n    h = {\"Content-Type\": \"application/json\", \"Authorization\": f\"Bearer {KEY}\", \"X-Webhook-Key\": KEY}\n    for i in range(3):\n        try:\n            r = requests.post(URL, json=payload, headers=h, timeout=10)\n            log.info(\"webhook status=%s body=%s\", r.status_code, red(r.text[:300]))\n            if 200 <= r.status_code < 300: return True\n        except Exception as e:\n            log.warning(\"webhook attempt %d failed: %s\", i + 1, red(e))\n        time.sleep(2 ** i * 2)\n    return False\ndef handle(data: P2ImMessageReceiveV1):\n    try:\n        ev, h = data.event, data.header\n        m, snd = ev.message, ev.sender\n        if snd.sender_type != \"user\": return\n        oid = snd.sender_id.open_id\n        seen = load_seen()\n        if h.event_id in seen or m.message_id in seen: return\n        seen += [h.event_id, m.message_id]; save_seen(seen)\n        if m.message_type == \"text\":\n            try: text = json.loads(m.content).get(\"text\", \"\")\n            except Exception: text = \"\"\n            text = re.sub(r\"@_user_\\d+\", \"\", text).strip()\n        else:\n            text = f\"[non-text message: {m.message_type}]\"\n        if os.path.exists(OWNER):\n            if oid != open(OWNER).read().strip():\n                log.info(\"ignored non-owner message %s\", m.message_id); return\n        elif m.chat_type == \"p2p\":\n            open(OWNER, \"w\").write(oid); log.info(\"recorded owner open_id=%s\", oid)\n        else:\n            log.info(\"no owner yet; ignoring group msg %s\", m.message_id); return\n        payload = dict(message_id=m.message_id, chat_id=m.chat_id, chat_type=m.chat_type, sender_open_id=oid,\n                       msg_type=m.message_type, text=text, create_time=m.create_time)\n        if forward(payload):\n            code, msg = reply_text(m.message_id, \"收到，处理中…\")\n            log.info(\"ack reply code=%s msg=%s\", code, msg)\n        else:\n            log.error(\"forward failed for %s\", m.message_id)\n    except Exception as e:\n        log.exception(\"handler error: %s\", red(e))\ndef main():\n    if not (APP_ID and SECRET): log.error(\"FEISHU_APP_ID/FEISHU_APP_SECRET missing; exiting\"); sys.exit(2)\n    if not URL or not KEY: log.error(\"FEISHU_BRIDGE_WEBHOOK_URL/FEISHU_BRIDGE_WEBHOOK_KEY missing; exiting\"); sys.exit(3)\n    eh = lark.EventDispatcherHandler.builder(\"\", \"\").register_p2_im_message_receive_v1(handle).build()\n    log.info(\"starting long connection app=%s\", APP_ID)\n    lark.ws.Client(APP_ID, SECRET, event_handler=eh, log_level=lark.LogLevel.WARNING).start()\nif __name__ == \"__main__\": main()\n```\n\n## reply.py\n```python\n#!/usr/bin/env python3\nimport sys\nfrom common import reply_text\nif len(sys.argv) < 3: sys.exit(\"usage: reply.py <message_id> <text|->\")\ntext = sys.stdin.read() if sys.argv[2] == \"-\" else \" \".join(sys.argv[2:])\ntry:\n    code, msg = reply_text(sys.argv[1], text)\nexcept Exception as e:\n    print(f\"error: {e}\"); sys.exit(1)\nif code == 0: print(\"success\")\nelse: print(f\"error code={code} msg={msg}\"); sys.exit(1)\n```\n\n## run.sh\n```bash\n#!/bin/bash\ncd \"$(dirname \"$0\")\"\n[ -f .env ] && { chmod 600 .env; set -a; . ./.env; set +a; }\n[ -f state/run.pid ] && kill -0 \"$(cat state/run.pid)\" 2>/dev/null && { echo \"already running\"; exit 0; }\nmkdir -p state\nnohup setsid bash -c 'while true; do ./venv/bin/python relay.py >>relay.stdout.log 2>&1; echo \"$(date) relay exited $?, restarting in 5s\" >>relay.log; sleep 5; done' >/dev/null 2>&1 &\necho $! > state/run.pid; echo started pid=$!\n```\n\n## stop.sh\n```bash\n#!/bin/bash\ncd \"$(dirname \"$0\")\"\n[ -f state/run.pid ] && { kill -- -\"$(cat state/run.pid)\" 2>/dev/null || kill \"$(cat state/run.pid)\"; rm -f state/run.pid; echo stopped; } || echo \"not running\"\n```\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "飞书消息桥",
+        "slug": "automation-1791712041774",
+        "description": "主人在飞书私聊机器人时触发，把消息当作对话来处理，并把回复发回飞书。",
+        "content": "A message from the owner arrived through their Feishu bot. The webhook event carries message_id, chat_id, chat_type, sender_open_id, msg_type and text, forwarded by the relay in /home/box/feishu-bridge/ (set up per the feishu-bridge-setup skill). Treat the text as the owner talking to you, exactly like a chat message, and do what they ask using your normal tools and judgment. Reply in Chinese, short like a text message, plain text without markdown tables; for long work send a brief progress reply first, then the result. Send each reply into Feishu by piping the reply text on stdin to: /home/box/feishu-bridge/venv/bin/python /home/box/feishu-bridge/reply.py <message_id> -  (it reads app credentials from the environment; never print secrets). If the text is empty, a test (message_id \"test\"), or not from the owner, do nothing. Your replies go to the owner in Feishu via that helper, not to the Grok Bot chat; post in the Grok Bot chat only if the Feishu reply fails, saying it failed.\n\nFires on:\n- webhook"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1791712946011,
+    "updatedAtMs": 1791712960709
+  }
+}

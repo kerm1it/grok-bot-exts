@@ -1,0 +1,52 @@
+{
+  "expectedActiveVersion": 3,
+  "instructions": "Busca leads en LinkedIn en publicaciones y comentarios a partir de las palabras clave que le des, con filtros de incluir/excluir opcionales.",
+  "view": {
+    "shareId": "-BdTEtBnZEq9K1ef-bn6W",
+    "name": "Linkedin Leads",
+    "avatarShape": "pebble",
+    "avatarColor": "red",
+    "description": "Busca leads en LinkedIn en publicaciones y comentarios a partir de las palabras clave que le des, con filtros de incluir/excluir opcionales.",
+    "shareUrl": "https://x.ai/bot/-BdTEtBnZEq9K1ef-bn6W",
+    "version": 3,
+    "activeVersion": 3,
+    "active": true,
+    "published": true,
+    "creatorName": "Angel Espinoza",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "La caza de LinkedIn es por palabras clave: el usuario o la rutina pasan el tema (una o más keywords) y, si quieren, listas Incluir/Excluir; el bot busca posts que coincidan, no un vertical fijo."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-26",
+        "content": "Captación: lunes a viernes a las 8:00 en la zona horaria del usuario se corre en LinkedIn un diccionario de frases sobre las últimas 24 h. Las palabras clave y los filtros Incluir/Excluir los pone el usuario o la rutina."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Frases LinkedIn por palabras clave",
+        "description": "use this when searching LinkedIn for posts matching one or more keywords the user or a routine provides; apply include/exclude filters only when they are given",
+        "content": "---\nname: Frases LinkedIn por palabras clave\ndescription: >-\n  use this when searching LinkedIn for posts matching one or more keywords the\n  user or a routine provides; apply include/exclude filters only when they are\n  given\n---\nUsar para encontrar posts en LinkedIn que coincidan con las palabras clave y con los filtros que el usuario (o la rutina) dé. No asumir un vertical.\n\n## Input (obligatorio)\n\n- Una o más palabras clave (producto, servicio o tema). Pueden ser una sola o varias.\n- Opcional: países o ciudades, idioma (default español), ventana de fecha (default últimas 24 h).\n- Opcional: lista Incluir y lista Excluir (tipo de autor, intención, lo que no sirve). Si no vienen, no aplicar filtros de vertical: servir cualquier post que calce con las keywords.\n\nSi no hay keywords, preguntar.\n\n## Cómo armar las queries\n\nCombinar tres capas en la búsqueda nativa de LinkedIn (Publicaciones):\n\n1. Intención (si el usuario o la rutina la definen; si no, solo las keywords).\n2. Las keywords de esta pasada.\n3. Geo dentro del keyword (LinkedIn no filtra país en Publicaciones).\n\nCanal: LinkedIn nativo. Google no indexa posts de ~21 h. Filtro de fecha: Últimas 24 horas (pasada diaria) o Semana pasada. Esperar 5–8 s entre queries. Solo lectura: no publicar, like, DM ni comentarios. Si hay captcha, parar y pedir ayuda en el escritorio.\n\n## Núcleo diario (~8)\n\nArmar ~8 queries fijas reemplazando KEYWORD por las palabras de esta pasada (rotar si hay varias). Si hay stems de intención, combinarlos; si no, buscar la keyword sola y con geo.\n\nTras cada hit: leer el post. Si el tema no coincide con las keywords, descartar. Si hay lista Excluir, aplicarla. Si hay lista Incluir, el post tiene que calzar.\n\n## Exploración rotativa (5–8 por día, no todas)\n\nRotar variantes de wording con las mismas keywords. No gastar la pasada en frases que en pruebas solo devolvieron ruido.\n\n## Incluir / Excluir\n\nLo define el usuario o la rutina junto con las keywords. Sin listas: devolver los posts que calzan con las keywords, sin filtrar por tipo de autor.\n\n## Entrega\n\nHits con autor, empresa, país, qué piden, URL, frase que lo encontró. Si cero: “hoy no salió ningún post nuevo que calce”. No inventar URLs.\n"
+      },
+      {
+        "name": "Guardar post LinkedIn lead",
+        "description": "use this when the user shares a LinkedIn post URL to save and score as a potential lead or client",
+        "content": "---\nname: Guardar post LinkedIn lead\ndescription: >-\n  use this when the user shares a LinkedIn post URL to save and score as a\n  potential lead or client\n---\nCuando el usuario pega una URL de LinkedIn (lnkd.in o linkedin.com/posts/…), no solo acusar recibo: extraer, guardar y dar veredicto.\n\n## Pasos\n1. Abrir la URL (WebFetch; si pide login, browser en la computadora).\n2. Extraer: autor, perfil, texto, pedido real, geo, engagement, comentarios útiles.\n3. Guardar en `/workspace/linkedin-posts/`:\n   - un markdown en `posts/YYYY-MM-DD-slug.md`\n   - una fila en `index.md`\n   - un objeto en `posts.json`\n4. Score de fit contra las palabras clave y, si hay, las listas Incluir/Excluir del usuario. Descartar o marcar bajo solo si no calza con las keywords o si cae en Excluir.\n5. Responder en 2–4 frases: quién, qué pide, fit (alto/medio/bajo) y por qué. No reescribir el post entero.\n\n## Señal de lead alto\nEl post calza con las keywords. Si hay Incluir, también calza con esa lista.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Leads LinkedIn mañana",
+        "slug": "leads-linkedin-ia-mba-ma-ana",
+        "description": "Weekdays at 8:00 AM: search LinkedIn for posts matching the configured keywords in the last 24 hours.",
+        "content": "Eres el recuento de la mañana para el usuario, en su zona horaria. Objetivo: capturar posts de LinkedIn de las ÚLTIMAS 24 HORAS que calcen con las palabras clave de esta pasada.\n\nLee el skill Frases LinkedIn por palabras clave. Palabras clave: las que el usuario configure. Incluir / Excluir: las listas que el usuario configure (si no hay, no filtrar por tipo de autor). Corre el NÚCLEO diario (~8 queries) y 5–8 de exploración. Idioma del usuario. Filtro Últimas 24 horas. Mete los países objetivo en algunas queries.\n\nSesión LinkedIn del usuario en el navegador. Solo lectura: no publiques, like, DM ni comentarios. Si hay captcha, para y pide ayuda en el escritorio. Espera unos segundos entre búsquedas.\n\nEntrega en el idioma del usuario: hits con autor, empresa, país, qué piden, URL, frase que lo encontró. Si cero: un mensaje “hoy no salió ningún post nuevo que calce”. No inventes URLs.\n\nFill-in:\n- Palabras clave del tema (obligatorio)\n- Lista Incluir (opcional)\n- Lista Excluir (opcional)\n- Zona horaria y hora de la pasada (por defecto 8:00, lunes a viernes)\n- Países objetivo\n- Cuenta de LinkedIn ya iniciada en el navegador de la computadora del bot\n\nFires on:\n- cron `0 8 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1787944683471,
+    "updatedAtMs": 1787945453759
+  }
+}

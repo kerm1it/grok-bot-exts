@@ -6,8 +6,9 @@ import { readContributions } from "./contributions.mjs";
 const root = resolve(import.meta.dirname, "..");
 const catalogPath = join(root, "src/data/catalog.json");
 const searchDirectory = join(root, "public/data");
-const botSource = join(root, "bots");
-const pluginSource = join(root, "plugins/plugin-catalog-complete.json");
+const grokRoot = join(root, "extensions/grok-bot");
+const botSource = join(grokRoot, "bots");
+const pluginSource = join(grokRoot, "plugins");
 const openMausRoot = join(root, "contributions/openmausbot");
 const contributions = readContributions(openMausRoot);
 
@@ -115,6 +116,7 @@ function normalizeGrokBots() {
       tags: unique([...(listing.tags || []), official ? "official" : "community"]),
       updatedAt: isoDate(listing.updated, manifest.exportedAt),
       sourceUrl: text(listing.shareUrl, `https://x.ai/bot/${id}`),
+      repositoryUrl: `https://github.com/kerm1it/grok-bot-exts/tree/main/extensions/grok-bot/bots/${encodeURIComponent(folder.name)}`,
       sourceLabel: official ? "Grok Bot official catalog" : "Awesome Grok Bot catalog",
       capabilities: compact([
         ...skills.map((item, index) => capability("skill", item, index)),
@@ -137,8 +139,11 @@ function normalizeGrokBots() {
 
 function normalizeGrokPlugins() {
   if (!existsSync(pluginSource)) return [];
-  const catalog = readJson(pluginSource);
-  return (catalog.plugins || []).map((plugin) => {
+  const provenance = readJson(join(grokRoot, "provenance.json"));
+  const plugins = readdirSync(pluginSource, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => readJson(join(pluginSource, entry.name, "plugin.json")));
+  return plugins.map((plugin) => {
     const id = text(plugin.id, plugin.name);
     const name = text(plugin.displayName, text(plugin.name, "Untitled plugin"));
     const description = text(plugin.description, `${name} plugin`);
@@ -180,7 +185,7 @@ function normalizeGrokPlugins() {
       verified: Boolean(plugin.isPublished),
       category: slugify(plugin.curatedCategoryKeys?.[0], "developer-tools"),
       tags: unique([...(plugin.tags || []), ...(plugin.curatedCategoryKeys || []), "plugin"]),
-      updatedAt: isoDate(plugin.updatedAt, catalog.exportedAt),
+      updatedAt: isoDate(plugin.updatedAt, provenance.pluginCatalogExportedAt),
       sourceUrl: text(plugin.repositoryUrl, plugin.gitUrl),
       repositoryUrl: text(plugin.repositoryUrl, plugin.gitUrl),
       sourceLabel: "Cursor public plugin catalog",
@@ -252,19 +257,10 @@ function sortEntries(a, b) {
   );
 }
 
-function existingGrokEntries() {
-  if (!existsSync(catalogPath)) return [];
-  return readJson(catalogPath).entries.filter((entry) => entry.platform === "grok-bot");
-}
-
-const importedGrok = process.argv.includes("--import-grok")
-  ? [...normalizeGrokBots(), ...normalizeGrokPlugins()]
-  : [];
-const entries = [
-  ...(importedGrok.length ? importedGrok : existingGrokEntries()),
-  ...walkOpenMaus("bot"),
-  ...walkOpenMaus("plugin"),
-].sort(sortEntries);
+const importedGrok = [...normalizeGrokBots(), ...normalizeGrokPlugins()];
+const entries = [...importedGrok, ...walkOpenMaus("bot"), ...walkOpenMaus("plugin")].sort(
+  sortEntries,
+);
 
 const seen = new Set();
 for (const entry of entries) {

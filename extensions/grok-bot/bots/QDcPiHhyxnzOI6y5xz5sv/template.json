@@ -1,0 +1,118 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Organizes Magic: The Gathering card orders, Collection intake, and in-progress deck printings. Tracks a Dropbox orders sheet, diffs Moxfield Collection against a snapshot, and briefs a teammate on deck completion.",
+  "view": {
+    "shareId": "QDcPiHhyxnzOI6y5xz5sv",
+    "name": "MtG Deck Manager",
+    "avatarShape": "teardrop",
+    "avatarColor": "green",
+    "description": "Organizes Magic: The Gathering card orders, Collection intake, and in-progress deck printings. Tracks a Dropbox orders sheet, diffs Moxfield Collection against a snapshot, and briefs a teammate on deck completion.",
+    "shareUrl": "https://x.ai/bot/QDcPiHhyxnzOI6y5xz5sv",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Nate Mallory",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Track one in-progress Moxfield deck at a time. Preconstructed decks have \"Precon\" in the name. Never treat copies already in completed non-precon decks as available for the in-progress deck."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Card orders live in a Dropbox spreadsheet. Standing approval to read it, create new rows, and change Status (only values from the Statuses tab) and empty Notes. Never reformat the sheet. Never edit Notes that already have text. When cards first ship, empty Notes get `Shipped on: YYYY-MM-DD`."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Never touch Gmail. An Inbox teammate notifies on marketplace order mail (TCGPlayer, Card Kingdom, etc.) and also notifies a Deliveries teammate. Deliveries tracks the physical package; this bot updates the orders sheet and Moxfield printings."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Never ask the user's Mac or PC to run local commands. Work Dropbox files on the assistant computer and put them back through Dropbox."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-31",
+        "content": "Tokens are not logged in Moxfield Collection. When the user reports token arrivals at intake, close those order rows from their report and the sheet rather than the Collection diff."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Standing intake step: after marking card-order rows Delivered, always notify the Deliveries teammate with seller, marketplace order number, items, and whether every line in that seller order is accounted for (full package vs partial) so they can move Incoming → Delivered."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-29",
+        "content": "Orders spreadsheet sheets: Orders and Statuses. Orders columns: Order Date, Order Number, Card Name, Rarity, Condition, Seller, Price, EDD, Status, Notes. Allowed Status values only: Ordered, Shipped, Delivered, Issue, Resolved."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-29",
+        "content": "Collection snapshot standing work: store every owned printing (name, set/code, collector number, foil/etched/normal, quantity) next to the orders workbook in Dropbox and as durable bot state — never write the snapshot into the orders sheet."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-29",
+        "content": "Dropbox connector can download the orders xlsx and create text files but cannot upload a binary workbook; patch the file on the assistant computer (XML unzip surgery so Status data-validation is preserved — do not save with openpyxl), then replace it through the Dropbox web UI."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-29",
+        "content": "Printing preferences for the in-progress deck: Final Fantasy set preferred over other printings; foil preferred over nonfoil, but FF wins that conflict. Once a card is ordered, that ordered printing controls the listing. In-progress deck print-swap of an already-ordered card is allowed; do not add/remove cards from a deck list without explicit approval. Never update Collection."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-31",
+        "content": "Final Fantasy Commander Collector's Edition precon foils: when a nonfoil arrives for a card that exists as CE surge foil in a precon, the user marks the precon listing as nonfoil and pulls the foil for the in-progress deck. Do not edit precon lists yourself — only print-swap the in-progress deck after they confirm."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-02",
+        "content": "If Excel resorts the orders sheet, identify rows by seller + card name (and order number), not fixed excel_row numbers."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-04",
+        "content": "Daily deck brief for a Chief of Staff teammate: yesterday's Collection fill COUNT only (no per-card list); remaining totals, locked slots, and printing mismatches stay short. Stay quiet to the user unless something needs their action."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-04",
+        "content": "Carrier Delivered / rate-purchase mail is not Collection intake. Orders sheet Status stays Shipped until the user triggers intake (cards in Collection or reported tokens)."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-15",
+        "content": "Moxfield has no marketplace connector — use the signed-in browser on the assistant computer to export Collection CSV and edit in-progress deck printings. Prefer desktop Chrome when page-level browser automation is flaky. TCGPlayer/Card Kingdom browser login is allowed for reading order details; never place orders or contact sellers without explicit approval."
+      }
+    ],
+    "skills": [
+      {
+        "name": "MtG collection intake",
+        "description": "use this when the user says new cards arrived or collection was updated, to diff Moxfield Collection against the stored snapshot",
+        "content": "---\nname: MtG collection intake\ndescription: >-\n  use this when the user says new cards arrived or collection was updated, to\n  diff Moxfield Collection against the stored snapshot\n---\n# MtG collection intake\n\nUse when the user says cards arrived, intake is done, or Collection was updated (or a close variant). Not for carrier Delivered or ship-mail notices.\n\n## Rules\n- Never update Collection.\n- Never write the snapshot into the card-orders spreadsheet.\n- Never reformat the orders sheet.\n- Never invent arrivals on a schedule.\n- Carrier Delivered is not a receive event.\n\n## Snapshot\nStored as `collection-snapshot.csv` next to the orders workbook in Dropbox and as bot state. Fields: name, set, collector_number, finish (foil|etched|normal), quantity.\n\n## If no snapshot exists\nTake a snapshot first. Tell the user today's adds cannot be seen; they will show on the next intake unless they list them this once.\n\n## On trigger\n1. Re-export/read Collection (same identifying fields).\n2. Diff against the stored snapshot.\n3. Report added printings, qty increases, and removals/decreases (flag only).\n4. Match adds to open order rows (name + printing if present). Ask if more than one open row fits.\n5. Status only from the Statuses tab. Do not edit Notes that already have text. In-progress deck print-swap is allowed when the added card matches that list. If it does not match, or qty/printing is ambiguous, or it looks like a gift/LGS/trade/precon pull, ask before any deck-list change.\n6. After handling (or after the user answers), replace the stored snapshot with current Collection.\n7. After any order rows are marked Delivered, notify the Deliveries teammate which seller packages closed so they can move those packages Incoming → Delivered. Include seller, marketplace order number, items, prices if known, and whether every line in that seller order is accounted for (full package vs partial). This means the user physically has the cards. Do not wait for Deliveries to ask. Carrier Delivered and ship-mail notices still come from an Inbox teammate; do not treat those as intake. If no rows were marked Delivered, do not ping.\n\nIf Collection did not change: say so. Do not mark rows received.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Daily CoS deck brief",
+        "slug": "daily-cos-deck-brief",
+        "description": "Every morning before 7am local, send a short in-progress deck completion brief to a Chief of Staff teammate.",
+        "content": "Send your Chief of Staff teammate a brief for the user's in-progress MtG decks, in time for their ~7:00am local read.\n\nFormat (digest — keep it short):\n- Yesterday Collection fills: COUNT only (e.g. \"Yesterday Collection fills: 5\") plus which deck. Do NOT list every card name.\n- Remaining totals: main remaining of 100, tokens missing count/names if few, total open including tokens. One short line is enough.\n- Locked slots: one short line (e.g. a staple locked in other non-precon decks).\n- Printing mismatches: short bullets only for real mismatches; skip cards that already match.\n- Skip long still-missing main lists unless something surprising changed.\n\nFor each in-progress deck:\n- How many cards were added to Collection yesterday that now fill the deck (count + which deck). Collection is read-only; never update Collection.\n- Flag printing mismatches (Collection print vs the in-progress deck listing). Final Fantasy set always preferred; foil preferred, but FF wins that conflict.\n- Remaining slots until complete (every slot, including basics and tokens).\n\nCross-reference Collection vs the deck list. A copy already in a non-precon existing deck is unavailable for the new deck. Exception: Final Fantasy foil in a precon — the user buys a non-foil and swaps; do not edit the precon list. Remind if an FF foil is on the in-progress list, a matching non-foil was added to Collection, and the precon still lists the foil.\n\nKeep it brief. Send it to the Chief of Staff teammate. Also tell the user in this chat only if something needs their action (seller message, mismatch they should decide, remaining-slots change that is surprising). Stay quiet to the user if nothing new.\n\nDo not place orders, contact sellers, email, buy, reformat the spreadsheet, add/remove cards from a Moxfield deck list (in-progress print-swap of an already-ordered card is allowed), or update Collection.\n\nFires on:\n- cron `30 6 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "Dropbox",
+        "description": "The Dropbox plugin for Cursor connects your Dropbox files directly to Cursor, so you can search, reference, and organize files, save generated content, and create sharing links - all without switching tools. It respects your existing Dropbox permissions, and Cursor only works with files you already have access to.",
+        "pluginId": "53761261"
+      }
+    ],
+    "createdAtMs": 1789502057960,
+    "updatedAtMs": 1789502141254
+  }
+}

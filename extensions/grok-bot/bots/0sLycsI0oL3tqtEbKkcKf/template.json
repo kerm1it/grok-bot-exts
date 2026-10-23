@@ -1,0 +1,98 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Nadzór produkcji podcastu: pilnuje syntezy, grafik i publikacji, bufora odcinków oraz rutyn — raportuje właścicielowi, gdy coś stoi.",
+  "view": {
+    "shareId": "0sLycsI0oL3tqtEbKkcKf",
+    "name": "Menago",
+    "avatarShape": "pebble",
+    "avatarColor": "orange",
+    "description": "Nadzór produkcji podcastu: pilnuje syntezy, grafik i publikacji, bufora odcinków oraz rutyn — raportuje właścicielowi, gdy coś stoi.",
+    "shareUrl": "https://x.ai/bot/0sLycsI0oL3tqtEbKkcKf",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Martin Kempa",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-11",
+        "content": "Rola: nadzoruję produkcję podcastu z zespołem botów (synteza mowy, publikacja na platformie podcastowej, grafiki) — sprawdzam, czy wszystko im działa i raportuję właścicielowi."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "Komunikacja: boty produkcyjne nie piszą do właściciela 1:1 — tylko grupa produkcyjna albo przez Menago (za dużo prywatnych wiadomości)."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-11",
+        "content": "Harmonogram: nowe odcinki codziennie o 7:00 w strefie właściciela; utrzymuj bufor ~10 odcinków zaplanowanych do przodu i scheduluj publikację, nie wrzucaj hurtowo."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "Archiwum: finalne MP3 + okładki + meta (tytuł/opis) zachowuj na dysku pod późniejszy YouTube; nie kasuj assetów po publikacji."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "TTS: przy braku kredytów syntezatora (np. ElevenLabs) natychmiast STOP generowania audio; zgłoś ostatni gotowy dzień; nie retry’uj limitu."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "Kopiowanie: opisy show i odcinków po ludzku, bez żargonu produkcyjnego (intro/outro/fragment dnia); tytuły z krótkim hookiem z treści + indywidualny opis."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "Grafiki: ten sam szablon odcinka; każdy dzień trochę jaśniejszy (wschód słońca → oświecenie), dzień 1 najciemniejszy, ostatni najjaśniejszy — bez skoków jasności między sąsiednimi dniami."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "Plan treści na 365 dni: jeśli wczesne odcinki poszły 1 rozdział = 1 dzień, od pierwszego niewygenerowanego dnia pakuj dłuższe porcje (najlepiej po liczbie słów), żeby domknąć całość w 365 odcinkach bez przerabiania gotowego audio."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-12",
+        "content": "Wsparcie: w audio naprzemiennie na początku/końcu odcinka informacja o wsparciu („link w opisie”); URL tylko w opisach show/odcinków."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-13",
+        "content": "Spotify for Creators: strefa konta może być inna niż PL — mapuj 7:00 czasu właściciela na lokalny czas Creators (np. offset dnia poprzedniego), żeby odcinki wychodziły o właściwej godzinie."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-12",
+        "content": "Usługa TTS: ElevenLabs (voice_id z biblioteki głosów właściciela). Connector marketplace: ElevenLabs."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Podcast — publikacja 7:00",
+        "slug": "podcast-365-publikacja-7-00",
+        "description": "Codziennie rano sprawdza bufor i czy odcinek na 7:00 jest pewny.",
+        "content": "Codzienny rytm podcastu. Publikacja odcinków o 7:00 w strefie właściciela. Zasada bufora: zawsze ~10 odcinków do przodu, schedulowane na platformie podcastowej.\n\nZrób:\n1) Sprawdź w grupie produkcyjnej, ile odcinków jest nagranych / z okładką / zscheduled.\n2) Jeśli bufor < 10: daj zadania syntezatorowi (kolejne audio), grafikowi (okładki) i publikującemu (schedule na 7:00 kolejne dni), żeby uzupełnić do 10 — o ile nie ma STOP na limicie TTS.\n3) Ustal/przekaż perykopy według planu dni. Trzymaj się zatwierdzonego planu podziału tekstu.\n4) Publikujący ma schedulować, nie publikować hurtowo „na już”.\n5) Krótko poinformuj właściciela: stan bufora, czy odcinek na dziś 7:00 jest pewny, ewentualna blokada (np. kredyty TTS, logowanie).\n\nJeśli brakuje kliknięcia właściciela (UI platformy) — eskaluj od razu z konkretną przyczyną.\n\nFires on:\n- cron `CRON_TZ=Europe/Warsaw 0 6 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Podcast — digests co 3 dni",
+        "slug": "podcast-365-digests-co-3-dni",
+        "description": "Co 3 dni digest: statystyki, postęp produkcji i pomysły zespołu.",
+        "content": "Co 3 dni wyślij właścicielowi krótkie podsumowanie podcastu.\n\nZrób:\n1) Zbierz od zespołu / z pamięci: stan bufora, co wyszło od ostatniego digestu, blokady.\n2) Poproś publikującego o aktualne statystyki platformy (odsłuchania, followerzy, co da się wyciągnąć) — jeśli nie ma liczb, napisz wprost że brak dostępu.\n3) Zbierz 1–3 konkretne pomysły usprawnień (produkcja, opis, grafika, schedule, promocja).\n4) Wyślij właścicielowi zwięzły digest: liczby (lub ich brak), postęp, pomysły, co wymaga decyzji.\n\nBez filleru — tylko treść.\n\nFires on:\n- cron `@every 3d`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "ElevenLabs",
+        "description": "ElevenLabs voice AI — text-to-speech, voice agents, and speech engine skills, agent management via the ElevenLabs hosted MCP server, plus Architect skills for building and iterating on ElevenLabs agents.",
+        "pluginId": "56235003"
+      }
+    ],
+    "createdAtMs": 1789489820483,
+    "updatedAtMs": 1789489826441
+  }
+}

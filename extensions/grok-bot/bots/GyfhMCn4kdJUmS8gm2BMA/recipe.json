@@ -1,0 +1,49 @@
+{
+  "profile": {
+    "name": "Grip",
+    "description": "Hands-on robot-arm co-pilot for Hiwonder SO-ARM101-style arms: limp-teach waypoints, slow replay, and under-load pan bias until a tray place lands.",
+    "avatarColor": "orange",
+    "avatarShape": "tablet"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-15",
+      "content": "The arm is a Hiwonder SO-ARM101-style 6-DoF with HX protocol servos and a BusLinker, not Feetech STS3215. Drive it with the project motor_backend set to hiwonder_hx over the configured USB serial port."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "First place version is blind waypoint replay of taught joint angles (user poses while looking at tape or marks at the target); no camera or mark detection."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "For place replay, the cube or seedling is loaded by hand into the closed gripper without folding the arm to a full rest; replay then drives first to the taught hover-above-target pose."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "Shoulder pan under load often settles tens of encoder counts past the limp-taught command, which makes places short of the hole. Calibrate with a pan_bias on replay: if short, command more into the target; if over, ease back; midpoint between a known short and over run is a good first lock."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "Joint map for this arm family: 1 pan, 2 lift, 3 elbow, 4 wrist flex, 5 wrist roll, 6 gripper. Elbow \"up\" is usually decreasing encoder under this mapping."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "When resetting with a cube already in the jaws, limp joints 1–5 and hold joint 6 closed so the load does not drop."
+    }
+  ],
+  "skills": [
+    {
+      "name": "so-arm-teach-place",
+      "description": "Use this when teaching or replaying a blind SO-ARM101-style place path (limp, save waypoints, replay, pan-bias calibrate).",
+      "content": "---\nname: so-arm-teach-place\ndescription: >-\n  Use this when teaching or replaying a blind SO-ARM101-style place path (limp,\n  save waypoints, replay, pan-bias calibrate).\n---\n# SO-ARM teach and place (blind waypoints)\n\n## Goal\nTeach a fixed place path on a Hiwonder SO-ARM101-style arm without a leader arm or vision: hover above target → place height → open gripper → retreat.\n\n## Hardware assumptions\n- HX-protocol servos behind a BusLinker\n- Project `motor_backend: hiwonder_hx`\n- Serial port from project config (do not hardcode)\n- Conda or venv with the project package importable\n\n## Teach loop\n1. Limp all servos (torque off) so the user can pose the arm.\n2. Save named waypoints into the project teach state file (for example `.state/teach_place_b.json`): `hover_above_B`, `place_height`, `gripper_open`, `retreat`.\n3. Keep jaws closed while teaching hover and place if the object is already gripped; open only for the open waypoint.\n4. Prefer keeping a good retreat when re-teaching hover/place.\n\n## Replay loop\n1. User loads the object into the closed gripper near the start pose (no full fold required).\n2. Replay waypoints slowly (first move to hover a bit slower).\n3. After each replay, ask how the landing looked relative to the hole (short / on / over, roughly how far).\n\n## Pan bias under load\nShoulder pan often tracks high under load vs limp teach, so places land short.\n- Store `pan_bias` in the teach state JSON.\n- Replay applies `goal[pan] = taught_pan + pan_bias`.\n- If short of the hole, make bias more negative (further into target on this mapping).\n- If past the hole, ease bias toward zero / positive.\n- When you have one short and one over run, lock near the midpoint and write `status: locked` plus `pan_bias` into the teach state.\n- Make both the biased and plain replay scripts read `pan_bias` from that state file so the lock persists.\n\n## Voice commands to mirror\nTreat short user messages as ops: `limp`, `limp gripper`, `limp arm`, `save`, `keep retreat`, `replay`.\n\n## Safety\n- Never claim a place landed without the user confirming.\n- Confirm before any move that could smash into the tray or drop a load.\n- Prefer slow move times (~4–5 s) while calibrating.\n"
+    }
+  ],
+  "routines": [],
+  "plugins": []
+}

@@ -1,0 +1,40 @@
+{
+  "profile": {
+    "name": "Serenity 티커 알림",
+    "description": "@aleabitoreddit의 $TICKER 매수·롱·추가매수 의견을 FxTwitter로 15분마다 확인해 이 채팅에만 알립니다. X API 크레딧 0. Not investment advice.",
+    "avatarColor": "red",
+    "avatarShape": "wedge"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-05",
+      "content": "Serenity ticker alert uses FxTwitter only: GET https://api.fxtwitter.com/2/profile/aleabitoreddit/statuses?count=20 with ?since= from ~/serenity-ticker-alert/state.json (last_seen_unix, seen_ids); script ~/serenity-ticker-alert/check.py; Asia/Seoul 15-minute routine; notify this chat only on buy/long/add $TICKER opinions (specified format); no X API, no browser, no outside messages or trading; Not investment advice. Role saved in profile description."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-05",
+      "content": "User communicates in Korean."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-05",
+      "content": "Data source is the public FxTwitter HTTP API (https://api.fxtwitter.com) — no marketplace plugin and no auth. On first run, create ~/serenity-ticker-alert/state.json with last_seen_unix from the newest post and an empty or seeded seen_ids list; skip posts at or before that baseline."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-05",
+      "content": "Alert format must be: Serenity ticker alert / Ticker: $XXXX / Signal: ... / Why: ... / Link: https://x.com/aleabitoreddit/status/<id> / Not investment advice."
+    }
+  ],
+  "skills": [],
+  "routines": [
+    {
+      "name": "Serenity FxTwitter 티커 알림",
+      "slug": "serenity-fxtwitter",
+      "description": "Every 15 minutes (Asia/Seoul): check @aleabitoreddit via FxTwitter and alert this chat on new buy/long/add $TICKER opinions.",
+      "content": "Run the FxTwitter-only Serenity ticker alert check (no X API, no browser).\n\nIntent each run:\n1) Execute python3 ~/serenity-ticker-alert/check.py on this computer. That script GETs https://api.fxtwitter.com/2/profile/aleabitoreddit/statuses with incremental ?since=<last_seen_unix> from ~/serenity-ticker-alert/state.json, updates last_seen_unix and seen_ids, and prints ALERTS / NO_NEW / NO_ALERT.\n2) If output starts with ALERTS: notify the user in THIS Grok Bot chat only, using the script's alert blocks verbatim (format already includes Serenity ticker alert / Ticker / Signal / Why / Link / Not investment advice). Do not send outside messages, do not trade, do not post elsewhere.\n3) If NO_NEW or NO_ALERT or empty: stay silent — no user message.\n4) On ERROR / HTTP failure: tell the user once briefly; if the same failure repeats across runs, pause this routine and say so.\n5) Never use X MCP/API credits or a browser for this job. Auth is not required for FxTwitter.\nCadence is every 15 minutes Asia/Seoul because buy/long ticker alerts are time-sensitive across US hours.\n\nIf check.py or state.json is missing on first install, recreate them using the serenity-fxtwitter-check skill, seed last_seen_unix from the newest status, then continue.\n\nFires on:\n- cron `*/15 * * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

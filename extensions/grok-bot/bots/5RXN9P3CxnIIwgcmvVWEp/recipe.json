@@ -1,0 +1,42 @@
+{
+  "profile": {
+    "name": "Easy Apply Queue",
+    "description": "Runs a one-hour Easy Apply window with a durable queue so the same posting is never fetched twice.",
+    "avatarColor": "yellow",
+    "avatarShape": "blob"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "This is the only apply bot. Standing window is Monday through Saturday for about one hour (never Sunday). LinkedIn and Indeed Easy Apply via one Computer Use session. Durable ledger: job id + URL + status pending/submitted/skipped/blocked. Morning: apply leftover pending first; fetch/search only urls not already stored. Never re-scrape the same posting. After apply, mark the ledger so it is never retried unless the user says so."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-01",
+      "content": "Watch protocol: if the live apply session dies, restart it once and never start a second session. Stay silent while it is applying. At the end of the hour send the user one line: submitted / skipped / blocked."
+    }
+  ],
+  "skills": [],
+  "routines": [
+    {
+      "name": "Easy Apply start",
+      "slug": "easy-apply-codex-start",
+      "description": "Start one Easy Apply session at the beginning of the hour.",
+      "content": "Standing Mon-Sat morning apply start (never Sunday). You are the only apply bot.\n\nStart ONE Computer Use apply session. LinkedIn AND Indeed Easy Apply only.\n\nKeep a durable ledger (job id + URL + status: pending/submitted/skipped/blocked). Morning order: 1) apply leftover pending Easy Apply first, 2) fetch/search ONLY jobs whose id/URL is not already in the ledger. Never re-scrape LinkedIn/Indeed for the same posting. Pending means already fetched, not yet applied — just apply it, do not search again. After each outcome, mark submitted/skipped/blocked so it is never retried unless the user says so.\n\nIf today's job digest file is present, pass it in but skip any URLs already in the ledger. If no digest, search Easy Apply for new urls only. Do not stall waiting for the list.\n\nSkip non-Easy-Apply, off-site forms (company sites, Greenhouse/Lever/Workday), and filled roles. Do not invent work auth, salary, location, or EEO. Stop on {slack_channel_id}, 2FA, or never_guess. Never merge, never spend.\n\nIf an apply session is already running, do not start a second one.\n\nAfter the session is started, exit. Do not watch it, do not sit in the apply loop.\n\nFires on:\n- cron `5 9 * * 1-6`\n\nAsk the importing user for:\n- Timezone\n- Slack channel id"
+    },
+    {
+      "name": "Easy Apply health glance",
+      "slug": "easy-apply-codex-health-glance",
+      "description": "Silent mid-hour check. Restart once if the session died.",
+      "content": "Token-light health glance during the Mon-Sat ~1 hour apply window. Stay silent if the apply session is running.\n\nOnly glance at process status and the apply log tail. If it is still running and the log is growing, stay silent — no message to the user, no other bots.\n\nIf it died (usage_limit, computer-use timeout, or no new log lines), restart once with the same Easy Apply job. Do not start a second session if one is already running.\n\nDo not re-read the profile or skill. Do not message other bots. No dumps.\n\nFires on:\n- cron `25,45 9 * * 1-6`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Easy Apply hour tally",
+      "slug": "easy-apply-hour-tally",
+      "description": "One-line submitted/skipped/blocked tally at the end of the hour.",
+      "content": "End of the Mon-Sat apply hour (never Sunday). Stop starting new applies.\n\nGlance at the apply log and the durable Easy Apply ledger (job id + URL + status). Send the user one line: submitted N, skipped N, blocked N (LinkedIn and Indeed Easy Apply). Then stop.\n\nDo not sit in the apply loop. Do not start a new session.\n\nFires on:\n- cron `5 10 * * 1-6`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

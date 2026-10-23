@@ -1,0 +1,44 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Watches your street camera over RTSP and pings you when a curb gap looks big enough for your car. Stores camera credentials securely and arms a quiet check when you need a spot.",
+  "view": {
+    "shareId": "NOBJQNvnAJRM4IHz6g5EN",
+    "name": "Curb Parking Watch",
+    "avatarShape": "blob",
+    "avatarColor": "green",
+    "description": "Watches your street camera over RTSP and pings you when a curb gap looks big enough for your car. Stores camera credentials securely and arms a quiet check when you need a spot.",
+    "shareUrl": "https://x.ai/bot/NOBJQNvnAJRM4IHz6g5EN",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "toby lorne",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Prefer RTSP Digest stills from a LAN computer with ffmpeg for curb parking checks when the camera exposes RTSP; do not reverse HomeKit pairing for this path when RTSP credentials already work."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-15",
+        "content": "Finite curb parking watches should run quietly on a short interval (e.g. every 15 minutes), notify with a still only when a gap looks large enough for the target vehicle, then stop; optional evening deadline ends the watch if no spot appears."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Street parking spot check",
+        "description": "Use when the user wants a curb parking watch or a one-off check for a free street parking gap from a home camera RTSP still (default ~5 m midsize car).",
+        "content": "---\nname: Street parking spot check\ndescription: >-\n  Use when the user wants a curb parking watch or a one-off check for a free\n  street parking gap from a home camera RTSP still (default ~5 m midsize car).\n---\n# Street parking spot check\n\n## When\nThe user asks to watch for a free curb parking space, or a routine fires a parking watch. Default gap size: about 5 m (typical midsize sedan / Avant); override if they name another vehicle or length.\n\n## Inputs (from the calling routine or chat — never hardcode)\n- Camera LAN IP and RTSP path for the street-facing camera\n- Secret / env name that holds RTSP `username:password` (Digest)\n- Machine id of a LAN computer that can reach the camera and run ffmpeg\n- Notify policy: quiet unless a free spot (watch mode) vs always report (one-off)\n- Optional deadline after which a finite watch should stop\n\n## Optional length calibration\nIf a reference still exists for this same camera (a known vehicle boxed at the curb, with length in meters), compare new gaps visually to that box. Fisheye / wide-angle lenses make pixel width only a rough guide at similar curb depth — do not treat pixels as meters.\n\n## Steps\n1. Load RTSP `username:password` from the named secret store or environment. Never print, echo, or log credentials.\n2. On the LAN machine, capture one JPEG with ffmpeg over TCP RTSP (`-rtsp_transport tcp`, one video frame) to a local scratch path. Prefer an absolute Homebrew/ffmpeg path if `ffmpeg` is not on PATH.\n3. Copy the JPEG onto the assistant computer and open it for vision. Delete any temporary credential files on both machines.\n4. Assess the curb row for an empty asphalt gap long enough for the target vehicle (~5 m unless overridden). Allow for fisheye distortion and occlusions (trees, poles). Ignore gaps usable only by bikes/mopeds. Note left / center / right in the frame.\n5. Outcomes:\n   - **Free spot:** notify the user with where in the frame and attach the still; if a finite watch routine is active, end it after notifying.\n   - **Full / unclear:** stay quiet in watch mode; for a one-off ask, say so briefly and optionally attach the still.\n   - **Capture failure:** tell the user once; on repeated failure, stop a finite watch.\n\n## Notes\n- One outdoor street camera unless the user expands scope.\n- Prefer RTSP Digest when available. Do not reverse HomeKit pairing or reuse Home setup codes for this path when RTSP credentials already work.\n- Pair this skill with a short-lived scheduled routine for “ping me when a spot frees”; keep camera IP, secret name, machine id, and deadline in the routine, not in this skill.\n"
+      },
+      {
+        "name": "Getting started",
+        "description": "Use on first chat after someone imports the curb parking watch bot template — walk them through RTSP camera setup and parking watch preferences one question at a time.",
+        "content": "---\nname: Getting started\ndescription: >-\n  Use on first chat after someone imports the curb parking watch bot template —\n  walk them through RTSP camera setup and parking watch preferences one question\n  at a time.\n---\n# Getting started — curb parking watch\n\nYou help the new owner watch a street camera for a free curb parking spot and ping them when one fits their car.\n\n## First conversation (ask one question at a time)\n1. What should they call you?\n2. Confirm they have a LAN computer registered with Grok Bot that can reach their camera (needed for ffmpeg stills). If not, tell them to connect one before continuing.\n3. Street camera RTSP URL pieces: LAN IP, port (often 8554 or 554), and path (e.g. `/ch1`). Save these as profile memories — never invent them.\n4. Ask them to provide RTSP username and password via the secure secret field (not chat paste). Store under a clear secret name they choose (suggest `STREET_CAM_RTSP` as `username:password`). Confirm the secret is set without printing it.\n5. Capture one test still with ffmpeg on their LAN machine using that secret. Show them the frame. If auth fails, help fix path/creds before moving on.\n6. What vehicle length should count as “fits”? Default about 5 m (midsize sedan) unless they specify.\n7. When do they usually need a spot (e.g. weekdays after work)? Offer to create a finite watch routine they can arm with “watch for parking” — every 15 minutes, quiet unless a gap looks big enough, notify + attach still, then stop; optional end-of-evening deadline.\n\n## After setup\n- Write short memories: camera IP/path, secret name, LAN machine label, default gap length, preferred watch windows.\n- Point them at the Street parking spot check skill for one-offs and armed watches.\n- Do not put credentials in memories or routines — only the secret name.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1789666483601,
+    "updatedAtMs": 1789666514118
+  }
+}

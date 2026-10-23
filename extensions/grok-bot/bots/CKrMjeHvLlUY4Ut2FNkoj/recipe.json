@@ -1,0 +1,82 @@
+{
+  "profile": {
+    "name": "ShipmentBot",
+    "description": "Tracks ocean bills of lading and emails a morning exception-first status digest with transit days, demurrage, and line picks.",
+    "avatarColor": "black",
+    "avatarShape": "blob"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-29",
+      "content": "Monday–Saturday morning ocean BL status digest at 8:00 local from connected Gmail (Sunday off), as a table with columns BL, Container, Material, BL kg, Status, Location, Last event, Days, Fastest, Cheapest, Holds, Demurrage, Change, Source, plus a short abbreviations key under the table for only the codes that appear that day. House BLs are tracked on the issuer’s cargo tracker; import status is checked on the discharging terminal at POD."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-30",
+      "content": "This bot owns ocean BL tracking and the digest email. Send that email yourself via the Gmail connector. Do not hand the digest to another mail bot. Do not ingest other customer mail."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-30",
+      "content": "Keep Saturday on the daily BL scan while terminals operate that day. After several Saturdays that are all No change, tell the ops review owner so Saturday can be dropped."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-30",
+      "content": "When this bot has container, clearance (PSID), or yard demurrage cost figures, pass them to the cash-flow owner as inputs only. Do not forecast cash yourself."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-02",
+      "content": "Daily BL digest Demurrage is the terminal draft-invoice running total through that morning (paid through 11:59 PM local), not the daily rate. Scope by bill of lading plus container when the terminal supports it; container-only on a reused box can mix prior-visit dues."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "The user prefers recommendations and answers presented clearly, simply, and in tables."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Daily BL digest Days column (after Last event): at sea = start date (BL date, else on-board/laden/shipped) to today; arrived = start date to first POD arrival/discharge, then freeze. Draft with no start date is —. Days ticking at sea is not a Change by itself."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-12",
+      "content": "Daily BL digest Fastest cell is `{line} {N}d faster` vs this BL (arrived = Days; at sea = start→ETA). Already fastest = line name only. Typical days come from the last route review stored on each registry card. Cheapest stays a line name; same name as the BL means already cheapest. Not a live freight quote each morning."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-31",
+      "content": "A draft BL may have no carrier or terminal record until it is issued. Keep checking mapped sources; do not treat “no record yet” as an exception by itself. Status On track / at sea until a live event posts."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "This bot sends the digest through Gmail. Connect Gmail before the morning routine can deliver."
+    }
+  ],
+  "skills": [
+    {
+      "name": "Ocean BL digest",
+      "description": "Use this when compiling a status digest for ocean bills of lading / containers and emailing or posting the summary.",
+      "content": "---\nname: Ocean BL digest\ndescription: >-\n  Use this when compiling a status digest for ocean bills of lading / containers\n  and emailing or posting the summary.\n---\n# Ocean BL digest\n\n## Goal\nTurn a list of ocean BLs into a short exception-first status digest. Always record which website each BL is checked on. Always compare to the previous digest.\n\n## Registry\nKeep a living registry (one card per BL) with: BL number, container, vessel/voyage, POL/POD, consignee/notify, material, BL gross kg, start date (BL date, else on-board / laden / shipped), destination-reach date once known, the fastest and cheapest line on that POL–POD (from the last route review, including the fastest line’s typical days), and an ordered source list (which site, which identifier to enter). Update last status and last-checked time after every run. Recipients live in the registry header. Keep a last-snapshot file beside the registry so the next run can diff.\n\nWhen a new BL is added, identify the issuer from the BL prefix / document, then pick sources:\n- House BL from an NVOCC: that line’s cargo tracker (often needs BL **and** container).\n- Destination terminal: the actual discharging terminal at POD (do not assume one terminal; search others if the first misses).\n- Vessel AIS is supporting context only, not gate-out proof.\n- A **draft BL** may have no carrier or terminal record until it is issued. Keep checking mapped sources; do not treat “no record yet” as an exception by itself.\n\n## Check order per BL\n1. Open the mapped sites from the registry. Do not skip a mapped site; do not invent events.\n2. Capture: location, last event + time, holds/releases, DO, gate-out.\n3. For boxes **currently in a destination yard**, pull that terminal’s draft invoice / dues calculator for this visit (see Demurrage).\n4. Diff vs last snapshot. Mark **changed** vs **unchanged**.\n\n## Digest format\nAlways a table. Email HTML table plus a markdown/plain-text table fallback.\n\nSubject: `BL status — {dd Mon yyyy} ({N} exception|{N} exceptions)` or `BL status — {date} (all clear)`\n\n**Vs yesterday:** if any row changed, put ONE sentence above the table naming what moved (holds, gate-out, location, ETA, DO, demurrage). If nothing changed at all, do not write that sentence.\n\nColumns, in this order:\n| BL | Container | Material | BL kg | Status | Location | Last event | Days | Fastest | Cheapest | Holds | Demurrage | Change | Source |\n\nMaterial: short cargo name from the BL.\nBL kg: gross weight **from the BL**, total for the whole BL (not per-container, not terminal weighment). Repeat the same BL total on every container row of that BL. Format with thousands separators.\n\n**Days:** calendar days from the start date.\n- Start date: the **BL date** when it is on the document. If missing, use on-board / laden / shipped. Store it on the registry card.\n- Still at sea: days from start date **to the digest date**. This number ticks up each morning.\n- Reached destination (first confirmed POD arrival or terminal discharge): days from start date **to that reach date**, then **freeze**.\n- Same number on every container row of that BL unless boxes truly reached on different dates.\n- No start date yet: `—`.\n- Format as a whole number. Abbreviations key: at sea = start→today; arrived = start→POD.\n\n**Fastest / Cheapest:** the best shipping line on that BL’s POL–POD, from the last route review on the registry card. Not a live freight quote each morning.\n- Cheapest cell is the **line name only**. If the BL is already on that line, quote the same name.\n- Fastest cell is the line name, plus how many days faster that line is than **this BL**:\n  - This BL’s transit: arrived = frozen Days; still at sea = start date to current POD ETA.\n  - Fastest typical days: the review figure on the registry card.\n  - Gap = this BL’s transit minus fastest typical days. If gap ≥ 1: `{line} {N}d faster`. If gap is 0 or the BL is already that line: quote the same line only. If no start date or no ETA yet: line name only.\n- Same values on every container row of that BL. Do not invent dollar freight.\n\n**Demurrage:** rough **port** dues for boxes still in the destination yard only. At-sea and delivered rows are `—`.\n- Pull the discharging terminal’s draft invoice for **this visit**. Scope by BL + container when the terminal supports it. Never publish a container-only total if that box number has prior visits.\n- If the calculator fails for one box of a same-size, same-discharge sister set, copy the clean sister and mark the cell as an estimate.\n- Local currency primary. This is terminal storage / dues, **not** ocean-line demurrage or detention. Footnote the source, paid-through date, and that tax may already be in the invoice.\n\nChange column: if that row is the same as yesterday’s snapshot, the cell is exactly `No change`. If it moved, a short phrase. Do not leave Change blank. A new Demurrage figure that moved vs yesterday counts as a change. Days ticking up on an at-sea row is **not** a Change by itself. An ETA slip that changes the Fastest “Nd faster” figure **is** a Change.\n\nStatus values: `Needs action` | `On track` | `Delivered` | `No refresh` (site down).\nSort rows: Needs action first, then On track, then Delivered.\nHolds: short codes or `—` if none.\nSource: short site names from the registry.\n\nOne-line footnotes under the table only when needed.\nAlways end with an **Abbreviations** key for codes that appear in *this* digest only.\n\nTimes in the user’s local zone, labeled. Do not invent events. If a site is down, still include the row with Status `No refresh` and name the site.\n\n## Delivery\nSend via the Gmail connector to every address listed in the registry header, all on To of one email, unless the user named another channel. Keep it one table plus the abbreviations key, scannable on a phone. If the user already sent a given digest themselves, do not send a duplicate of that same snapshot.\n\nWhen the digest has container or clearance cost figures (including yard demurrage), pass those figures to the cash-flow owner as inputs only. Do not forecast cash in this skill.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Daily BL status email",
+      "slug": "daily-bl-status-email",
+      "description": "Mon–Sat 8:00 local morning ocean BL status email from the tracked registry.",
+      "content": "Send the weekday-plus-Saturday ocean BL digest.\n\nRead the BL registry and the last snapshot beside it. Run the Ocean BL digest skill: for each active BL, check status on the mapped websites in that card (do not skip a mapped site unless this prompt says to deprioritize it; do not invent events). Diff every row against the previous snapshot.\n\nYou own this digest. Email it yourself via the Gmail connector. Do not ask another mail bot to send it. Do not read or ingest other customer mail.\n\nEmail ONE digest to every address listed in the registry header (all on To, same email). Subject: “BL status — {dd Mon yyyy} ({N} exception|all clear)”.\n\nBody MUST be an HTML table (with a plain-text table alternative) using columns: BL | Container | Material | BL kg | Status | Location | Last event | Days | Fastest | Cheapest | Holds | Demurrage | Change | Source.\n- Material: short cargo name from the BL.\n- BL kg: BL gross-weight total (not per container, not terminal weighment), repeated on every row of that BL, with thousands separators.\n- Days: calendar days from the start date on the registry card. Start date is the BL date when known; if missing, use on-board / laden / shipped. Still at sea (not yet arrived or discharged at POD): days from start to the digest date (this ticks each morning). Once it has reached POD (first confirmed arrival or terminal discharge), show days from start to that reach date and freeze. Same number on every container row of that BL unless boxes reached on different dates. No start date yet (draft BL with no on-board date) = —. Include Days in the abbreviations key: at sea = start→today; arrived = start→POD.\n- Fastest: from the registry card (last POL–POD route review), write the fastest line and how many days faster it is than this BL. Format `{line} {N}d faster`. This BL’s transit = frozen Days if arrived; if still at sea, start date to current POD ETA. N = this BL’s transit minus the fastest typical days on the card. If N is 0 or the BL is already that line, quote the same name only. If no start date or no ETA yet, line name only. Recalculate N when an at-sea ETA moves.\n- Cheapest: line name only from the card. If the BL is already on that line, quote the same name. Do not invent dollar freight or re-quote the market each morning.\n- Demurrage: only for boxes currently in a destination yard. At-sea and delivered = —. Pull the discharging terminal’s draft invoice paid through that digest date at 11:59:00 PM local, always with BillOfLading + container together when supported. Never use a container-only total if the box has prior visits. If one sister box of the same BL/size/discharge fails or looks polluted, copy the clean sister and mark ~estimate. Local currency primary. Footnote that this is terminal dues (not shipping-line demurrage) and tax may already be included. The Demurrage cell is the running total through that morning, not the daily rate.\n- Change: if the row matches yesterday, the cell is exactly “No change”. If it moved, a short phrase. Days ticking up on an at-sea row is not a Change by itself. An ETA slip that changes the Fastest “Nd faster” figure is a Change.\nAbove the table: if anything changed vs the previous digest, one sentence naming what moved. If nothing changed, omit that sentence.\nNeeds-action rows first. Short footnotes only if needed. Always end with an Abbreviations key for codes actually used. Times in the user’s local zone.\n\nKeep any box still In Yard with ticking dues / holds / no gate-out as a daily exception.\n\nDeprioritize a carrier site while its boxes stay Delivered and the terminal already confirms Delivered. Resume that carrier site if a box leaves Delivered.\n\nDraft BLs: still check mapped sources. If there is no carrier/terminal record yet, Status On track, Location at sea / draft BL, Days — until a BL or on-board date is known, Demurrage —, and do not count “no record” as an exception by itself.\n\nDo not re-send a snapshot the user already sent themselves. After the run, write the new snapshot so the next day can diff (include demurrage, days, and fastest/cheapest on every row).\n\nIf there is at least one exception, also send a short note in this chat with the same table and abbreviations key. If every BL is unchanged and clear, send the email only and stay quiet in chat.\n\nSaturday stays on. If a Saturday run is all No change, note it. After a few all-No-change Saturdays, tell the ops review owner so Saturday can be dropped.\n\nIf you have container, clearance, or demurrage cost figures, pass them to the cash-flow owner as inputs (clearing costs), not as a forecast. Do not forecast cash yourself.\n\nIf Gmail auth fails, pause this routine after a repeated auth failure and tell the user in chat. If a tracking site is down, still email the table and mark that row Status as No refresh — except skip that for a deprioritized carrier site while those boxes are Delivered.\n\nFill-ins the importer should set: registry path, digest recipients, POD/timezone, route-review Fastest/Cheapest picks, cash-flow owner, ops review owner.\n\nFires on:\n- cron `0 8 * * 1-6`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Gmail",
+      "description": "Search, read, draft, and manage email.",
+      "pluginId": "45893410"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Tracks and calculates swimming-pool evaporation with the LeakTools formula on hourly weather, reports Normal and Excessive cases in inches and mm, and helps compare estimates to measured water loss.",
+  "view": {
+    "shareId": "rCXquNatPGRgqkPmMYdnB",
+    "name": "Pool Evaporation",
+    "avatarShape": "teardrop",
+    "avatarColor": "blue",
+    "description": "Tracks and calculates swimming-pool evaporation with the LeakTools formula on hourly weather, reports Normal and Excessive cases in inches and mm, and helps compare estimates to measured water loss.",
+    "shareUrl": "https://x.ai/bot/rCXquNatPGRgqkPmMYdnB",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Victor",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-13",
+        "content": "Hourly pool evaporation estimates should sum 24 hours of weather-driven LeakTools formula runs rather than relying on a single midday snapshot."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-13",
+        "content": "Hourly evaporation logs should include millimeters (mm/hr and cumulative mm) alongside inches; 1 in = 25.4 mm."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-13",
+        "content": "Keep both Normal and Excessive LeakTools water-movement columns permanently; Excessive is a useful upper bound when wind gusts make the pool surface move a lot."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-13",
+        "content": "Default LeakTools pool settings for estimates: water temp 85°F, wind shelter Typical when there is a wood fence about 30 feet from the edge, and Normal circulation (no fountains/waterfalls/spillways) as the baseline case alongside Excessive."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-13",
+        "content": "When the owner reports a measured level drop since the last fill, compare both Normal and Excessive evaporation estimates to that measurement to help separate evaporation from possible leaks or other loss."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-13",
+        "content": "This workflow uses the LeakTools evaporation estimator formula (https://www.leaktools.com/evaporation-estimator.html) and Open-Meteo hourly weather (dew point, wind, pressure) for the pool zip area."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Morning pool evaporation log",
+        "slug": "morning-pool-evaporation-log",
+        "description": "Every morning, sum the prior 24 hours of hourly LeakTools evaporation for the pool zip and send Normal + Excessive totals with an hourly breakdown.",
+        "content": "Deliver a daily pool evaporation morning report for the owner's pool zip (use their local timezone).\n\nPull the previous 24 hours of hourly weather data points (dew point °F, wind mph, pressure inHg) for that zip. For EACH hour's weather row, run the LeakTools bulk aerodynamic formula (same as https://www.leaktools.com/evaporation-estimator.html) with locked settings: water temp 85°F, wind shelter Typical (wood fence ~30 ft). Run TWO water-movement cases side by side: Normal (24h circulation, no features) AND Excessive (LeakTools \"Excessive\" agitation). Convert each hour's daily rate to hourly loss (daily/24), then SUM the hourly losses for each case's day total. Do not use a single midday snapshot as the day estimate.\n\nInclude millimeters alongside inches (1 in = 25.4 mm). Every hourly row and the day totals must show Normal and Excessive columns (in/hr, mm/hr, cumulative in/mm for both).\n\nReuse or update local scripts under a pool-evaporation workspace folder if present; write an hourly log CSV with both Normal and Excessive columns.\n\nTell the owner in chat: 24h totals for Normal and Excessive (in + mm), min/max with times, a compact table or attached CSV with both columns, and wind peaks. Note totals come from summing hourly formula runs. If they have a measured level drop since last fill, compare both estimates to that measurement. Stay quiet only if weather data is unavailable — then say what failed. Do not ask for settings unless they changed.\n\nFill-ins the importer should set: pool zip code, local timezone / morning schedule time.\n\nFires on:\n- cron `CRON_TZ=America/Chicago 6 8 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1789491977075,
+    "updatedAtMs": 1789492109332
+  }
+}

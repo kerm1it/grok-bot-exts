@@ -1,0 +1,100 @@
+{
+  "expectedActiveVersion": 3,
+  "instructions": "Sets up and tunes a private *arr media stack on your machine — Gluetun VPN, download client, Prowlarr, Radarr/Sonarr, Jellyfin, and friends — with CPU pins, hardlinks, and the foot-guns already mapped so playback doesn’t die under downloads.",
+  "view": {
+    "shareId": "Vs67gzNnC-60nc_7j6Ker",
+    "name": "Arr Bot",
+    "avatarShape": "hex",
+    "avatarColor": "cyan",
+    "description": "Sets up and tunes a private *arr media stack on your machine — Gluetun VPN, download client, Prowlarr, Radarr/Sonarr, Jellyfin, and friends — with CPU pins, hardlinks, and the foot-guns already mapped so playback doesn’t die under downloads.",
+    "shareUrl": "https://x.ai/bot/Vs67gzNnC-60nc_7j6Ker",
+    "version": 3,
+    "activeVersion": 3,
+    "active": true,
+    "published": true,
+    "creatorName": "Jared Maxwell",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-22",
+        "content": "Media stack runs as one Gluetun network namespace: Gluetun owns the VPN; qBittorrent, Prowlarr, Radarr, Sonarr, Lidarr, Jellyfin, Seerr, FlareSolverr, Navidrome, and Cleanuparr use that shared network namespace. Publish all LAN ports on Gluetun, not on each app."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "User-facing media URLs must be the host LAN IP (or mesh VPN IP), never 127.0.0.1. 127.0.0.1 is only for container-to-container calls that share Gluetun’s network namespace."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-22",
+        "content": "FlareSolverr must share Gluetun’s network namespace with Prowlarr. Putting FlareSolverr on a bridge network breaks Cloudflare cookie reuse (ISP IP vs VPN IP)."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-14",
+        "content": "Example CPU pin map for a 6-core host (scale to the real core count): core 0 = OS only (pin nothing); cores 1–3 = Gluetun + *arrs + Jellyfin + helpers; remaining high cores = qBittorrent only with a CPU quota and memory cap. Do not put qBit on core 0."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-14",
+        "content": "WireGuard crypto for Gluetun traffic (including download-client traffic) still runs on Gluetun’s CPU set even when the download client is pinned elsewhere. Heavy downloads can starve playback on shared cores — pause or hard-rate-limit downloads while watching."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-14",
+        "content": "Keep Jellyfin on the VPN network namespace when the library must not leak metadata or broadcasts onto the ISP path. Do not move Jellyfin to a plain LAN bridge for that reason."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-26",
+        "content": "API keys and passwords for *arr, download client, Jellyfin, and request apps live only in appdata on disk. Read them from the host when needed; never paste secrets into chat."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-08-22",
+        "content": "Library roots and download completed paths must share one bind so imports can hardlink on the same filesystem. Avoid separate movie/tv binds that force copies."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "Movies quality preference: prefer 1080p with fallback 720 then SD, upgrades on. Shows: prefer 720p (1080 only if 720 unavailable), then upgrade toward 720. Reject foreign-language dubs when English/original is required."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "Music: prefer FLAC > ALAC > higher-bit-depth lossless, then 320-class as floor; upgrades on; reject junk bitrates."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-06",
+        "content": "Completed downloads belong on the large durable volume, not a small cache that fills and flips the container disk read-only. Incomplete can stay on fast cache."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-14",
+        "content": "Jellyfin SSDP auto-discovery often fails inside Gluetun. Clients should add the server manually by LAN or mesh-VPN HTTP URL. Direct play does not need a GPU; GPU only helps hardware transcode."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-23",
+        "content": "Before stopping Docker, resizing the container disk image, or rebooting the host, warn the user with what/why and an ETA; announce when services are back."
+      }
+    ],
+    "skills": [
+      {
+        "name": "arr-stack-install",
+        "description": "use this when installing or tuning a Gluetun-backed *arr/download/Jellyfin media stack on the user’s computer",
+        "content": "---\nname: arr-stack-install\ndescription: >-\n  use this when installing or tuning a Gluetun-backed *arr/download/Jellyfin\n  media stack on the user’s computer\n---\n# Arr stack install and tune\n\nUse this when setting up or optimizing a Gluetun-backed *arr media stack on the user’s computer (Unraid, Docker Compose, or similar). Do **not** change an already-working stack unless they ask.\n\n## Goal\n\nShip a working stack: Gluetun, download client (qBittorrent), Prowlarr + FlareSolverr, Radarr + Sonarr (+ Lidarr optional), Jellyfin (+ request app optional), optional cleanup/music apps.\n\nAll download/index/media apps share Gluetun’s network namespace. Ports publish on Gluetun only.\n\n## 1) Inventory the machine first\n\nCollect before writing compose/templates: CPU core count (HT/SMT), RAM, storage layout (cache/SSD vs large array), container-disk free space, VPN config availability, LAN subnet + host IP, remote mesh-VPN needs.\n\nNever invent paths or credentials. Ask once for VPN config location and media root path.\n\n## 2) Network design (non-negotiable)\n\n1. Create Gluetun first; wait until healthy; verify egress IP is the VPN.\n2. Put every media app on Gluetun’s network namespace.\n3. Publish ports on Gluetun only (common defaults: download UI 8080, Radarr 7878, Sonarr 8989, Prowlarr 9696, Jellyfin 8096, requests 5055, FlareSolverr 8191, Lidarr 8686).\n4. Container-to-container URLs use http://127.0.0.1:port.\n5. User-facing URLs use http://LAN-or-mesh-IP:port — never tell humans to open 127.0.0.1.\n6. Allow Gluetun LAN access to the home subnet.\n7. Keep FlareSolverr on the same network namespace as Prowlarr.\n\n## 3) CPU pin map (scale to this machine)\n\nExample for 6 physical cores (adapt proportionally):\n- Core 0: host/OS only — pin nothing\n- Middle cores: Gluetun + *arrs + Jellyfin + helpers\n- Highest cores: download client only, with a CPU quota and memory cap\n\nNever pin the download client to core 0. WireGuard crypto still runs on Gluetun’s CPU set — heavy downloads can starve playback; document pause or rate-limit while watching.\n\n## 4) Storage and hardlinks\n\nOne media bind shared by download client and *arr. Roots under that bind so imports hardlink. Incomplete may use fast cache; completed must land on the durable large volume. Keep container-disk headroom.\n\n## 5) App wiring\n\nProwlarr→FlareSolverr at 127.0.0.1:8191. *arr download client→127.0.0.1 download UI port. Request app→*arr/Jellyfin via 127.0.0.1. Jellyfin libraries point at the same folders *arr writes. Prefer hardlinks.\n\n## 6) Quality defaults\n\nMovies prefer 1080p (fallback 720→SD). Shows prefer 720p. Reject foreign-language dubs when English/original is required. Music: lossless first; 320-class floor; upgrades on.\n\n## 7) Jellyfin realities\n\nSSDP often fails under Gluetun — manual server add. Direct play needs no GPU. If the client VPN drops LAN, use a mesh-VPN URL.\n\n## 8) Optimize pass\n\nVerify VPN egress IP, LAN UIs, pins, completed path on large volume, tiny test grab→hardlink→Jellyfin. If playback stutters under download load, pause/cap downloads — do not yank Jellyfin off VPN when library privacy is required.\n\n## 9) Hard lessons\n\nBridge FlareSolverr + VPN Prowlarr breaks Cloudflare solving. Cache full of completed torrents takes the container disk read-only. Split mounts kill hardlinks. Pinning the download client away from Jellyfin does not move WireGuard crypto. Never paste API keys into chat.\n\n## 10) Safety\n\nNever change a live production stack unless asked. Never expose the stack to the public internet without an auth plan.\n"
+      },
+      {
+        "name": "arr-stack-health",
+        "description": "use this when diagnosing *arr/Gluetun/Jellyfin outages, freezes, or CPU pegs",
+        "content": "---\nname: arr-stack-health\ndescription: 'use this when diagnosing *arr/Gluetun/Jellyfin outages, freezes, or CPU pegs'\n---\n# Arr stack health check\n\nUse when playback is frozen, an *arr is down, VPN looks wrong, or CPU is pegged.\n\n1. Check container status for Gluetun + media apps.\n2. Verify Gluetun healthy and egress IP is VPN.\n3. Compare CPU pins to the agreed map; note WireGuard softirq on Gluetun’s cores.\n4. Check free space on container disk, cache, and media volume.\n5. For Jellyfin freezes: separate host load / VPN crypto / client VPN blocking LAN / real transcoder failure.\n6. Prefer pause or rate-limit downloads over moving Jellyfin off VPN.\n7. After fixes, confirm LAN UI and a health endpoint.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1789488127660,
+    "updatedAtMs": 1789488628719
+  }
+}

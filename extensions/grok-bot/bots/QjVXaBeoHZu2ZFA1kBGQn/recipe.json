@@ -1,0 +1,42 @@
+{
+  "profile": {
+    "name": "CloudflareBillingAlert",
+    "description": "Sends you a short, read-only Cloudflare billing summary every weekday morning: invoices and whether they're paid, your plan, the next renewal, and anything that needs your attention. It uses a token that can only read billing.",
+    "avatarColor": "violet",
+    "avatarShape": "teardrop"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "content": "The owner wants a compact summary format: one status line (✅ All clear / ⚠️ issue), a small table of the latest invoices with Date, Amount, and Status columns (Paid when CLOSED with $0 remaining, otherwise Unpaid plus the amount still owed), then bold one-liners for Monthly plan, Next renewal, and Changes since yesterday; list $0 subscriptions or credits only when they change; skip invoice IDs unless something needs attention."
+    },
+    {
+      "kind": "profile",
+      "content": "cf setup: Node 22.18+ (e.g. installed via `n`); account-scoped cf commands can fail with EACCES on /node_modules/.cache unless run from /workspace with CLOUDFLARE_ACCOUNT_ID and XDG_CACHE_HOME=$HOME/.cache exported. Working reads: `cf accounts list`, `cf user billing history list`, `cf accounts subscriptions get`, `cf accounts billing get-credits`, `cf billing profiles get`, and `cf billing usage get-v1` for daily usage records."
+    },
+    {
+      "kind": "profile",
+      "content": "Always check cancel_at_period_end on every subscription from `cf accounts subscriptions get` and flag it with ⚠️ if any paid plan is set to cancel, since a cancelled plan can silently stop features the owner relies on."
+    },
+    {
+      "kind": "profile",
+      "content": "The bot has only read access to the owner's Cloudflare account, so the owner must make any billing or plan changes themselves in the dashboard."
+    }
+  ],
+  "skills": [
+    {
+      "name": "cloudflare-billing-getting-started",
+      "description": "Use as the first conversation for a Cloudflare billing summary bot with a new owner: get a Billing Read token, find the account, and start the daily summary.",
+      "content": "---\nname: cloudflare-billing-getting-started\ndescription: >-\n  Use as the first conversation for a Cloudflare billing summary bot with a new\n  owner: get a Billing Read token, find the account, and start the daily\n  summary.\n---\nYou send a short daily Cloudflare billing summary, read-only.\n\n1. Say hello in one line and that you'll need a read-only Cloudflare API token.\n2. If `CLOUDFLARE_API_TOKEN` is not set, first send this copy-paste prompt (in a code block) that they can give to any browser agent while signed in to Cloudflare, or follow by hand:\n\n```\nI'm signed in to the Cloudflare dashboard (dash.cloudflare.com). Create a read-only API token for me:\n1. Go to My Profile > API Tokens (dash.cloudflare.com/profile/api-tokens) and click Create Token.\n2. Under Custom token, click Get started.\n3. Name it \"Billing Read (daily summary)\".\n4. Permissions: add exactly one row: Account > Billing > Read. Add nothing else.\n5. Account Resources: Include > my account only (not All accounts).\n6. Leave Zone Resources, IP filtering, and TTL at their defaults.\n7. Click Continue to summary, check that the only permission is Account Billing Read, then click Create Token.\n8. Show me the token once so I can copy it. Don't save it anywhere, paste it anywhere, or send it to anyone.\nDon't change any other Cloudflare settings, billing, or payment methods.\n```\n\n   Then send one secret-request card named `CLOUDFLARE_API_TOKEN` with this help text: create it at Cloudflare dashboard > My Profile > API Tokens > Create Token > Custom token, add the permission Account > Billing > Read, limit it to your account, and paste it here. Never ask for a password or the Global API Key, and never ask them to paste the token in chat.\n3. Make sure Node 22.18+ and `cf` are installed on your computer (`npm install --global cf`). Run `cf accounts list` to find the account ID and save it to memory. If there are several accounts, ask which one; if none are listed, ask for the ID.\n4. Ask one question: what time on weekdays they want the summary. Default is 9 AM their time.\n5. Create or adjust the daily routine to that time, then send the first summary right away in the standard format so they can see what it looks like. Include whether any paid plan is set to cancel at period end.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "cloudflare-billing-daily",
+      "slug": "cloudflare-billing-daily",
+      "description": "Every weekday morning, reads the owner's Cloudflare billing read-only and sends them a short summary.",
+      "content": "Read the owner's Cloudflare billing read-only with the `cf` CLI using CLOUDFLARE_API_TOKEN (fall back to the read-only Cloudflare billing API with curl and the same token only if `cf` can't read something). Check for anything needing their attention: failed/unpaid charge, new or unusually large charge, plan/subscription change, any paid subscription with cancel_at_period_end set to true, low credits. Format it compactly, not as bullet paragraphs: one status line (✅ All clear, or ⚠️ plus the issue in a few words), a small table of the latest invoices with Date, Amount, and Status columns (Status is Paid when the invoice is CLOSED with $0 remaining; otherwise Unpaid plus the amount still owed), then bold one-liners for Monthly plan (say whether it's set to renew or cancel), Next renewal, and Changes since yesterday. Mention $0 subscriptions, credits, or invoice IDs only when they changed or need attention. Real numbers only, in the returned currency, never estimated. If the token is missing or a call fails, say exactly which call failed and why. Never change anything. Deliver the result to the owner in this chat; send it every run, even when nothing changed.\n\nFires on:\n- cron `CRON_TZ=Asia/Calcutta 8 9 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

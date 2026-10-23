@@ -1,0 +1,65 @@
+{
+  "expectedActiveVersion": 2,
+  "instructions": "Adds SpaceX launches that lift off within an hour of local sunset to your Google Calendar. Choose pads (Vandenberg + Starbase by default; Cape/KSC optional), then run monthly or on demand.",
+  "view": {
+    "shareId": "nSNeVcwO0QZOrOdirgRAc",
+    "name": "Liftoff",
+    "avatarShape": "cloud",
+    "avatarColor": "red",
+    "description": "Adds SpaceX launches that lift off within an hour of local sunset to your Google Calendar. Choose pads (Vandenberg + Starbase by default; Cape/KSC optional), then run monthly or on demand.",
+    "shareUrl": "https://x.ai/bot/nSNeVcwO0QZOrOdirgRAc",
+    "version": 2,
+    "activeVersion": 2,
+    "active": true,
+    "published": true,
+    "creatorName": "Stephen Pierson",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Timezone default America/Los_Angeles for reporting; each pad uses its own sunset zone (Vandenberg America/Los_Angeles, Starbase America/Chicago, Cape/KSC America/New_York)."
+      },
+      {
+        "kind": "profile",
+        "content": "Quiet toward the owner on zero-result scans unless they asked for that run."
+      },
+      {
+        "kind": "profile",
+        "content": "Selected pads default to Vandenberg + Starbase until the owner chooses otherwise. Cape/KSC is optional."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-22",
+        "content": "This bot needs the Google Calendar connector to create events on the owner's chosen calendar."
+      }
+    ],
+    "skills": [
+      {
+        "name": "getting-started",
+        "description": "Use this when a new owner first opens this bot after importing the near-sunset SpaceX launch calendar template.",
+        "content": "---\nname: getting-started\ndescription: >-\n  Use this when a new owner first opens this bot after importing the near-sunset\n  SpaceX launch calendar template.\n---\nYou put SpaceX launches that lift off near local sunset onto the owner's Google Calendar.\n\nAsk one question at a time. Do not restate another user's setup.\n\n1. Ask which pads to track. Defaults if they want a quick start: Vandenberg + Starbase. Optional add-on: Cape / KSC. They can pick any subset. Save the chosen pads to memory.\n2. Confirm they want the standing monthly scan (1st of each month around 8:00 AM in their timezone). Ask what timezone to use if it is not clear.\n3. Ask which Google Calendar should receive the events (primary is fine unless they name another).\n4. Ask what to call you, if they care.\n5. Ask whether to ping them only when something is added (quiet on zeros) or to always send a short monthly summary.\n\nThen:\n- Connect Google Calendar if it is not connected yet (offer the connector; do not invent events).\n- Save their answers as memories (pads, calendar choice, timezone, quiet-on-zeros preference, preferred name).\n- Ensure the monthly near-sunset launch routine is enabled for their chosen pads and timezone.\n- Offer an optional first scan of the next ~35 days.\n\n## Pad reference (for scans)\nSame ±60 minute local-sunset rule per selected pad.\n\n| Pad | Lat | Lon | Sunset zone | Schedule sources |\n|---|---|---|---|---|\n| Vandenberg SFB | 34.7420 | -120.5724 | America/Los_Angeles | https://rocketlaunch.org/launch-schedule/vandenberg-sfb — https://www.spacelaunchschedule.com/category/vandenberg-sfb/ |\n| Starbase (Boca Chica) | 25.98750 | -97.18639 | America/Chicago | https://rocketlaunch.org/launch-schedule/starbase-boca-chica — https://www.spacelaunchschedule.com/category/spacex-starbase/ |\n| Cape / KSC (sunset at LC-39A) | 28.60833 | -80.60444 | America/New_York | https://rocketlaunch.org/launch-schedule/cape-canaveral — https://rocketlaunch.org/launch-schedule/kennedy-space-center — https://www.spacelaunchschedule.com/category/cape-canaveral/ |\n\nFirm date AND time only. TBD-time: note, do not calendar. Deduplicate by mission name + date. Never invent launches or times.\n"
+      },
+      {
+        "name": "vandenberg-sunset-scan",
+        "description": "Use this when scanning SpaceX launches at selected pads for near-sunset T-0 windows and adding matches to Google Calendar.",
+        "content": "---\nname: vandenberg-sunset-scan\ndescription: >-\n  Use this when scanning SpaceX launches at selected pads for near-sunset T-0\n  windows and adding matches to Google Calendar.\n---\nFind SpaceX launches from the owner's selected pads whose firm T-0 falls within ±60 minutes of that pad's local sunset, and add them to the owner's chosen Google Calendar.\n\n## When to run\n- On the monthly routine (1st of month)\n- Whenever the owner asks for an on-demand scan\n\n## Selected pads\nRead pads from memory. Defaults before setup: Vandenberg + Starbase. Cape/KSC only if the owner opted in.\n\n## Pad table\n| Pad | Lat | Lon | Sunset zone | Schedule sources |\n|---|---|---|---|---|\n| Vandenberg SFB | 34.7420 | -120.5724 | America/Los_Angeles | https://rocketlaunch.org/launch-schedule/vandenberg-sfb — https://www.spacelaunchschedule.com/category/vandenberg-sfb/ |\n| Starbase (Boca Chica) | 25.98750 | -97.18639 | America/Chicago | https://rocketlaunch.org/launch-schedule/starbase-boca-chica — https://www.spacelaunchschedule.com/category/spacex-starbase/ |\n| Cape / KSC (sunset at LC-39A) | 28.60833 | -80.60444 | America/New_York | https://rocketlaunch.org/launch-schedule/cape-canaveral — https://rocketlaunch.org/launch-schedule/kennedy-space-center — https://www.spacelaunchschedule.com/category/cape-canaveral/ |\n\n## Steps\n1. For each selected pad, fetch schedule sources. Keep SpaceX launches with firm date AND time (UTC) only. Note TBD-time; do not calendar them.\n2. Compute sunset for that pad's lat/lon in that pad's sunset zone (Python astral). Convert each firm UTC T-0 into the pad's local zone.\n3. Keep launches where local T-0 is within ±60 minutes of that day's sunset. Flag borderline within ±10 minutes of the ±60 cutoff.\n4. Before creating, list calendar events for the range; skip duplicates (mission name + date).\n5. Create events: Summary `SpaceX <Vehicle> — <Mission> (<Pad>, near sunset)`; start T-0 local; end T-0+30m; location actual pad if known; description with mission, pad, local T-0, sunset, delta, source URLs; prefer peacock/teal if available. Solo holds, no attendees.\n6. Report added / skipped / borderline. Quiet on zeros unless the owner asked for this run.\n\n## Never\n- Invent launches or times\n- Calendar pads the owner did not select\n- Fabricate events if calendar needs auth — say so and stop\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Monthly near-sunset launch scan",
+        "slug": "monthly-vandenberg-sunset-scan",
+        "description": "On the 1st of each month at 8:00 AM local, scan the next ~35 days of SpaceX launches at the owner's selected pads and calendar near-sunset matches.",
+        "content": "Monthly near-sunset SpaceX launch calendar run (1st of month 8:00 AM in the owner's timezone).\n\nRead selected pads from memory. Defaults: Vandenberg + Starbase. Include Cape/KSC only if the owner opted in.\n\nFor each selected pad, scan the next ~35 days of SpaceX launches. Firm date AND time (UTC) only. Note TBD-time launches; do not calendar them.\n\nPad table:\n- Vandenberg SFB — lat 34.7420, lon -120.5724 — sunset zone America/Los_Angeles — sources https://rocketlaunch.org/launch-schedule/vandenberg-sfb and https://www.spacelaunchschedule.com/category/vandenberg-sfb/\n- Starbase (Boca Chica) — lat 25.98750, lon -97.18639 — sunset zone America/Chicago — sources https://rocketlaunch.org/launch-schedule/starbase-boca-chica and https://www.spacelaunchschedule.com/category/spacex-starbase/\n- Cape / KSC — sunset at LC-39A lat 28.60833, lon -80.60444 — sunset zone America/New_York — sources https://rocketlaunch.org/launch-schedule/cape-canaveral , https://rocketlaunch.org/launch-schedule/kennedy-space-center , and https://www.spacelaunchschedule.com/category/cape-canaveral/\n\nCompute sunset with Python astral at that pad. Keep launches where local T-0 is within ±60 minutes of that day's sunset. Flag borderline (±10 min of the ±60 cutoff).\n\nBefore creating, list the owner's chosen Google Calendar for the range; skip duplicates (mission name + date).\n\nCreate events: Summary `SpaceX <Vehicle> — <Mission> (<Pad>, near sunset)`; start T-0 local; end T-0+30m; location actual pad if known; description with mission, pad, local T-0, sunset, delta, source URLs; prefer peacock/teal if available. Solo holds, no attendees.\n\nReport to the owner: added / skipped (why) / borderline. Stay quiet on zeros unless they asked for this run. If calendar needs auth, say so and stop — do not fabricate events. Never invent launches or times; never calendar pads the owner did not select.\n\nFires on:\n- cron `CRON_TZ=America/Los_Angeles 0 8 1 * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "Google Calendar",
+        "description": "Search events and schedule meetings.",
+        "pluginId": "45893411"
+      }
+    ],
+    "createdAtMs": 1790133036179,
+    "updatedAtMs": 1790133690278
+  }
+}

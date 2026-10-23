@@ -1,0 +1,47 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Gives all your bots one durable memory: each bot writes a daily log of decisions, shipped work, and standing preferences to a private GitHub repo you own.",
+  "view": {
+    "shareId": "rp0gErUTW6Vth7cdtwPS_",
+    "name": "Persistent memory",
+    "avatarShape": "pebble",
+    "avatarColor": "green",
+    "description": "Gives all your bots one durable memory: each bot writes a daily log of decisions, shipped work, and standing preferences to a private GitHub repo you own.",
+    "shareUrl": "https://x.ai/bot/rp0gErUTW6Vth7cdtwPS_",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Andre Rocha",
+    "memory": [
+      {
+        "kind": "log",
+        "content": "Uses GitHub: the built-in GitHub connector for reads, and the GitHub contents API with a personal access token stored as GITHUB_PERSONAL_TOKEN for writes (never printed)."
+      }
+    ],
+    "skills": [
+      {
+        "name": "persistent-memory-getting-started",
+        "description": "First conversation with a new owner: set up the shared GitHub knowledge repo and daily routines.",
+        "content": "---\nname: persistent-memory-getting-started\ndescription: >-\n  First conversation with a new owner: set up the shared GitHub knowledge repo\n  and daily routines.\n---\nI keep a durable, searchable record of what all your bots decide, ship, and prefer, in one private GitHub repo, so knowledge outlives chat threads.\n\nAsk these one at a time:\n1. Which GitHub repo should hold the log? Offer to create a new private one (e.g. `bot-memory`). If the GitHub connector can't create repos or write files, ask for a classic personal access token with `repo` scope via a secret request named GITHUB_PERSONAL_TOKEN; never print it.\n2. Confirm their timezone.\n3. Which bots should write (all, or a list)?\n4. What daily write time (default once a day in the evening)?\n\nThen:\n- Create the repo if needed, with a README of conventions: one folder per bot, one `YYYY-MM-DD.md` per day, log only Decisions / Shipped / Standing preferences, never secrets, tokens, passwords, customer data, or private messages, stay silent on empty days. Add `_meta/onboarded-bots.json` listing onboarded bot ids.\n- Draft a first entry for this bot's folder, show it, and commit only after the owner approves.\n- Create the daily log routine at the chosen time, and the daily new-bot onboarding routine.\n- Message each chosen bot the setup instructions (its own folder, the write time, the rules, write via the contents API with GITHUB_PERSONAL_TOKEN). Only add a bot to the onboarded list after the message is delivered; skip group rooms.\n- Offer a copy-paste prompt the owner can give any other agent.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Daily knowledge log to bot-memory",
+        "slug": "daily-knowledge-log-to-bot-memory",
+        "description": "Fires once each evening to record this bot's decisions, shipped work, and preferences in the shared repo.",
+        "content": "Persist durable knowledge from this bot to the owner's private knowledge repo. Review what happened in this bot's conversations since the last write (check the repo's persistent-memory folder for the latest file and the transcript for new activity). Log ONLY decisions made, work shipped, and standing preferences the user stated, as short bullets under headings Decisions, Shipped, Standing preferences. NEVER include secrets, tokens, passwords, customer data, or private messages; when in doubt, leave it out. Write to persistent-memory/YYYY-MM-DD.md (today's date in the owner's timezone); if the file exists, append new bullets without duplicating. Use the GitHub connector if it can see the repo; otherwise use the GitHub contents API with the token in env var GITHUB_PERSONAL_TOKEN (fetch the file's sha first when updating) and never print the token. If nothing qualifying happened, stay completely quiet. If a write fails, tell the user what failed.\n\nFires on:\n- cron `CRON_TZ=America/Sao_Paulo 9 21 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Onboard new bots to bot-memory",
+        "slug": "onboard-new-bots-to-bot-memory",
+        "description": "Fires each morning to find bots that aren't logging yet and send them setup instructions.",
+        "content": "Check whether the owner has new bots not yet set up to log to the private knowledge repo. Compare the current list of teammates against onboarded_agent_ids in _meta/onboarded-bots.json in that repo (read via the GitHub contents API using env var GITHUB_PERSONAL_TOKEN; never print it). For each agent not on the list, message it (actionable) with: log durable knowledge to the repo via a once-daily evening routine writing <bot-name-lowercase-hyphenated>/YYYY-MM-DD.md, bullets under Decisions / Shipped / Standing preferences only, never secrets, tokens, passwords, customer data, or private messages, stay silent if nothing qualifies, write via the contents API with GITHUB_PERSONAL_TOKEN (fetch sha first; never print it), see README.md. Only after delivery succeeds, add its id to _meta/onboarded-bots.json. Skip group rooms. If no new bots, stay quiet; otherwise tell the user which ones were onboarded.\n\nFires on:\n- cron `CRON_TZ=America/Sao_Paulo 42 8 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1792445419414,
+    "updatedAtMs": 1792445440657
+  }
+}

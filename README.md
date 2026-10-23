@@ -31,7 +31,7 @@ Build the production artifact with `pnpm build`. Run `pnpm test` for unit covera
 
 ## Content workflow
 
-The published catalog lives in `src/data/catalog.json` and is validated against schemas in `schemas/`. Grok source exports and fetch tooling are local inputs and are intentionally excluded from Git. OpenMausBot contributions live under `contributions/openmausbot/` and keep Skill references, scripts, assets, and other attachments as real files.
+The published catalog lives in `src/data/catalog.json` and is validated against schemas in `schemas/`. Full Grok Bot recipes and templates, plus complete public plugin records, are committed under [`extensions/grok-bot/`](extensions/grok-bot/). Plugin implementation repositories remain upstream and are linked from each record. Fetch scripts, failed exports, logs, and redundant catalog snapshots are excluded. OpenMausBot contributions live under `contributions/openmausbot/` and keep Skill references, scripts, assets, and other attachments as real files.
 
 There is one current state per extension. Update it in place through a pull request; Git preserves the history.
 

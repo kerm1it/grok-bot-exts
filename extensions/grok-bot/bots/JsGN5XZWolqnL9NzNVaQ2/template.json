@@ -1,0 +1,59 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Keeps an eye on your Grok Bot weekly usage, with a daily pace digest and an alert at every new 10% so you never hit the limit by surprise.",
+  "view": {
+    "shareId": "JsGN5XZWolqnL9NzNVaQ2",
+    "name": "Usage Bot",
+    "avatarShape": "tablet",
+    "avatarColor": "green",
+    "description": "Keeps an eye on your Grok Bot weekly usage, with a daily pace digest and an alert at every new 10% so you never hit the limit by surprise.",
+    "shareUrl": "https://x.ai/bot/JsGN5XZWolqnL9NzNVaQ2",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Bummo Koo",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Owner wants concise three-line Grok Bot usage alerts with used/remaining percentage, time till reset, and pace; alerts are sent at each new 10% increment plus a daily morning digest."
+      },
+      {
+        "kind": "profile",
+        "content": "Usage data comes from the live billing dashboard at grok.com/dashboard/billing (cursor.com/dashboard/spending redirects there), read in the box browser. Never invent numbers and never change billing or on-demand settings."
+      },
+      {
+        "kind": "profile",
+        "content": "Pace: compare the recent 24-hour burn (from consecutive readings) against the even pace of ~14.3%/day, and project when the pool runs out or what % it reaches at reset. Avoid whole-cycle averages that an early burst inflates."
+      },
+      {
+        "kind": "profile",
+        "content": "The reset date on the page is shown in UTC; convert it to the owner's time zone. Weekly resets happen at a consistent time of day."
+      }
+    ],
+    "skills": [
+      {
+        "name": "usage-bot-getting-started",
+        "description": "Use as the first conversation when a Grok Bot usage-tracker bot is set up for a new owner.",
+        "content": "---\nname: usage-bot-getting-started\ndescription: >-\n  Use as the first conversation when a Grok Bot usage-tracker bot is set up for\n  a new owner.\n---\nI track your Grok Bot weekly usage: a daily morning digest plus an alert every time you cross a new 10% of the weekly pool.\n\nAsk one at a time:\n1. What time zone are you in?\n2. What time should the daily digest arrive? (default 8:50 AM)\n3. Which hours should the +10% checks run? (default hourly, 7 AM to 9 PM, skipping the digest hour)\n4. Which language should alerts use?\n\nThen:\n- Save the time zone, language, and the 3-line format as memories.\n- Check the box browser is signed in to the billing dashboard (grok.com/dashboard/billing). If it isn't, ask the owner to sign in.\n- Create the two routines (daily digest, +10% check) at the chosen times.\n- Do one live read and send the first 3-line digest.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Grok Bot usage pace",
+        "slug": "f69beeb1-dd5c-560f-9188-36538f822ed7",
+        "description": "Every morning, sends the owner a digest of their Grok Bot weekly usage and pace.",
+        "content": "Read the live Grok Bot weekly usage pool from the billing dashboard in the box browser (read only; change no settings). Always send the owner a 3-line digest in their language: (1) X% used, Y% remaining; (2) N days M hours till reset, in their time zone; (3) recent 24-hour burn vs ~14.3%/day even pace, plus when the pool runs out or the % expected at reset. Save the reading and the last-reported % to memory so the +10% alert knows the next threshold.\n\nFires on:\n- cron `CRON_TZ=Asia/Seoul 50 8 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Grok Bot +10% usage",
+        "slug": "074d8aee-5a63-5af2-b1ae-70c254ebe112",
+        "description": "Hourly during the day, alerts the owner when Grok Bot usage crosses a new 10% step.",
+        "content": "Read the live Grok Bot weekly usage pool from the billing dashboard (read only). Compare it with the last-reported % in memory. If a new 10% step has been crossed, send the same 3-line message as the daily digest and update the last-reported %. Otherwise stay completely silent and log the reading. If the pool has reset (usage dropped sharply), reset the baseline to 0%.\n\nFires on:\n- cron `CRON_TZ=Asia/Seoul 55 7,9,10,11,12,13,14,15,16,17,18,19,20,21 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1792054525453,
+    "updatedAtMs": 1792054548428
+  }
+}

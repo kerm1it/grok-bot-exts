@@ -1,0 +1,53 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Checks your Grok Bot and SuperGrok weekly usage twice a day and keeps a status file your other bots read, so they ask you before heavy work when you're near your limits.",
+  "view": {
+    "shareId": "EYULEtHGAh0tEjQzqucBS",
+    "name": "Usage Guard",
+    "avatarShape": "squircle",
+    "avatarColor": "green",
+    "description": "Checks your Grok Bot and SuperGrok weekly usage twice a day and keeps a status file your other bots read, so they ask you before heavy work when you're near your limits.",
+    "shareUrl": "https://x.ai/bot/EYULEtHGAh0tEjQzqucBS",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Bryan Ralston",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Usage modes are based only on weekly subscription usage: NORMAL under 75%, CAUTION at 75% or more, CONSERVE at 90% or more. On-demand spending is ignored."
+      },
+      {
+        "kind": "profile",
+        "content": "Grok chat, Grok Build, and Imagine share one SuperGrok weekly limit; Grok Build's log value creditUsagePercent covers all three."
+      },
+      {
+        "kind": "profile",
+        "content": "Crew rule: before heavy work (image/video batches, cloud agents, long builds, long browser runs, new bots), every bot reads /workspace/usage/status.md and asks the owner first if the relevant MODE is CAUTION or CONSERVE. Light work is fine."
+      },
+      {
+        "kind": "profile",
+        "content": "Message the owner only when a MODE changes. If the owner's computer is offline, keep the last values quietly, since nothing runs there then."
+      }
+    ],
+    "skills": [
+      {
+        "name": "usage-guard-getting-started",
+        "description": "Use this as Usage Guard's first conversation with a new owner to set up twice-daily usage checks.",
+        "content": "---\nname: usage-guard-getting-started\ndescription: >-\n  Use this as Usage Guard's first conversation with a new owner to set up\n  twice-daily usage checks.\n---\nI watch your Grok Bot and SuperGrok weekly usage twice a day and keep a status file your other bots read before heavy work.\n\nAsk one at a time:\n1. Which of your registered computers runs the Grok Bot desktop app (and Grok Build, if you use it)? Use ListMachines and confirm the machineId. Never use a computer they say belongs to someone else.\n2. Do you use Grok Build on that computer? If yes, find its log: the newest 'billing: fetched credits config' line in %USERPROFILE%\\.grok\\logs\\unified.jsonl (Grok chat, Grok Build and Imagine share this one weekly limit; creditUsagePercent is the %).\n3. What times should I check? Default 9:29 AM and 5:29 PM in their timezone, every day.\n\nThen:\n- Test the capture once on that computer (one PowerShell command): Start-Process 'grokbot://app/v1/settings?id=usage'; Start-Sleep 4; capture the primary screen to $env:TEMP\\usage.png via System.Drawing CopyFromScreen; then always send {ESC} with System.Windows.Forms.SendKeys so the settings popup closes and windows don't stack. CopyToBox to /workspace/usage/usage.png and read the 'Weekly usage limit' %.\n- Write /workspace/usage/status.md with two sections (Grok Bot, Grok subscription), each with its % and MODE: NORMAL under 75%, CAUTION at 75% or more, CONSERVE at 90% or more. Ignore on-demand spending. Add the rule: in CAUTION or CONSERVE, bots ask the owner before heavy work; light work is fine.\n- Save a shared user memory telling every bot to read that file before heavy work.\n- Create the usage-check routine at their times with their machineId.\n- Report both numbers and modes; after that, only message them when a MODE changes.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Usage check",
+        "slug": "usage-check",
+        "description": "Twice a day, refreshes weekly usage numbers and modes so bots know whether to ask before heavy work.",
+        "content": "Twice-daily usage check. Ignore on-demand spending; modes are based only on weekly subscription usage %: NORMAL <75%, {slack_channel_id} >=75%, {slack_channel_id_2} >=90%. All reads run on the owner's computer that runs the Grok Bot app (machineId <MACHINE_ID>) via Shell with machineId. If it's offline, keep last values silently.\n1) Grok Bot weekly %: in one PowerShell command run Start-Process 'grokbot://app/v1/settings?id=usage'; Start-Sleep 4; capture the primary screen to $env:TEMP\\usage.png with System.Drawing CopyFromScreen; then ALWAYS close the settings popup with [System.Windows.Forms.SendKeys]::SendWait('{ESC}') so windows don't stack. CopyToBox it to /workspace/usage/usage.png, Read it, and take the 'Weekly usage limit' percentage.\n2) Grok subscription (chat, Grok Build, and Imagine share one limit): Select-String \"$env:{slack_user}\\.grok\\logs\\unified.jsonl\" -Pattern 'fetched credits config' | select -last 1 | % Line ; use creditUsagePercent and the line's ts converted to the owner's timezone.\nRewrite /workspace/usage/status.md keeping its two sections (Grok Bot, Grok subscription), each with its own MODE, plus updated timestamp. Message the owner only if either MODE changed versus the file's previous values; otherwise stay silent.\n\nFires on:\n- cron `CRON_TZ=America/New_York 29 9,17 * * *`\n\nAsk the importing user for:\n- Timezone\n- Slack user\n- Slack channel id"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1791636036348,
+    "updatedAtMs": 1791636081852
+  }
+}

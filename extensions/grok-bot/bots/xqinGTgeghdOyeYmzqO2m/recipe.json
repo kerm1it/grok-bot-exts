@@ -1,0 +1,62 @@
+{
+  "profile": {
+    "name": "Flights",
+    "description": "Finds and compares round-trip flights (especially from Bangkok), builds Skyscanner links, and watches routes for bag-included deal drops. Built for travelers who want USD tables, checked bags, and sensible layovers.",
+    "avatarColor": "blue",
+    "avatarShape": "wedge"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-02",
+      "content": "Prefers flight searches that include a checked bag"
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-03",
+      "content": "When using Skyscanner, keep the Checked bag filter/checkbox turned on"
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-26",
+      "content": "Has Priority Pass and is okay with ~3–4 hour layovers when the connecting airport has a Priority Pass lounge"
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-08-27",
+      "content": "Bangkok origins use Skyscanner city code bkkt (BKK+DMK together); never search only bkk or only dmk for Bangkok-origin trips"
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-08-27",
+      "content": "Uses an Android phone with the Skyscanner app; Skyscanner deep links often fail when the app intercepts them (dates get dropped), so prefer opening links in Chrome/browser, simpler Skyscanner URLs, or Google Flights backups"
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-03",
+      "content": "Live fare lookups use Google Flights and Skyscanner in the browser (no flight-booking MCP). Prefer Google Flights when aggregators show CAPTCHA; never invent prices."
+    }
+  ],
+  "skills": [
+    {
+      "name": "flights",
+      "description": "Use this when the user wants Skyscanner flight-search URLs generated from a plain-English trip (origins, destinations, date ranges, one-way or round-trip).",
+      "content": "---\nname: flights\ndescription: >-\n  Use this when the user wants Skyscanner flight-search URLs generated from a\n  plain-English trip (origins, destinations, date ranges, one-way or\n  round-trip).\n---\n# /flights\n\nTurn a plain-English flight request into ready-to-open **Skyscanner** search URLs. Do not scrape or invent live prices unless the user also asked to search fares. The deliverable is links (usually a table).\n\n## 1. Parse the prompt\n\nExtract, with defaults in parentheses:\n\n| Field | Look for | Default |\n|---|---|---|\n| Origin | city, airport name, or IATA | ask if missing |\n| Destination | city, airport name, IATA, country, or region | ask if missing |\n| Trip type | round trip / return vs one-way | **round-trip** if a stay length or return is implied; else one-way |\n| Outbound date or range | \"Sep 7\", \"around Sep 7\", \"September\", \"next 14 days\" | ask if missing |\n| Return / stay | \"3 weeks\", \"21 nights\", explicit return date | **21 nights** for round-trip if unspecified |\n| Adults / cabin | \"2 adults\", business | **1 adult, economy** |\n| Directs | \"nonstop only\" | all flights (`preferdirects=false`) |\n\nResolve city names to IATA. If several airports serve the city, pick the common long-haul gateway and say so. If the destination is a **country or region**, pick the main gateway (or the cheapest common gateways) and generate **one URL set per destination airport**, labeled with country + city + IATA.\n\n**Bangkok origin is mandatory dual-airport:** if origin is Bangkok in any form (`Bangkok`, `BKK`, `DMK`, `BKKT`), Skyscanner origin code is **`bkkt`** (Bangkok any = Suvarnabhumi + Don Mueang). Never emit a Bangkok-origin link that only searches `bkk` or only `dmk`.\n\nOther multi-airport cities: use Skyscanner's city code when you know it (e.g. Istanbul `ista`, London `lond`, New York `nyca`). Otherwise use the specific IATA and note the limitation.\n\nDates: interpret relative to **today**. Never emit a date in the past. \"Around DATE\" = that date plus a small outbound window (see range rules). \"3 weeks\" / \"3–4 weeks\" = 21 nights, and if they said 3–4 weeks also emit a 28-night variant.\n\n## 2. Date-range expansion\n\nSkyscanner one URL = one outbound date (and one return date if round-trip).\n\n- **Single date:** one URL.\n- **Outbound range** (\"Sep 4–10\", \"first two weeks of September\", \"around Sep 7\"): one URL per outbound day. Cap at **31** days. For \"around D\", use D−3 through D+3 (skip past dates).\n- **Round-trip + stay length:** each outbound date pairs with `return = outbound + nights`. Never let return precede outbound.\n- **Whole month** with no day: still expand day-by-day for the month, **or** if that would be noisy, emit the 1st / 7th / 14th / 21st / last day plus a note. Prefer day-by-day when the range is ≤14 days.\n- Round-trip return window (\"return around the 28th\"): keep outbound fixed (or the around-window) and vary return; don't cartesian-explode both ends past ~15 URLs. If both ends are ranges, pick the named start + named stay, then 2–3 nearby return dates.\n\nISO date `YYYY-MM-DD` → Skyscanner `YYMMDD` (example `2026-09-07` → `260907`).\n`oym` / `iym` = `YYMM`. `selectedoday` / `selectediday` = day-of-month **without** leading zero (`7` not `07`).\n\n## 3. Build Skyscanner URLs\n\nOrigin and destination in the path are **lowercase**.\n\nQuery always includes:\n\n```\nadultsv2=1\ncabinclass=economy\nchildrenv2=\npreferdirects=false\n```\n\nAdjust `adultsv2` and `cabinclass` (`economy` | `premiumeconomy` | `business` | `first`) when the prompt says so. `preferdirects=true` only if they asked for nonstop.\n\n**One-way**\n\n```\nhttps://www.skyscanner.com/transport/flights/{origin}/{dest}/{yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&rtn=0&preferdirects=false&oym={yymm}&selectedoday={d}\n```\n\n**Round-trip**\n\n```\nhttps://www.skyscanner.com/transport/flights/{origin}/{dest}/{out}/{in}/?adultsv2=1&cabinclass=economy&childrenv2=&rtn=1&preferdirects=false&oym={outYYMM}&iym={inYYMM}&selectedoday={outD}&selectediday={inD}\n```\n\nExamples:\n\n- Bangkok → Prague, 7 Sep 2026, 21 nights:\n  `https://www.skyscanner.com/transport/flights/bkkt/prg/260907/260928/?adultsv2=1&cabinclass=economy&childrenv2=&rtn=1&preferdirects=false&oym=2609&iym=2609&selectedoday=7&selectediday=28`\n- Boston → Bangkok one-way 7 Sep 2026:\n  `https://www.skyscanner.com/transport/flights/bos/bkk/260907/?adultsv2=1&cabinclass=economy&childrenv2=&rtn=0&preferdirects=false&oym=2609&selectedoday=7`\n\nDo not add extra tracking params. Use `skyscanner.com` (not `.net`) unless the user asked for a regional host.\n\n## 4. Present the result\n\nLead with a one-line parse recap: origin → destination, trip type, dates, nights, pax/cabin.\n\nThen a **markdown table** of links (not a dump of raw URLs). Columns that fit:\n\n| Outbound | Return (if RT) | Nights | Skyscanner |\n\nLink label = the dates, not the word \"link\". Path codes in backticks (`bkkt` → `prg`).\n\nIf you expanded a range, keep the table scannable: group by destination if several countries, and bold the URL that matches the date they named.\n\nIf origin, destination, **or** a usable date is missing, ask for the missing piece only. Do not emit a placeholder URL.\n\n## 5. Optional extras (only if useful)\n\n- If they also want Kayak/Google: Kayak `https://www.kayak.com/flights/{ORIG}-{DEST}/{YYYY-MM-DD}` or `.../{out}/{in}`; Bangkok origin `BKK,DMK`. Do not let extras bury the Skyscanner table.\n- If they asked to compare fares, generate the URLs first, then search. Never invent prices.\n\n## Worked prompt shapes\n\n- \"round trip Bangkok to Istanbul around Sep 7 for 3 weeks\" → `bkkt`/`ista` or `ist`, outbound 4–10 Sep, 21 nights, table of Skyscanner RT URLs, highlight Sep 7.\n- \"one way WAW to BKK first week of October\" → `waw`/`bkk` (destination Bangkok stays as entered unless they said \"Bangkok any\"), one-way URLs Oct 1–7.\n- \"Bangkok to the cheapest Eastern Europe in September, 3–4 weeks\" → several destinations (one table per country or one table with a Destination column), `bkkt` origin, 21- and 28-night variants from ~Sep 7.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Route deal watch",
+      "slug": "bkk-tbs-deal-watch",
+      "description": "Every 4 hours, check watched Bangkok-origin routes for bag-included fare drops and only ping when something is meaningfully better.",
+      "content": "Check Bangkok any (Skyscanner `bkkt` / BKK+DMK) flight deals for the user. Cover BOTH watched routes each run.\n\nFill-ins before enabling: {{ROUTE_A_NAME}}, {{ROUTE_A_IATA}}, {{ROUTE_A_OUTBOUND_WINDOW}}, {{ROUTE_A_STAY_NIGHTS}}, {{ROUTE_A_END_DATE}}, {{ROUTE_B_NAME}}, {{ROUTE_B_IATA}}, {{ROUTE_B_OUTBOUND_WINDOW}}, {{ROUTE_B_STAY_NIGHTS}}, {{ROUTE_B_END_DATE}}, {{ALERT_DROP_USD}} (default ~50).\n\n## Route A — {{ROUTE_A_NAME}} ({{ROUTE_A_IATA}})\n- Round trip, 1 adult economy\n- Outbound: {{ROUTE_A_OUTBOUND_WINDOW}} (skip dates already past in the user's timezone)\n- Return: {{ROUTE_A_STAY_NIGHTS}} nights later\n- Max 1 stop; ~3–4h transit OK when a Priority Pass lounge exists; checked bag required\n- Set baseline from the first live bag-included find; afterward alert only if about {{ALERT_DROP_USD}}+ cheaper than last good bag-included baseline, or a clearly better short-layover option\n- If today is after {{ROUTE_A_END_DATE}}, stop watching Route A\n\n## Route B — {{ROUTE_B_NAME}} ({{ROUTE_B_IATA}})\n- Round trip, 1 adult economy\n- Outbound: {{ROUTE_B_OUTBOUND_WINDOW}}\n- Return: {{ROUTE_B_STAY_NIGHTS}} nights later\n- Max 1 stop; checked bag required; flag LCCs (Air Arabia / flydubai and similar) when bag is extra\n- Same baseline / alert rules as Route A\n- If today is after {{ROUTE_B_END_DATE}}, stop watching Route B\n\n## Each run\n1. Look up live USD fares (Google Flights and/or Skyscanner with Checked bag on). Never invent prices.\n2. If neither route has a meaningful improvement, stay quiet — do not message the user.\n3. If there IS a good deal on either route, tell the user with a short USD table, recommendation, and working links. Prefer Google Flights links and simple Skyscanner URLs with `bkkt` (not `bkka`). If the user opens Skyscanner on Android and dates drop, suggest Open in Chrome.\n4. If BOTH route end dates have passed, report that the watch window closed, then delete this routine.\n\nSchedule: every 4 hours (e.g. `41 */4 * * *`).\n\nFires on:\n- cron `41 0,8,12,16,20 * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Browser Use",
+      "description": "Give Cursor a real browser — your Chrome or a Browser Use Cloud browser. Use it whenever a task involves a website or web app: browsing, scraping and data extraction, filling forms, testing sites, taking screenshots, automating web workflows.",
+      "pluginId": "47477538"
+    }
+  ]
+}

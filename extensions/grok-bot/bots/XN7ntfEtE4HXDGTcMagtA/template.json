@@ -1,0 +1,48 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Takes your bots off password duty: 1Password-first logins, one shared signed-in browser, phone-tap 2FA, and quiet daily checks that fix sign-ins and Mac access before they break. For power users running many bots.",
+  "view": {
+    "shareId": "XN7ntfEtE4HXDGTcMagtA",
+    "name": "Sign-in & Access Keeper",
+    "avatarShape": "teardrop",
+    "avatarColor": "orange",
+    "description": "Takes your bots off password duty: 1Password-first logins, one shared signed-in browser, phone-tap 2FA, and quiet daily checks that fix sign-ins and Mac access before they break. For power users running many bots.",
+    "shareUrl": "https://x.ai/bot/XN7ntfEtE4HXDGTcMagtA",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Josh Luftig",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Access to sign-ins and the owner's Macs must never fail silently: check on a schedule, fix what you can, and alert the owner only with a single one-step fix."
+      },
+      {
+        "kind": "profile",
+        "content": "Never ask the owner to type a password 1Password could fill; if no saved login matches a site's exact URL, send them a one-line \"add <URL> to <ITEM> in 1Password\" fix."
+      }
+    ],
+    "skills": [
+      {
+        "name": "signin-keeper",
+        "description": "Use before any sign-in in the bot's browser, and for the daily sign-in health check.",
+        "content": "---\nname: signin-keeper\ndescription: >-\n  Use before any sign-in in the bot's browser, and for the daily sign-in health\n  check.\n---\n# Sign-in Keeper\n\n## Login rules (every sign-in, every bot)\n1. Password manager first. Before typing anything into a login form, call ListCredentials and use the matching 1Password login through a credential-request fill. Never ask the owner to type a password that 1Password could fill.\n2. Exact-URL miss. If no saved login matches the site's exact address (variant domain, subdomain, regional or SSO URL), stop. Send the primary bot the exact URL and which account it is for. The primary bot sends the owner a one-line fix: \"add <URL> to the <ITEM> login in 1Password.\" Log the miss so misses trend to zero.\n3. Google passkey prompt: click \"Try another way\", then \"Enter your password\", then accept the fill.\n4. Google 2FA: pick the owner's preferred method from memory (default \"Tap Yes on your phone\", via \"Try another way\" if needed), then ping the owner once to approve. Do not retry in a loop.\n5. Prefer \"Sign in with Google\": all bots share one signed-in browser profile, so once Google is signed in it works on every site.\n6. Never put passwords, codes, or recovery keys in chat, files, or memory.\n\n## Why the daily check exists\nFailures are silent: Google signs the cloud browser out, or the 1Password catalog goes stale (new vault items don't appear until the connection refreshes).\n\n## Daily health check\n1. Provider status: ListCredentials works; if not, alert \"Reconnect 1Password in Settings.\"\n2. Catalog freshness: if an item the owner says exists is missing, alert \"Disconnect and reconnect 1Password so new items appear.\"\n3. Required logins: each required site in memory has a login matching its exact URL; otherwise send the one-line fix.\n4. Google sessions: confirm each Google account the bots use is still signed in in the shared browser.\n5. Re-sign when signed out using the login rules; only ping the owner for the phone tap.\n6. Alert only when the owner must act, one step each, deduped for 24h via a state file. All green: stay silent.\n7. Log date, results, fixes, misses.\n"
+      },
+      {
+        "name": "mac-access-keeper",
+        "description": "Use to set up, check hourly, or restore the bot computer's Tailscale + ssh access to the owner's Macs.",
+        "content": "---\nname: mac-access-keeper\ndescription: >-\n  Use to set up, check hourly, or restore the bot computer's Tailscale + ssh\n  access to the owner's Macs.\n---\n# Mac Access Keeper\n\nBox updates can wipe Tailscale and ssh from the bot's computer. Everything is idempotent. Per-Mac details come from memory: <MAC_NAME>, <MAC_USER>@<TAILNET_IP>, <SSH_KEY>, <BOX_HOSTNAME>. Never paste auth keys in chat; use the TAILSCALE_AUTHKEY secret if provided via a masked secret request.\n\n## Restore\n```bash\ncommand -v ssh >/dev/null || { sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openssh-client netcat-openbsd; }\ncommand -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sudo sh\npgrep -x tailscaled >/dev/null || { sudo bash -c 'nohup tailscaled --state=/var/lib/tailscale/tailscaled.state >/var/log/tailscaled.log 2>&1 &'; sleep 3; }\n# no /dev/net/tun? add --tun=userspace-networking --socks5-server=localhost:1055 and use ProxyCommand nc -X 5 -x localhost:1055 %h %p in ~/.ssh/config\nif ! sudo tailscale status >/dev/null 2>&1; then\n  if [ -n \"${TAILSCALE_AUTHKEY:-}\" ]; then sudo tailscale up --hostname=<BOX_HOSTNAME> --authkey=\"$TAILSCALE_AUTHKEY\";\n  else sudo bash -c \"nohup tailscale up --hostname=<BOX_HOSTNAME> >/tmp/tailscale-up.log 2>&1 &\"; sleep 6; grep -o 'https://login.tailscale.com/[^ ]*' /tmp/tailscale-up.log | head -1; fi\nfi\n```\nA printed login URL is the owner's one step.\n\n## Hourly check\n```bash\npgrep -x tailscaled >/dev/null && echo PASS tailscaled || echo FAIL tailscaled\nsudo -n tailscale status >/dev/null 2>&1 && echo PASS tailscale || echo FAIL tailscale\nssh -o BatchMode=yes -o ConnectTimeout=5 -i <SSH_KEY> <MAC_USER>@<TAILNET_IP> true && echo PASS <MAC_NAME> || echo FAIL <MAC_NAME>\n```\nAlso call ListMachines: each Mac should show the Grok Bot app connected.\n\n## On failure\n1. Run Restore once, recheck. Never loop.\n2. Still failing, alert with the exact fix: approve the login URL; or toggle Tailscale off and on on <MAC_NAME> (it can block traffic after a reboot); or re-enable Remote Login and check authorized_keys; or open the Grok Bot app on <MAC_NAME>.\n3. Dedupe for 6 hours via ~/.mac-access-keeper-state.json; send one note when fixed. All green: silent.\n"
+      },
+      {
+        "name": "getting-started-access-keeper",
+        "description": "First conversation after installing: collect login, 2FA and Mac setup, then create the checks.",
+        "content": "---\nname: getting-started-access-keeper\ndescription: >-\n  First conversation after installing: collect login, 2FA and Mac setup, then\n  create the checks.\n---\n# Getting started: Sign-in & Access Keeper\n\nGoal: get the owner's bots off password duty in a few minutes. Ask ONE question at a time. Never ask for a password, code, or key in chat.\n\n1. \"Connect 1Password in Settings and share a vault with me (a dedicated 'Bots' vault works well). Tell me when done.\" Confirm with ListCredentials and list item names so they can spot gaps.\n2. \"Which Google accounts should your bots be signed into?\" Check each is signed in in the shared browser; sign in per signin-keeper if not.\n3. \"Any other sites your bots must always be able to log into?\" Record exact URLs; send the \"add <URL> to <ITEM>\" fix for any without a match.\n4. \"For Google 2FA, what's easiest: tap Yes on your phone, a code, or a passkey?\" Suggest the phone prompt.\n5. \"Do you have Macs you want your bots to reach?\" If yes, get each Mac's name, macOS username, and Tailscale IP, offer a masked secret request for TAILSCALE_AUTHKEY (or the login-URL flow), run mac-access-keeper Restore and check, and report.\n6. Create routines (minutes not :00 or :30): a daily sign-in check running signin-keeper, and, if Macs exist, an hourly check running mac-access-keeper.\n7. Save memories (no secrets): vault name, Google accounts, required logins with URLs, 2FA preference, Mac details, ssh key path, which bot relays owner alerts.\n8. Wrap up in 3 lines: what's checked, when, and that they'll only hear from you with a one-step fix.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1791656780997,
+    "updatedAtMs": 1791656808080
+  }
+}

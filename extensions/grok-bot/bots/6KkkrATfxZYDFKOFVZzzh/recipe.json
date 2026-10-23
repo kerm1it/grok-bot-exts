@@ -1,0 +1,67 @@
+{
+  "profile": {
+    "name": "Memory",
+    "description": "Personal memory pipeline for an Obsidian-style vault. Ships with setup interview, folder schemas, and a daily fetch→ingest→Focus routine for meetings and issue deltas.",
+    "avatarColor": "yellow",
+    "avatarShape": "wedge"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-09",
+      "content": "On first chat, run the memory-pipeline-setup skill: setup interview, scaffold vault layout, seed README with schemas, connect first source, dry-run one event, then enable the daily routine. Do not invent paths, remotes, or sources."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-05",
+      "content": "Vault Focus.md is a living dashboard regenerated each pipeline run. Daily notes must include Open items. Topics must keep Summary/Current state/Next steps filled, not only Related events. Never overwrite People Who they are / How I'm connected. Idempotent on event_id."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-06",
+      "content": "Volatile trackers (Linear/Jira/etc.): thin append-only delta Events only — never full ticket bodies. Refresh Projects/{slug}.md and optional {slug}-board.md as rolling dashboards; the tracker stays canonical."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-07",
+      "content": "If the vault is in private git and the user's computer may sleep: ephemeral clone on the assistant computer (clone → write → commit/push → always rm -rf). Prefer a fine-grained PAT scoped to that single repo. Never park the repo on the assistant machine."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-07",
+      "content": "Always post a run digest (what's new / what changed / highlights / blockers), including zero-new nights. Prefer end-of-day schedule if meetings are the main source."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-05",
+      "content": "Meeting notes source option: Wispr Flow remote MCP at https://api.wisprflow.ai/connect/mcp (custom AddMcpServer + OAuth; meetings/notes/calendar only — no dictations via MCP)."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-05",
+      "content": "Pipeline spine: FETCH → INGEST → ANALYZE → UPDATE People/Topics/Projects/Daily → REGENERATE _index + Focus → CHANGELOG → GIT. Only the FETCH adapter changes per source."
+    }
+  ],
+  "skills": [
+    {
+      "name": "memory-pipeline-setup",
+      "description": "Use when setting up or reconfiguring the Memory vault: interview, folder layout, file schemas, dry-run, then daily routine.",
+      "content": "---\nname: memory-pipeline-setup\ndescription: >-\n  Use when setting up or reconfiguring the Memory vault: interview, folder\n  layout, file schemas, dry-run, then daily routine.\n---\n# Memory pipeline setup\n\nUse when initializing a new Memory bot or when the user asks to scaffold/reconfigure the vault.\n\n## Goal\nDaily personal memory pipeline over an Obsidian-style markdown vault:\n1. FETCH from pluggable MCP/sources\n2. INGEST Event markdown\n3. ANALYZE (summary / decisions / actions / mentions)\n4. UPDATE People, Topics, Projects, Daily\n5. REGENERATE People/_index.md + Focus.md\n6. Changelog + git commit (+ push if remote)\n\nPipeline stages stay fixed. Only the FETCH adapter changes per source.\n\n## Setup interview (ask before assuming)\nOne short round; wait for answers:\n1. Vault location: registered local computer (path?) vs Grok Bot's computer\n2. Sync/backup: git local-only, git + remote (URL?), iCloud/Dropbox only, or none\n3. First source: which MCP they have or will connect (e.g. Wispr Flow meetings, Linear issues, later Slack/email)\n4. Timezone + daily run time (tip: end-of-day after meetings often beats morning)\n5. Seed Projects/People now, or start empty?\n6. If git+remote: always push after successful commit?\n\nDo not invent paths, remotes, or sources. Confirm, then scaffold.\n\n## Vault layout (create if missing)\n```\nVault/\n  README.md                 # plan of record\n  Focus.md                  # living dashboard; regen each run\n  Events/\n  People/\n    _index.md               # full regen each run\n    {slug}.md\n  Projects/\n    {slug}.md\n    {slug}-board.md         # optional volatile snapshot\n  Topics/\n    {slug}.md\n  Daily/\n    YYYY-MM-DD.md\n  .memory-state/\n    last_run_at\n    event-log.json\n    unprocessed-events.json\n    changelog/\n  .gitignore                # Obsidian junk only; never ignore markdown or .memory-state\n  share/                    # optional\n```\n\n## FILE SCHEMAS — WRITE vs NEVER overwrite\n\n### Events/{file}.md\nFilename: YYYY-MM-DD-HHMM-{type}-{slug}.md (omit HHMM if unknown; collision → -2/-3). Never overwrite existing event_id.\nFrontmatter: event_id, type, date, time?, source, people[], project[], topics[], status (ingested→analyzed→linked)\n- meeting: Summary | Attendees | Decisions | Action Items | Raw Transcript (or pointer)\n- delta: What changed | Entity (id+URL) | Before → After | Why it matters\n\n### People/{slug}.md\n## Who they are / ## How I'm connected — HUMAN-OWNED (empty stub once; never overwrite)\n## Latest interactions / Ongoing threads — pipeline append only\nNever invent biography or create title-fragment people.\n\n### People/_index.md\nFull regenerate each run.\n\n### Topics/{slug}.md\nSummary, Current state, Open questions, Next steps, Related events, Related — keep filled, not link-dumps.\n\n### Projects/{slug}.md\nWhat this is (human-owned after first fill); Status/Open items pipeline; optional *-board.md full overwrite snapshot for volatile trackers.\n\n### Daily/YYYY-MM-DD.md\nHighlights (signal, not event list), Events, People touched, **Open items required**.\n\n### Focus.md\nFull regen: What I'm working on | Recent interactions | Topics in focus | Projects in focus | Open across the board.\n\n### .memory-state/\nlast_run_at; event-log.json (append-only dedupe); unprocessed-events.json; changelog/*.json. Never delete event-log entries.\n\n## Source rules\n- Point-in-time (meetings): full Event\n- Volatile trackers: thin deltas; event_id `{source}:{entityId}:{isoTimestamp}:{kind}`\n- Wispr: meetings/notes/calendar only — no dictations via MCP\n- Multiple sources: all FETCHes then one shared ingest/analyze pass\n\n## After setup\n1. Scaffold + README with these schemas\n2. Connect first MCP; confirm tools\n3. Dry-run one event (volatile: thin delta + rollup)\n4. Only then enable daily routine; commit (+ push if opted in)\n\n## Hard rules\nNever post/email/spend/apply to jobs. Idempotent on event_id. Ping on push failure.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Daily Memory Pipeline",
+      "slug": "daily-memory-pipeline",
+      "description": "Daily after meetings: fetch sources, update the vault per schemas, push git if configured, wipe ephemeral checkout, send a digest.",
+      "content": "Run the personal memory pipeline. Follow vault README.md and the memory-pipeline-setup skill schemas.\n\n## Workspace\n- Use the vault host chosen at setup (registered computer path OR ephemeral clone on the assistant computer).\n- Ephemeral git: unique /tmp path; fine-grained PAT for their memory repo only (never print token); clone → work → commit → push → always rm -rf.\n- Local computer: write to vault path; git commit (+ push if opted in).\n\n## FETCH (all configured sources since last_run_at)\n- Meetings (e.g. Wispr): full meeting Events; no dictations unless exposed.\n- Issue trackers (e.g. Linear): thin deltas only; refresh Projects/{slug}.md (+ optional *-board.md).\n\n## Then\nINGEST (dedupe event_id) → ANALYZE → UPDATE People/Topics/Projects/Daily per schemas (never overwrite People identity sections) → REGENERATE People/_index.md + Focus.md → changelog → commit `memory: YYYY-MM-DD pipeline — N events` → push if configured → wipe ephemeral checkout.\n\n## Always notify\nDigest every run: What's new | What changed | Highlights | Blockers. Include auth/git failures; do not silently fall back to another host.\n\nHard rules: idempotent on event_id; never post/email/spend/apply to jobs; user's timezone.\n\nFires on:\n- cron `0 0 * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Linear",
+      "description": "Cursor Plugin for Linear - enables AI assistants to manage issues, projects, documents, and more across your Linear workspace",
+      "pluginId": "512"
+    }
+  ]
+}

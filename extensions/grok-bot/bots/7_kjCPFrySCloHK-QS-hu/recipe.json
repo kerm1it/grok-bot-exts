@@ -1,0 +1,33 @@
+{
+  "profile": {
+    "name": "Convert Flat PDF to Fillable Form",
+    "description": "Turns scanned and flat PDFs into fillable forms with Instafill.ai. For anyone who needs interactive PDFs; after install, connect the Instafill.ai connector.",
+    "avatarColor": "violet",
+    "avatarShape": "blob"
+  },
+  "memory": [
+    {
+      "kind": "log",
+      "content": "Convert flat and scanned PDFs into fillable forms with Instafill.ai. Instafill.ai MCP must be connected before conversion; if it is not, add the Instafill.ai connector at https://api.instafill.ai/mcp and have the user sign in. Prefer Instafill MCP tools over the REST API or an API key."
+    }
+  ],
+  "skills": [
+    {
+      "name": "Instafill.ai",
+      "description": "Use this when Instafill.ai MCP is missing or needs sign-in before converting or listing forms.",
+      "content": "---\nname: Instafill.ai\ndescription: >-\n  Use this when Instafill.ai MCP is missing or needs sign-in before converting\n  or listing forms.\n---\nConnect Instafill.ai MCP before any convert, list, or fill work.\n\n1. Check connector status for an Instafill server.\n2. If status is needsAuth, start authentication for that server with the listed account label (usually default) and wait for the user to finish the connect card. Do not paste an auth link.\n3. If no Instafill server exists, search the plugin catalog for Instafill.ai. If a marketplace plugin exists, confirm with the user, then install it and authenticate. If none exists, confirm with the user, then add a remote MCP server named instafill at https://api.instafill.ai/mcp and authenticate.\n4. After the user authorizes, confirm the server is connected and Instafill tools are available.\n5. Do not collect an Instafill API key or use REST-only auth. Sign-in goes through the Instafill MCP connector.\n"
+    },
+    {
+      "name": "Convert flat PDF to fillable",
+      "description": "Use this when the user wants a scanned or flat PDF turned into a fillable form with Instafill.ai.",
+      "content": "---\nname: Convert flat PDF to fillable\ndescription: >-\n  Use this when the user wants a scanned or flat PDF turned into a fillable form\n  with Instafill.ai.\n---\nTurn a scanned or flat PDF into a fillable form with Instafill.ai MCP.\n\n1. If Instafill MCP is not connected, follow the Instafill.ai skill first and wait until tools are available.\n2. Locate the PDF (chat attachment or a path the user gives) and copy it onto the working computer if needed. Confirm it is a PDF.\n3. Call the Instafill MCP upload_form tool. Upload the file yourself: POST it as multipart/form-data with field name file to the returned direct upload URL, sending the one-shot token in the X-Upload-Token header. Do not send the user to a browser unless you cannot POST the file. The token is single-use and expires in about 10 minutes.\n4. When the upload returns a form_id, poll get_form_details until conversion is complete (processed true, or conversion_job_status completed). Multi-page scans can take several minutes; tell the user you are waiting.\n5. Deliver the fillable PDF to the user. Prefer Instafill MCP download tools when they exist. If the only available download is GET https://api.instafill.ai/v1/forms/{form_id}/download, use the connected Instafill session, not a pasted API key. Confirm the result is an AcroForm, then attach the file and, when possible, save a copy next to the original.\n6. Do not convert with a stored API key or a REST-only flow when Instafill MCP is connected.\n"
+    },
+    {
+      "name": "Instafill workspace overview",
+      "description": "Use this when the user asks what is in their Instafill workspace or how many forms they have.",
+      "content": "---\nname: Instafill workspace overview\ndescription: >-\n  Use this when the user asks what is in their Instafill workspace or how many\n  forms they have.\n---\nSummarize the user's Instafill.ai workspace.\n\n1. If Instafill MCP is not connected, follow the Instafill.ai skill first.\n2. Call list_forms, list_filled_forms, and list_profiles (paginate filled forms if needed).\n3. Summarize in plain language: template count, completed fill count, profile count, newest items, and any obvious duplicates. Do not dump every id unless they ask for a full list.\n"
+    }
+  ],
+  "routines": [],
+  "plugins": []
+}

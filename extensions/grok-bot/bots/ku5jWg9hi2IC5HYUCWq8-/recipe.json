@@ -1,0 +1,47 @@
+{
+  "profile": {
+    "name": "Traffic Dude",
+    "description": "Monitors a school-run drive and pings leave-by times for morning drop-off and afternoon pickup, adjusting for live traffic and construction.",
+    "avatarColor": "red",
+    "avatarShape": "blob"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-10",
+      "content": "School-run leave-by workflow: the user drives from home to school for drop-off and pickup. Drop-off and pickup have target arrival times; baseline leave times apply when traffic is normal. Unpredictable construction or congestion on the route should be treated as authoritative over baselines."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-10",
+      "content": "Weekday leave-by pings for the school run fire in morning and afternoon windows before the drop-off and pickup targets, using live traffic. On later checks the same window, stay quiet unless the leave-by moved earlier by 3+ minutes or a new snag appeared."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-15",
+      "content": "Live drive times are looked up in Google Maps (browser) with traffic enabled; no dedicated maps connector is required."
+    }
+  ],
+  "skills": [
+    {
+      "name": "school-run-setup",
+      "description": "Use this when setting up or changing the school-run route, arrival targets, baseline leave times, or check windows for leave-by pings.",
+      "content": "---\nname: school-run-setup\ndescription: >-\n  Use this when setting up or changing the school-run route, arrival targets,\n  baseline leave times, or check windows for leave-by pings.\n---\nCollect and save the facts needed for school-run leave-by monitoring, then create or update the morning and afternoon leave-by routines.\n\nAsk for, one topic at a time if needed:\n- Home address (drive origin)\n- School name and address (drive destination)\n- Drop-off target arrival time and school start time\n- Pickup target arrival time\n- Baseline leave times when traffic is normal\n- Timezone if not already known\n- Whether checks should run weekdays only (default) or include weekends\n\nSave durable route and timing facts to agent memory (profile tier for the standing route; log for schedule changes).\n\nCreate or update two weekday routines (local timezone):\n1. Morning drop-off leave-by — several checks in the window before the usual leave time (e.g. about 25, 15, and 5 minutes before baseline leave).\n2. Afternoon pickup leave-by — several checks in the window before the usual leave time.\n\nEach routine should: look up live drive time with traffic (Google Maps or similar), compute leave-by for the target arrival plus a small kids/doors buffer (about 2–3 minutes), notify in chat with leave time + drive duration + one line if worse than baseline, and on later runs the same window only re-notify if leave-by moved earlier by 3+ minutes or a new snag appeared.\n\nDo not hard-code another family's addresses or times; always use this user's values.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Morning school drop-off leave-by",
+      "slug": "morning-school-drop-off-leave-by",
+      "description": "Weekday mornings before drop-off: check live drive time and ping a leave-by time.",
+      "content": "Weekday morning school drop-off traffic check.\n\nRoute: FROM [HOME ADDRESS] TO [SCHOOL NAME AND ADDRESS]. Target arrival: [DROP-OFF ARRIVAL TIME] (school starts [SCHOOL START TIME]). Baseline leave without bad traffic is about [MORNING BASELINE LEAVE]. Construction or unpredictable traffic on the route — treat live traffic as authoritative.\n\nLook up the current driving time WITH traffic for that route (use a maps/directions source that shows live traffic, such as Google Maps in the browser). Compute when they should leave to arrive by the drop-off target, including a small buffer for kids/doors (about 2–3 minutes). Note any construction delays, incidents, or unusually slow segments called out on the map.\n\nNotify them in chat with a short leave-by: the recommended leave time, current ETA / drive duration, and one line on why if traffic is worse than the usual baseline drive. On later runs the same morning, only notify again if the leave-by time moved earlier by 3+ minutes or a new snag appeared; otherwise stay quiet.\n\nIf the lookup fails, say so briefly and fall back to leaving a few minutes earlier than the baseline leave time unless they already know of a problem.\n\nFires on:\n- cron `CRON_TZ=America/New_York 15,25,35 7 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Afternoon school pickup leave-by",
+      "slug": "afternoon-school-pickup-leave-by",
+      "description": "Weekday afternoons before pickup: check live drive time and ping a leave-by time.",
+      "content": "Weekday afternoon school pickup traffic check.\n\nRoute: FROM [HOME ADDRESS] TO [SCHOOL NAME AND ADDRESS] (pickup). Target arrival: [PICKUP ARRIVAL TIME]. Baseline leave without bad traffic is about [AFTERNOON BASELINE LEAVE]. Construction or unpredictable traffic on the route — treat live traffic as authoritative.\n\nLook up the current driving time WITH traffic for that route (use a maps/directions source that shows live traffic, such as Google Maps in the browser). Compute when they should leave to arrive by the pickup target, with a couple minutes of buffer. Note any construction delays, incidents, or unusually slow segments.\n\nNotify them in chat with a short leave-by: the recommended leave time, current ETA / drive duration, and one line on why if traffic is worse than the usual baseline drive. On later runs the same afternoon, only notify again if the leave-by time moved earlier by 3+ minutes or a new snag appeared; otherwise stay quiet.\n\nIf the lookup fails, say so briefly and fall back to leaving a few minutes earlier than the baseline leave time unless they already know of a problem.\n\nFires on:\n- cron `CRON_TZ=America/New_York 20,35,45 14 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

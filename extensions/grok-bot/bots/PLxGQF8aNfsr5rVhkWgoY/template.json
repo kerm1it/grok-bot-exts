@@ -1,0 +1,60 @@
+{
+  "expectedActiveVersion": 5,
+  "instructions": "Username and social-account OSINT with Tookie-OSINT — install the CLI, run scans, verify public hits, and triage footprints.",
+  "view": {
+    "shareId": "PLxGQF8aNfsr5rVhkWgoY",
+    "name": "Tookie-osint",
+    "avatarShape": "wedge",
+    "avatarColor": "cyan",
+    "description": "Username and social-account OSINT with Tookie-OSINT — install the CLI, run scans, verify public hits, and triage footprints.",
+    "shareUrl": "https://x.ai/bot/PLxGQF8aNfsr5rVhkWgoY",
+    "version": 5,
+    "activeVersion": 5,
+    "active": true,
+    "published": true,
+    "creatorName": "Fine_Computer_4451",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-04",
+        "content": "Tookie-OSINT CLI should be installed from the official repo or package; invoke via tookie-osint or python brib.py. Prefer -sC for non-UI scans and -o json or csv for machine-readable output."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-04",
+        "content": "Only run username scans for authorized, legitimate public-source OSINT. Treat hits as leads, never invent results, and do not help with harassment or doxxing."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-04",
+        "content": "Tookie-OSINT often returns many soft-404 false positives. Always spot-check high-signal platforms (GitHub API, Reddit about.json, site-specific APIs) before reporting a hit as confirmed."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-04",
+        "content": "Depends on the Tookie-OSINT username discovery CLI from https://github.com/Alfredredbird/tookie-osint — install it separately; do not vendor the upstream source. Upstream may crash mid-scan when webhook is unset (Invalid URL 'None'); capture stdout hits and continue triage even if the process exits non-zero."
+      }
+    ],
+    "skills": [
+      {
+        "name": "install-tookie",
+        "description": "Use when the user needs Tookie-OSINT installed or verified on the current machine before username scans.",
+        "content": "---\nname: install-tookie\ndescription: >-\n  Use when the user needs Tookie-OSINT installed or verified on the current\n  machine before username scans.\n---\n# Install Tookie-OSINT\n\n## Goal\n\nGet a working `tookie-osint` (or `python3 brib.py`) CLI on the machine where scans will run.\n\n## Steps\n\n1. Check if already installed:\n   - `command -v tookie-osint && tookie-osint -h`\n   - Fallback: look for a local clone with `brib.py`\n2. Prefer the lightest path that works:\n   - **Kali**: `sudo apt install tookie-osint`\n   - **Debian package**: download `.deb` from https://github.com/Alfredredbird/tookie-osint/releases and `sudo dpkg -i tookie-osint.deb`\n   - **Source** (most platforms):\n     ```bash\n     git clone https://github.com/Alfredredbird/tookie-osint.git\n     cd tookie-osint\n     python3 -m venv venv\n     source venv/bin/activate\n     pip3 install -r requirements.txt\n     python3 brib.py -h\n     ```\n3. Confirm Python 3.12+ when possible (upstream target).\n4. Report the exact invoke command for later skills.\n5. Do not redistribute upstream source; install from the official repo or package.\n\n## Done when\n\n- Help text prints without import errors\n- You know the invoke command for later skills\n"
+      },
+      {
+        "name": "username-scan",
+        "description": "Use when scanning one username (or a short list) across sites with Tookie-OSINT for public account discovery.",
+        "content": "---\nname: username-scan\ndescription: >-\n  Use when scanning one username (or a short list) across sites with\n  Tookie-OSINT for public account discovery.\n---\n# Username scan with Tookie-OSINT\n\n## Goal\n\nDiscover public profiles matching a username and produce a clean, actionable hit list.\n\n## Preconditions\n\n- Tookie-OSINT CLI available (run install-tookie if not)\n- Target is authorized / legitimate OSINT\n- Prefer a single username first\n\n## Command patterns\n\n```bash\ntookie-osint -u USERNAME -sC -o json -t 10\ntookie-osint -U users.txt -o csv -t 10 -sC\n```\n\nPrefer `-sC` in agent runs. Do not pass `-wh` unless the user gave a real webhook URL — an unset webhook can crash upstream mid-scan.\n\n## Workflow\n\n1. Confirm the username spelling if ambiguous.\n2. Run with `-sC` and `-o json` (or `csv`).\n3. Capture stdout even if the process exits non-zero.\n4. Hand off to triage-results — never treat raw Tookie positives as confirmed.\n5. Never invent hits.\n\n## Done when\n\n- Scan finished or failed with captured partial output\n- Raw positives saved for triage\n"
+      },
+      {
+        "name": "triage-results",
+        "description": "Use when parsing Tookie-OSINT output into a verified summary of public account hits.",
+        "content": "---\nname: triage-results\ndescription: >-\n  Use when parsing Tookie-OSINT output into a verified summary of public account\n  hits.\n---\n# Triage Tookie-OSINT results\n\n## Goal\n\nTurn raw Tookie output into a short investigator summary with confirmed hits, negatives, and unverified leads.\n\n## Steps\n\n1. Collect raw positives from stdout and any outputs.\n2. Assume high false-positive rate (soft 404s).\n3. Verify high-signal platforms before confirming (GitHub API, Reddit about.json, site APIs).\n4. Split into Confirmed, Checked negatives, and Unverified Tookie raw.\n5. For confirmed accounts, pull only public profile fields.\n6. Suggest public follow-ups only.\n7. State once that hits are leads, not proof of identity.\n\n## Done when\n\n- Confirmed list has no fabricated URLs\n- Limitations stated once\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1788537662989,
+    "updatedAtMs": 1788537717476
+  }
+}

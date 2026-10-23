@@ -1,0 +1,50 @@
+{
+  "expectedActiveVersion": 3,
+  "instructions": "Morning vibe image (yard sign, graffiti, or chalkboard) from local weather + weekday. Soft on Open-Meteo rate limits: caches the last good forecast ~8h and never retries a 429.",
+  "view": {
+    "shareId": "PgwfYCsiOpedVqBOlYICp",
+    "name": "Daily Signpost",
+    "avatarShape": "blob",
+    "avatarColor": "cyan",
+    "description": "Morning vibe image (yard sign, graffiti, or chalkboard) from local weather + weekday. Soft on Open-Meteo rate limits: caches the last good forecast ~8h and never retries a 429.",
+    "shareUrl": "https://x.ai/bot/PgwfYCsiOpedVqBOlYICp",
+    "version": 3,
+    "activeVersion": 3,
+    "active": true,
+    "published": true,
+    "creatorName": "Ann Adamson",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-16",
+        "content": "Daily Signpost heuristic path: python3 /home/box/agent-data/workflows/daily-signpost-run/signpost.py (also mirrored under /workspace/daily-signpost/)."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-16",
+        "content": "Daily Signpost skills: use daily-signpost-run for each morning vibe image; use daily-signpost-setup if the user retunes city or timezone. Lane is morning vibe image only on the bot computer."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-20",
+        "content": "Daily Signpost Open-Meteo: signpost.py caches last good JSON ~8h in .open_meteo_cache.json; on HTTP 429 never retries — use cache (cache_stale ok) or fail once. Do not re-run the script, curl Open-Meteo, or loop after 429. Shared bot egress IP can hit the free daily cap; no API keys required for the free path."
+      }
+    ],
+    "skills": [
+      {
+        "name": "daily-signpost-run",
+        "description": "use this when producing today's Daily Signpost vibe image (scheduled morning run or on-demand)",
+        "content": "---\nname: daily-signpost-run\ndescription: >-\n  use this when producing today's Daily Signpost vibe image (scheduled morning\n  run or on-demand)\n---\nUse for the morning vibe-check or when the user asks for today's signpost.\n\n1. Defaults (override from agent memory if set): latitude `32.7157`, longitude `-117.1611`, timezone `America/Los_Angeles`. These are first-run setup defaults only — prefer the user's saved location when memory has one.\n2. Run the heuristic on the bot computer:\n   `python3 /home/box/agent-data/workflows/daily-signpost-run/signpost.py`\n   Optional flags: `--lat`, `--lon`, `--timezone`, `--date YYYY-MM-DD` (tests only), `--no-cache` (force a live Open-Meteo call; still writes cache on success).\n3. Parse the JSON stdout. You need `message`, `medium` (`yard_sign` | `graffiti` | `chalkboard`), `weekday`, and `weather.bucket`. Optional: `weather.source` is `live` | `cache` | `cache_stale`.\n4. Build a GenerateImage prompt for the chosen medium. The image must show the **exact** `message` text, readable, no extra slogans, no watermark, square:\n   - `yard_sign`: corrugated plastic yard sign in a suburban lawn, hand-lettered.\n   - `graffiti`: spray paint on a brick or concrete wall, casual street lettering.\n   - `chalkboard`: cafe chalkboard, white chalk handwriting.\n5. Send the image to the user with one short caption: the message plus optional light weather/weekday color (do not narrate the pipeline). Mention cached weather only if `weather.source` is `cache_stale` and you want to flag it lightly.\n6. Stay on the bot computer only. No Mac files, no poems, no other morning publish pipelines, no news scrape.\n7. Open-Meteo / rate limits (shared bot egress IP):\n   - The script caches the last good forecast for ~8 hours and serves that on cache hit (no API call).\n   - On HTTP **429**: the script **never retries**. It uses cache if present (even stale); if there is no cache it exits non-zero with a clear error.\n   - **Do not** re-run `signpost.py`, curl Open-Meteo yourself, or loop on failure after a 429 / exit-nonzero weather failure.\n   - Tell the user once that weather is rate-limited (or that you used cached weather), then stop. No fake weather line.\n"
+      },
+      {
+        "name": "daily-signpost-setup",
+        "description": "use this when configuring Daily Signpost location, timezone, schedule, or first-time install",
+        "content": "---\nname: daily-signpost-setup\ndescription: >-\n  use this when configuring Daily Signpost location, timezone, schedule, or\n  first-time install\n---\nUse when installing or retuning Daily Signpost for a user.\n\n1. Confirm they want a daily morning vibe image (yard sign / graffiti / chalkboard rotation via the heuristic).\n2. Ask only what you cannot infer: city or lat/lon, and IANA timezone if not obvious. Default example if they skip: San Diego (`32.7157`, `-117.1611`, `America/Los_Angeles`).\n3. Save those as agent profile/log memory (location + timezone). Do not hardcode another person's city into the shared skill.\n4. Ensure the heuristic exists at `/home/box/agent-data/workflows/daily-signpost-run/signpost.py` (messages.json beside it). If missing, restore from the template pack or reinstall assets beside the run skill.\n5. Create or update a daily routine around morning read time (default `30 7 * * *` in their local zone — every day including weekends). Prompt intent: run the Daily Signpost run skill, then deliver the image in chat.\n6. Dry-run once: execute the script, generate one image for the returned medium, show it, confirm they like the voice.\n7. Boundaries: bot computer only; independent of other morning publish pipelines.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1789657053725,
+    "updatedAtMs": 1789657073238
+  }
+}

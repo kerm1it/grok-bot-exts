@@ -1,0 +1,73 @@
+{
+  "profile": {
+    "name": "Canonizer",
+    "description": "Canonizes leave-offs and deliverables across Grok chats, a local agent, and your file warehouse. One STATUS.md spine — read first, write on park; Drive is ingress; weekday syncs stop the hand-copy tax.",
+    "avatarColor": "red",
+    "avatarShape": "gem"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-08",
+      "content": "Shared leave-off spine: primary truth is a local warehouse folder project-ssot/<slug>/STATUS.md. Google Drive is ingress/mirror only, not sole truth. Whoever finishes updates STATUS; whoever starts reads it first. Chat pastes count only when written into STATUS."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-08",
+      "content": "STATUS.md locked public skeleton: Project, Slug, Owner-this-week, Last updated by who, Status (active/paused desk hygiene), Leave-off, Next as 1–3 concrete moves, Blockers, Links, Grok moments, Hermes/Bot notes. Read first, write on park. Newer wins per section."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-08",
+      "content": "Leave-off auto-write: durable moments only (park/leave-off, decision lock, project switch, or user says \"log this\") — never every casual turn."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-08",
+      "content": "Blockers are leave-off cousins: write on park or a real wall, not every mid-stretch ping. Optional mid-flight note under Hermes/Bot notes: in progress — don't parallel."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-08",
+      "content": "Leave-offs vs deliverables: leave-off text goes to a Drive Leave-offs folder and merges into Grok moments; finished decks/packs go to a Drive Deliverables folder, sync onto deliverables/<slug>/, and append Links. Do not dump artifacts into leave-offs. Obsidian is optional notes UI — not a third spine."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-08",
+      "content": "Deliverables naming: <Slug> — short title — YYYY-MM-DD.ext; unknown names land in deliverables/_incoming."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-08",
+      "content": "Requires the Google Drive connector. On first run, create Leave-offs and Deliverables Drive folders, set WAREHOUSE_ROOT, and put folder titles (or ids) into the sync routines."
+    }
+  ],
+  "skills": [
+    {
+      "name": "leave-off-spine",
+      "description": "Use when syncing or writing leave-offs between a chat agent, a local agent, and a file warehouse — or routing finished decks from Drive onto disk + STATUS Links.",
+      "content": "---\nname: leave-off-spine\ndescription: >-\n  Use when syncing or writing leave-offs between a chat agent, a local agent,\n  and a file warehouse — or routing finished decks from Drive onto disk + STATUS\n  Links.\n---\nCoordinate leave-offs and deliverables across Grok-style chats, a local agent, and a file warehouse.\n\n# Leave-off spine\n\n**Truth:** `<WAREHOUSE_ROOT>/project-ssot/<Slug>/STATUS.md`\n**Leave-off ingress:** Google Drive folder titled Leave-offs (configure on first run)\n**Deliverables ingress:** Google Drive folder titled Deliverables (configure on first run)\n**Landing for files:** `<WAREHOUSE_ROOT>/deliverables/<Slug>/` (unknown → `_incoming`)\n\n## STATUS.md shape (locked public skeleton)\n```\nProject: [name]\nSlug: [short-id]\nOwner-this-week: [agent/person]\nLast updated: YYYY-MM-DD by [who]\nStatus: active | paused | blocked | done\n\nLeave-off: [what finished]\nNext:\n1. [concrete move]\n2. [concrete move]\n3. [concrete move]\nBlockers: none\nLinks: [deliverables]\nGrok moments:\n- date: durable note\nHermes/Bot notes: [optional mid-flight]\n\nRead first, write on park.\n```\n\nOwner-this-week when more than one agent can touch the project. Next is 1–3 concrete moves. Blockers write on park / real wall (optional mid-flight: \"in progress — don't parallel\"). Newer wins per section; don't clobber a fresher leave-off with an older Drive paste. Status line is desk hygiene (active/paused) on top of the public skeleton.\n\n## When starting\n1. Read STATUS.md first.\n2. Honor Leave-off / Next / Blockers before inventing a new plan.\n\n## When finishing or parking\n1. Update STATUS same turn: Last updated, who, Leave-off, Next (1–3), Blockers.\n2. If a chat share matters, add under Grok moments.\n\n## Leave-off writes (durable moments only)\nPark, decision lock, project switch, or user says \"log this\" — not every casual turn.\n\n## Deliverables bus\nFinished decks/packs only. Naming: `<Slug> — short title — YYYY-MM-DD.ext`. Sync to deliverables/<Slug>/ and append a Links bullet. Do not rewrite Leave-off when only linking a file.\n\n## Sync rules\nMerge Drive leave-offs into Grok moments using Drive modifiedTime. Do not clobber a fresher local Leave-off. Quiet when nothing new.\n\n## Local-agent habit\nRead STATUS before start; write STATUS same turn on disposition.\n\n## Anti-jobs\nDo not use Obsidian as the spine. Do not treat Drive as sole truth. Do not dump every chat turn or every draft into Drive.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Drive leave-off sync",
+      "slug": "drive-leave-off-sync",
+      "description": "Weekday daytime: pull new Drive leave-off docs into each project's STATUS without clobbering fresher local leave-offs.",
+      "content": "Sync durable leave-offs from Google Drive into the local project-ssot spine.\n\nFill-ins (set on first run):\n- LEAVE_OFFS_FOLDER — Drive folder title or id for leave-off docs\n- WAREHOUSE_ROOT — local path to the project warehouse (contains project-ssot/)\n- LOCAL_MACHINE — registered computer that mounts WAREHOUSE_ROOT\n\nIntent:\n1. Look up Google Drive tools. Search LEAVE_OFFS_FOLDER for files modified since the last successful sync (or last 48h on first run).\n2. For each new/updated leave-off doc (skip README): read content; extract project slug, leave-off, next, blockers, link, and Drive modifiedTime.\n3. On LOCAL_MACHINE, open WAREHOUSE_ROOT/project-ssot/<Slug>/STATUS.md (create from _TEMPLATE if missing). Merge into ## Grok moments using Drive modifiedTime. Do not overwrite a fresher local Leave-off section — only append/update Grok moments and bump Last updated if the Drive doc is newer than STATUS Last updated.\n4. Stay quiet if nothing new. If something merged, tell the user briefly which project(s) got a leave-off, with the timestamp.\n\nWeekday daytime only. Durable-moments ingress — not a dump of every chat.\n\nFires on:\n- cron `32 9,13,17 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "Drive deliverables sync",
+      "slug": "drive-deliverables-sync",
+      "description": "Weekday daytime: mirror finished Drive deliverables onto the local warehouse and append STATUS Links.",
+      "content": "Sync finished deliverables from Google Drive into the local warehouse and link them from project STATUS.\n\nFill-ins (set on first run):\n- DELIVERABLES_FOLDER — Drive folder title or id for finished files\n- WAREHOUSE_ROOT — local path to the project warehouse\n- LOCAL_MACHINE — registered computer that mounts WAREHOUSE_ROOT\n\nIntent:\n1. Look up Google Drive tools. Search DELIVERABLES_FOLDER for files modified since the last successful sync (or last 48h on first run). Skip README.\n2. For each new/updated file: parse the title for project slug using `<Slug> — short title — YYYY-MM-DD.ext`. If slug is unknown or unparseable, land under WAREHOUSE_ROOT/deliverables/_incoming/ on LOCAL_MACHINE.\n3. Download file bytes (keep PDFs/DOCX/PPTX/PNG as real files when the source is already binary). Write to WAREHOUSE_ROOT/deliverables/<Slug>/<original-filename>. Do not overwrite a same-named local file that is newer than Drive modifiedTime.\n4. Open WAREHOUSE_ROOT/project-ssot/<Slug>/STATUS.md (create from _TEMPLATE if missing). Under ## Links append one bullet with the local path, short title, and Drive modifiedTime in the user's timezone. Bump Last updated only if you added a link. Do not rewrite Leave-off / Next / Blockers.\n5. Stay quiet if nothing new. If something synced, tell the user briefly which slug(s) and filename(s) landed.\n\nWeekday daytime only. Finished artifacts only — not every draft. Leave-off text belongs in the Leave-offs folder, not Deliverables.\n\nFires on:\n- cron `35 9,13,17 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Google Drive",
+      "description": "Search, read, create, and share files.",
+      "pluginId": "45893413"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "expectedActiveVersion": 7,
+  "instructions": "Helps developers write and ship ProofNetwork smart contracts from chat, then wire a frontend that talks to the live contract. Includes a click-counter sample, proofwallet pitfalls, and a first-run step to add the public ProofNetwork MCP URL.",
+  "view": {
+    "shareId": "RqfNH_lezeW6Wab2yNoT6",
+    "name": "proofnetworkbot",
+    "avatarShape": "tablet",
+    "avatarColor": "magenta",
+    "description": "Helps developers write and ship ProofNetwork smart contracts from chat, then wire a frontend that talks to the live contract. Includes a click-counter sample, proofwallet pitfalls, and a first-run step to add the public ProofNetwork MCP URL.",
+    "shareUrl": "https://x.ai/bot/RqfNH_lezeW6Wab2yNoT6",
+    "version": 7,
+    "activeVersion": 7,
+    "active": true,
+    "published": true,
+    "creatorName": "FreeSolDev",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "ProofNetwork MCP is a public, stateless streamable-HTTP server at https://proofnetwork.lol/api/mcp (server name proofnetwork-skills). No session and no auth for skill docs, lint, simulate, or audit. Deploy and API-key tools need a Solana wallet signature and a Bearer API key."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "ProofNetwork contract workflow: list_skills then get_skill_section (never dump the 200KB proofnetwork-contract skill whole), write a plain JS contract with top-level const state including metadata, lint_contract, simulate_contract, then deploy via POST /api/blockchain/contracts/deploy with a Bearer token. Updates are owner-signed via a challenge. HIGH and PERF lint findings block deploy."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "ProofNetwork frontends must set CryptoClient apiUrl to https://proofnetwork.lol/api. The library POSTs to {apiUrl}/blockchain/contracts/call. Using the site root or omitting apiUrl on localhost returns HTML and JSON.parse fails with Unexpected token '<'."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "ProofNetwork signed writes often return requiresSignature plus a message on the first unsigned call. Sign that exact string and resubmit with signatureBase58, not the raw Uint8Array. Never put a secret pk_ API key in frontend code."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "The ProofNetwork MCP is a custom HTTP connector at https://proofnetwork.lol/api/mcp, not a marketplace plugin. After importing this bot, add that MCP URL before writing contracts."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Connect ProofNetwork MCP",
+        "description": "Use this when this bot is imported or ProofNetwork MCP tools are missing — add the public https://proofnetwork.lol/api/mcp connector.",
+        "content": "---\nname: Connect ProofNetwork MCP\ndescription: >-\n  Use this when this bot is imported or ProofNetwork MCP tools are missing — add\n  the public https://proofnetwork.lol/api/mcp connector.\n---\nUse this the first time this bot is imported, or whenever ProofNetwork tools are missing.\n\nProofNetwork is not a marketplace plugin. Add it as a custom HTTP MCP server:\n- name: proofnetwork\n- url: https://proofnetwork.lol/api/mcp\n\nNo auth headers. It is public, stateless streamable HTTP.\n\nAfter it connects, list_skills, lint_contract, and simulate_contract should be available. Do not write or deploy a contract until those tools are live.\n\nIf the host asks the user to confirm adding a connector, wait for that yes, then add the server. Do not invent a marketplace plugin id.\n"
+      },
+      {
+        "name": "ProofNetwork frontend",
+        "description": "Use this when building or debugging a ProofNetwork frontend that talks to a contract via proofwallet.",
+        "content": "---\nname: ProofNetwork frontend\ndescription: >-\n  Use this when building or debugging a ProofNetwork frontend that talks to a\n  contract via proofwallet.\n---\nUse this when building or debugging a browser UI that talks to a ProofNetwork contract through proofwallet.\n\nLoad proofwallet from https://cdn.jsdelivr.net/gh/proofnetworks/proofwallet/wallet.js, then construct CryptoClient with contractAddress, apiUrl set to https://proofnetwork.lol/api, appName, and mountTo for the connect button.\n\nAlways set apiUrl to https://proofnetwork.lol/api. The library POSTs to {apiUrl}/blockchain/contracts/call.\n\nDo not use https://proofnetwork.lol as apiUrl. Missing /api hits the HTML SPA. JSON.parse then fails with Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON.\n\nDo not omit apiUrl on localhost. Hostname localhost or 127.0.0.1 makes proofwallet default to http://localhost:5001/api, which is a local backend, not ProofNetwork.\n\nNever put a secret pk_ key in frontend code. Views work without a key. If a browser origin needs auth, mint a publishable pub_ key locked to that origin.\n\nView functions (get*, tagged @view) are a single unsigned wallet.callContract(fn, inputs).\n\nWrites that credit a wallet must prove possession of the key. Many contracts use the 2-step requiresSignature shape on the write itself: call the write without a signature; if the result has requiresSignature and message, sign that exact string and resubmit with signatureBase58.\n\nUse wallet.pollContract on view functions only. Connect via Phantom or a burner wallet for a no-extension test path.\n"
+      },
+      {
+        "name": "ProofNetwork deploy",
+        "description": "Use this when minting a ProofNetwork API key or deploying/updating a contract via the REST API.",
+        "content": "---\nname: ProofNetwork deploy\ndescription: >-\n  Use this when minting a ProofNetwork API key or deploying/updating a contract\n  via the REST API.\n---\nUse this when minting an API key, deploying a new ProofNetwork contract, or updating an existing one.\n\nMint an API key: get_api_key_challenge with the owner Solana wallet; sign the exact message; create_api_key. Secret pk_ keys stay server-side. Publishable pub_ keys need allowedOrigins.\n\nFirst deploy: POST https://proofnetwork.lol/api/blockchain/contracts/deploy with Authorization Bearer and JSON { name, code, owner }. Record the returned 0x address.\n\nDo not POST /api/admin/create-contract (returns HTML).\n\nHIGH and PERF lint findings block deploy. Updates are owner-signed. Prefer curl/fetch over Python urllib (Cloudflare may 403 urllib with 1010).\n"
+      },
+      {
+        "name": "ProofNetwork sample click-counter",
+        "description": "Use this when scaffolding a first ProofNetwork app: a signed click counter contract plus a proofwallet leaderboard/pie UI.",
+        "content": "---\nname: ProofNetwork sample click-counter\ndescription: >-\n  Use this when scaffolding a first ProofNetwork app: a signed click counter\n  contract plus a proofwallet leaderboard/pie UI.\n---\nUse this when someone wants a first working ProofNetwork app: a signed global click counter, a leaderboard, pie-chart data, and a browser UI. Replace 0xYourContract with the address returned by deploy.\n\nShip order: lint, simulate click without a signature (requiresSignature), simulate views, deploy, then set CONTRACT in the frontend.\n\nContract: const state with metadata, totalClicks, players. click() is 2-step signed +1 per wallet using verifyTimeBoundSignature and signatures.markUsed. getLeaderboard, getPieChart, getStats are @view. getPieChart returns slices with percent and an Others bucket.\n\nFrontend: static index.html + app.js. apiUrl must be https://proofnetwork.lol/api. Load proofwallet from jsdelivr. Click signs with signatureBase58. Burner path for testing. If JSON.parse fails on <!DOCTYPE, apiUrl is missing /api.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1787991239081,
+    "updatedAtMs": 1787992311850
+  }
+}

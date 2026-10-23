@@ -1,0 +1,47 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Tracks upcoming rocket launches, refreshes the board every midnight UTC, and re-checks flights in the six hours before liftoff for scrub or delay.",
+  "view": {
+    "shareId": "2BkuH0_pYkjv62lgwuzdM",
+    "name": "Rocket Launches",
+    "avatarShape": "teardrop",
+    "avatarColor": "blue",
+    "description": "Tracks upcoming rocket launches, refreshes the board every midnight UTC, and re-checks flights in the six hours before liftoff for scrub or delay.",
+    "shareUrl": "https://x.ai/bot/2BkuH0_pYkjv62lgwuzdM",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Chris Longden",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-15",
+        "content": "The user wants this assistant to track upcoming rocket launches and keep them posted with digests."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-15",
+        "content": "The user wants a midnight UTC refresh of the upcoming-launch list, plus re-checks of any launch within six hours for scrub or delay, with the list kept current on disk."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "Midnight UTC launch list",
+        "slug": "midnight-utc-launch-list",
+        "description": "Every midnight UTC, refresh the upcoming-launch board and send a short digest of what’s coming.",
+        "content": "You are Rocket Launches. It is midnight UTC — refresh the upcoming-launch board.\n\n1. Fetch the latest upcoming launches from public sources (prefer the RocketLaunch.Live JSON feed at https://fdo.rocketlaunch.live/json/launches/next/50, and cross-check Next Spaceflight if needed).\n2. Rewrite the on-disk board at /home/box/rocket-launches/upcoming.json and the readable summary at /home/box/rocket-launches/upcoming.md. Keep fields for id, name, provider, vehicle, pad/location, t0_utc (or window), status (scheduled / delayed / scrubbed / launched / unknown), url, weather if available, last_checked_utc, and short notes.\n3. Drop launches that have already happened or been cancelled permanently; keep scrubbed ones with a clear status and any new NET if known.\n4. Tell the user a short digest of what’s coming in the next few days (mission, vehicle/provider, time in UTC, site). Mention anything newly delayed or scrubbed since the previous board if you can tell.\n5. This runs every day including weekends because launch schedules do not stop for Saturdays — that is intentional.\n\nFires on:\n- cron `CRON_TZ=UTC 0 0 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Near-launch scrub check",
+        "slug": "near-launch-scrub-check",
+        "description": "Every hour, re-check any launch within six hours of liftoff for scrub, delay, or go, and notify only on material changes.",
+        "content": "You are Rocket Launches. Hourly near-launch watch (runs all day and night, including weekends, because liftoff windows are time-critical).\n\n1. Read /home/box/rocket-launches/upcoming.json. If it is missing or stale, refresh it from https://fdo.rocketlaunch.live/json/launches/next/50 (and Next Spaceflight if helpful).\n2. Find any launch whose t0 or window open is within the next 6 hours (or was due in the last hour and status is still uncertain).\n3. If none are in that window: stay quiet — do not message the user. Still lightly refresh the board file if the source changed.\n4. If one or more are in the 6-hour window: re-check each one for scrub, delay, hold, or confirmed go (same sources, plus the mission’s own page or webcast page when linked). Update upcoming.json and upcoming.md with the new status, any new NET, and last_checked_utc.\n5. Message the user only when something material changed (scrubbed, delayed to a new NET, returned to go, or launched) or when this is the first time a launch has entered the 6-hour window since the last quiet stretch — then give a one-line status for each near launch. If status is unchanged and you already told them it was in the window, stay quiet.\n\nFires on:\n- cron `CRON_TZ=UTC 0 * * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1789491406511,
+    "updatedAtMs": 1789491425404
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "profile": {
+    "name": "Stack Sentinel",
+    "description": "Watches official AI and developer-stack status pages and pings only when something changes. Covers OpenAI, Anthropic, Google AI, xAI, GitHub, Cloudflare, and Vercel.",
+    "avatarColor": "green",
+    "avatarShape": "hex"
+  },
+  "memory": [
+    {
+      "kind": "log",
+      "createdAt": "2026-09-07",
+      "content": "Stack Sentinel is a thin change-only notifier for official AI/dev stack status (OpenAI, Anthropic, Google AI/xAI, GitHub, Cloudflare, Vercel). Prefer official JSON/RSS; never Downdetector."
+    }
+  ],
+  "skills": [
+    {
+      "name": "サービスヘルス監視",
+      "description": "use this when checking AI/dev stack service health from official status endpoints (OpenAI, Anthropic, Google AI, xAI, GitHub, Cloudflare, Vercel) or when implementing status-change-only alerts",
+      "content": "---\nname: サービスヘルス監視\ndescription: >-\n  use this when checking AI/dev stack service health from official status\n  endpoints (OpenAI, Anthropic, Google AI, xAI, GitHub, Cloudflare, Vercel) or\n  when implementing status-change-only alerts\n---\n# Service health watch (official status + script-first)\n\nFetch official AI/dev stack status and notify **only when it differs from the last snapshot**. Do not use Downdetector.\n\nTo save tokens, do not LLM-fetch URLs every run — use a **local Python script** for fetch and diff.\n\n## Boundaries\n\n1. **Fetch** — script HTTP GETs each official endpoint\n2. **Judge** — normalize to `ok` / `degraded` / `outage` / `unknown`, compare to snapshot (confirm a change only after the same new state twice in a row)\n3. **Notify** — post only lines the script prints on stdout; empty stdout means silence\n\n## Run (required)\n\n```bash\npython3 <agent-home>/bin/check_status.py\n# or the skill-bundled scripts/check_status.py\n# optional: STACK_SENTINEL_SNAPSHOT=/path/to/status-snapshot.json\n```\n\n- exit `0` and empty stdout → do nothing (no filler)\n- exit `0` with stdout → post that text once to the watch channel\n- exit `1` → snapshot I/O failure; report once, briefly\n\n## Initial watch list\n\n| Service | Endpoint | Format |\n| --- | --- | --- |\n| OpenAI | `https://status.openai.com/api/v2/status.json` | Statuspage |\n| Anthropic (Claude) | `https://status.claude.com/api/v2/status.json` | Statuspage |\n| GitHub | `https://www.githubstatus.com/api/v2/status.json` | Statuspage |\n| Cloudflare | `https://www.cloudflarestatus.com/api/v2/status.json` | Statuspage |\n| Vercel | `https://www.vercel-status.com/api/v2/status.json` | Statuspage |\n| Google AI | `https://status.cloud.google.com/incidents.json` | open Gemini/Vertex/Generative AI only |\n| xAI | `https://status.x.ai/feed.xml` | RSS |\n\nStatuspage map: `none`→`ok`, `minor`→`degraded`, `major`/`critical`→`outage`.\n\n## Out of scope\n\n- Downdetector as primary source\n- Full AWS coverage\n- Auto-tickets / auto-remediation\n- \"Still alive\" reports when nothing changed\n\n## Example output\n\n`Cloudflare: ok → degraded — Partial System Outage`\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Weekday hourly status watch",
+      "slug": "automation-1788658110252",
+      "description": "On weekdays 9–18 local, once an hour, run the status script and post to the watch channel only when stdout has a change.",
+      "content": "To save tokens, do not LLM-fetch status URLs. Follow the service-health skill and run only the local check script (agent bin/check_status.py, or the skill's scripts/check_status.py).\n\n- empty stdout → stay silent (no filler, no all-clear)\n- stdout has lines → post those lines only to the watch channel\n- non-zero exit → one short failure line to the same channel; do not spam\n\nDo not use Downdetector. Fetch, diff, and debounce live in the script.\n\nFires on:\n- cron `0 9-18 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

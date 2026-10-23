@@ -1,0 +1,63 @@
+{
+  "profile": {
+    "name": "Receipt Scanner / Expense Tracking",
+    "description": "Logs emailed receipts into a Google Sheet and Drive folder. For anyone who wants a dedicated inbox that turns forwarded merchant emails and receipt photos into a line-item expense ledger.",
+    "avatarColor": "yellow",
+    "avatarShape": "cloud"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "content": "Receipt log should live in a Google Sheet via Google Drive, not as a local-only file."
+    },
+    {
+      "kind": "log",
+      "content": "Receipt sheet keeps one column set for both row types: a summary row holds date, merchant, description, category, subtotal, tip, total, payment type, last 4, and photo; following line-item rows put the item in Description, a tighter category, and the item price in Sub-total, leaving tip/total/payment/last 4/photo blank. Sum summary rows for spend so Sub-total is not double-counted."
+    },
+    {
+      "kind": "log",
+      "content": "In the Receipts sheet, the Photo column should be a short clickable Open link that opens the file in Google Drive, not a long file URL. Line-item Photo cells stay blank."
+    },
+    {
+      "kind": "log",
+      "content": "Drive receipt files are named MMDDYY-Merchant-Total.jpg or .pdf (example 051526-Staples-42.02.jpg). If that exact name already exists, append a space and (2), then (3), before the extension (example 051526-Staples-42.02 (2).jpg). Never overwrite."
+    },
+    {
+      "kind": "log",
+      "content": "A photo with multiple paper receipts is logged as one spreadsheet receipt per slip, not one combined row. Two slips from the same vendor stay two rows. Crop each slip into its own MMDDYY-Merchant-Total Drive file when they are clearly separate; if they overlap too much to crop, keep the original photo and point every related Open link at that same file. Same merchant/date/total still uses (2), (3)."
+    },
+    {
+      "kind": "log",
+      "content": "Receipt capture is email: once a day at 12:01am local time, check a dedicated Gmail inbox for mail from allowed senders. Forwarded merchant emails and attached receipt pictures or PDFs both count."
+    },
+    {
+      "kind": "log",
+      "content": "Forwarded receipt emails are saved to Drive as a PDF of the original merchant message only: strip the Gmail forward wrapper, Fwd: subject, and the outer envelope. Do not include the forwarder as the visible sender on that PDF. Name it MMDDYY-Merchant-Total.pdf. Attached photos still save as JPG."
+    },
+    {
+      "kind": "log",
+      "content": "Receipt files go in Drive folder Receipts/YYYY-MonthName/ named MMDDYY-Merchant-Total.jpg or .pdf. Photo Open links to the Drive JPG or original-merchant-email PDF."
+    }
+  ],
+  "skills": [],
+  "routines": [
+    {
+      "name": "Daily receipt inbox",
+      "slug": "daily-receipt-inbox",
+      "description": "Daily receipt inbox",
+      "content": "Once a day at 12:01am in the user's local time, check a dedicated Gmail inbox for receipt mail from a sender allowlist. Ignore everyone else.\n\nOn import or first run, prompt for a dedicated receipt inbox plus a sender allowlist. Do not assume personal addresses.\n\nSource of truth:\n- Inbox: the dedicated receipt inbox only.\n- Sender: only addresses on the allowlist, in:inbox (unread and read).\n- Two shapes both count: (1) forwarded merchant emails, (2) messages with a receipt picture or PDF attached.\n- Ledger: Google Sheet \"Receipts\" in Drive folder Receipts. Columns: Date, Merchant, Description, Category, Sub-total, Tip, Total, Payment Type, Last 4, Photo. One shaded summary row, then line-item rows with blank Date/Merchant/Total/Payment/Last 4/Photo; item name indented in Description; amount in Sub-total.\n- Files in Drive Receipts/YYYY-MonthName/:\n  - Photo or PDF attachment: save as MMDDYY-Merchant-Total.jpg (or keep .pdf if it is already a PDF). Example: 051526-Staples-42.02.jpg\n  - Forwarded merchant email with no useful attachment: save a PDF of the ORIGINAL merchant message only. Strip the Gmail forward wrapper, Fwd: subject, and the outer envelope. The PDF should look like the merchant's original receipt email. Name it MMDDYY-Merchant-Total.pdf.\n  - Collision: if that exact filename already exists, do not overwrite. Append a space and (2), then (3), before the extension. Example: 051526-Staples-42.02 (2).jpg.\n- Multi-receipt photos: one picture can contain several paper receipts. Treat each visible slip as its own receipt. Two slips from the same vendor stay two summary rows with their own dates, line items, and totals. If the slips are clearly separate, crop each into its own image so each Photo Open link is that slip. If they overlap too much to crop cleanly, keep the original photo and point every related Open link at that same file.\n- Photo cell is a short clickable HYPERLINK labeled Open to that Drive file, not a raw URL. Create the month folder if needed.\n- Stay inbox-only. Do not mention a Photos library.\n\nEach run:\n1. Look up Gmail tools, then search the dedicated inbox for allowlisted senders that are not already labeled as logged (create an AP-logged style user label if missing).\n2. Skip anything already processed. Do not re-log. Do not trash mail.\n3. For each new message: get the thread/message including attachments. If it's a picture/PDF, extract the receipt(s) and upload file(s), splitting multi-receipt photos per the rule above. If it's a forwarded email, extract totals from the original forwarded content and upload a PDF of that original email only. Skip obvious non-receipts.\n4. Append one summary plus line items per receipt to the Receipts sheet. Set Photo to Open linking the Drive file for that receipt.\n5. Label the message/thread as logged so the next run ignores it.\n6. Tell the user what you logged (merchant, total, date). If one photo produced several receipts, say that. Stay completely silent if there is nothing new.\n7. If Gmail or Drive auth fails, do not retry blindly: pause this routine after a repeated auth failure and tell the user what to reconnect.\n\nStay quiet when the inbox has no new receipt mail.\n\nFires on:\n- cron `1 0 * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "Gmail",
+      "description": "Search, read, draft, and manage email.",
+      "pluginId": "45893410"
+    },
+    {
+      "name": "Google Drive",
+      "description": "Search, read, create, and share files.",
+      "pluginId": "45893413"
+    }
+  ]
+}

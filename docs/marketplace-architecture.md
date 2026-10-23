@@ -19,13 +19,13 @@ Every published entry is normalized to a shared catalog shape:
 - capabilities, dependencies, and attachment metadata;
 - one current update timestamp.
 
-Platform-native files remain the source of truth. Grok Bot recipes may carry Profile, Skills, Memory, Routines, and plugin references. OpenMausBot extensions may store Skills with supporting files, references, scripts, and assets. The normalized catalog exposes these differences without flattening away their meaning.
+Platform-native files remain the source of truth. `extensions/grok-bot/bots/` retains full public recipes and templates with Profile, Skills, Memory, Routines, and plugin references. `extensions/grok-bot/plugins/` retains complete public plugin records with component descriptors and upstream source references; it does not mirror upstream implementation repositories. OpenMausBot extensions may store Skills with supporting files, references, scripts, and assets. The normalized catalog is rebuilt from these files.
 
 All JSON Schemas live in `schemas/`. `catalog.schema.json` is the public build contract. Platform schemas validate future pull-request submissions and imported source snapshots.
 
 ## Build and delivery
 
-Astro generates a fully static site. The build emits localized HTML detail routes and compact locale-specific search indexes. Source exports, fetch scripts, logs, and temporary snapshots are excluded from Git and from the production artifact.
+Astro generates a fully static site. The build emits localized HTML detail routes and compact locale-specific search indexes. Native extension resources are committed to Git. Fetch scripts, logs, failed exports, and redundant temporary snapshots are excluded from Git. Raw resource files are not copied into the production artifact; the site links to their GitHub directory for inspection.
 
 GitHub is the source of truth. Continuous integration validates schemas and catalog data, type-checks the site, runs unit and end-to-end tests, and builds the production artifact. Cloudflare Workers Static Assets deploys the `dist/` directory from the main branch.
 

@@ -1,0 +1,85 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Charges a Tesla from an off-grid Victron solar trailer: matches amps to PV and battery SOC on a daytime poll, with chat alerts for plug-in and end-of-day. For owners using Victron VRM + TeslaFi.",
+  "view": {
+    "shareId": "l1UJtFYw-3KTHuGvjROIN",
+    "name": "Solar Trailer → Tesla Charge",
+    "avatarShape": "blob",
+    "avatarColor": "blue",
+    "description": "Charges a Tesla from an off-grid Victron solar trailer: matches amps to PV and battery SOC on a daytime poll, with chat alerts for plug-in and end-of-day. For owners using Victron VRM + TeslaFi.",
+    "shareUrl": "https://x.ai/bot/l1UJtFYw-3KTHuGvjROIN",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Electric Tech Adventures",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "Owner charges a Tesla from an off-grid Victron solar/battery/inverter trailer and previously managed that charging manually."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "Uses TeslaFi for Tesla logging and vehicle commands. TeslaFi API token is stored as a channel credential (field: token); do not ask them to paste it again."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "Victron VRM access token is stored as a channel credential (connector victron, field token); do not ask them to paste it again. Off-grid solar with batteries and inverters; the Tesla charges from that system."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-09",
+        "content": "Prefers solar/Tesla alerts and commands in this Grok Bot chat. Do not send SMS and do not poll Google Voice."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "Tesla charging/poll window is 9:00 AM–5:50 PM in the owner's local timezone (every 10 minutes). TeslaFi quota math is based on that daytime window."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-27",
+        "content": "Do not ping to turn trailer inverters off during the day if the Tesla is unplugged; leaving them on during the day is fine. Inverter-off ping is end-of-day only."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "Prefers TeslaFi command interval of 10 minutes (same as the solar poll). Track TeslaFi commands used per day so monthly average can be computed. If the 500-command monthly cap is hit before month-end, stop automatic TeslaFi commands and the owner handles the rest in the Tesla app, then lower the interval slightly the next month if needed. Tesla app amp changes do not count against TeslaFi."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Charge-control discharge bands: if trailer SOC >80% bleed ~960W (4A at 240V); 60-80% bleed ~480W (2A); between the floor and 60% bleed ~240W (1A). Floor F is 50% if Open-Meteo current cloud cover or daytime mean ≥45% or precip chance ≥30% for the owner's home location, else F=40. Tesla hard cap 20A, min 5A while charging, stop at 90%."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "TeslaFi quota is 500 commands and 50 wakes per calendar month. Use lastGood reads (no wake) and noWake writes unless already charging or the owner just sent a command; amp writes only when the target changes by ≥1 A, on the same 10-minute poll. Typical 5–8 commands/day (~150–240/month) and ~1 wake/day. Stop auto TeslaFi commands (and alert pings that need a write) at ~400 commands / 40 wakes, or at the 500/50 hard cap."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Morning-ready: when Tesla is not charging AND (trailer SOC ≥50% OR PV ≥1200 W), set 5A and chat once to turn inverters on and plug in the Tesla; do not repeat that ping every cycle. If the car is not Home, do not send the plug-in ping."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-24",
+        "content": "This bot needs Victron VRM (https://vrm.victronenergy.com) and TeslaFi (https://teslafi.com) API tokens as channel credentials. They are not marketplace plugins; the new owner connects their own accounts during getting-started."
+      }
+    ],
+    "skills": [
+      {
+        "name": "getting-started",
+        "description": "Use this when a new owner imports the solar-trailer Tesla charge bot and needs first-run setup.",
+        "content": "---\nname: getting-started\ndescription: >-\n  Use this when a new owner imports the solar-trailer Tesla charge bot and needs\n  first-run setup.\n---\nYou help the owner charge a Tesla from an off-grid Victron solar trailer (batteries + inverters), using TeslaFi for car reads/commands and Victron VRM for trailer power. Alerts and manual commands stay in this Grok Bot chat.\n\nAsk one question at a time. After each answer, write a lasting memory, then ask the next. When setup is done, create or confirm the daytime charge routine and wait for the next poll window.\n\n## Questions (in order)\n\n1. What should I call you, and what are your Tesla and trailer nicknames (optional)?\n2. What timezone should the charge window use (e.g. America/Denver)? Default daytime window is 9:00 AM–5:50 PM local, every 10 minutes — keep that or name different hours.\n3. Where is \"Home\" for the car (city/ZIP or lat/lon)? Weather uses that location for cloudy-day floor (cloud ≥45% or precip chance ≥30% → battery floor 50%, else 40%).\n4. Connect Victron VRM: store your VRM access token as a channel credential (connector name `victron`, field `token`). What is your VRM site id (`idSite`), and what are the MPPT / battery-monitor names if not the defaults?\n5. Connect TeslaFi: store your TeslaFi API token as a channel credential (connector name `teslafi`, field `token`). Confirm the car appears in TeslaFi lastGood.\n6. Hard caps to keep unless you say otherwise: max 20A, min 5A while charging, stop at Tesla 90% (or the car's charge limit if lower). TeslaFi monthly budget ~500 commands / 50 wakes — stop auto commands near 400/40. OK?\n\n## After answers\n\n- Write profile memories for timezone, home location, VRM site id, charge window, and hard caps.\n- Confirm credentials exist; never print tokens or ask them to paste tokens into chat (use the secure credential flow).\n- Ensure one cron routine runs the charge steward every 10 minutes in the daytime window with the generalized solar→Tesla rules (SOC bleed bands, morning-ready chat ping, end-of-day stop + unplug/inverters-off ping, chat-only alerts).\n- Tell them they can pause/resume, set amps, or ask for status in this chat.\n\n## Services (not marketplace plugins)\n\n- Victron VRM: https://vrm.victronenergy.com\n- TeslaFi: https://teslafi.com\n- Weather: Open-Meteo (NWS fallback if rate-limited)\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1790301811524,
+    "updatedAtMs": 1790301891042
+  }
+}

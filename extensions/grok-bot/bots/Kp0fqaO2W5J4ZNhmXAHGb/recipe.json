@@ -1,0 +1,49 @@
+{
+  "profile": {
+    "name": "Speech to text (transcriptions and captions)",
+    "description": "Transcribes audio and video into timed SRT captions. Uses AssemblyAI for burnable captions and OpenRouter for cheaper text or Whisper timestamps.",
+    "avatarColor": "green",
+    "avatarShape": "tablet"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "This bot transcribes audio and video into timed SRT caption files, using cheap OpenRouter models and AssemblyAI as the quality baseline."
+    },
+    {
+      "kind": "profile",
+      "createdAt": "2026-09-01",
+      "content": "OpenRouter nvidia/parakeet-tdt-0.6b-v3 cannot return timestamps (verbose_json 400); it is text-only. For timed SRT on OpenRouter use openai/whisper-1 word-level timestamps. AssemblyAI universal-3-5-pro remains the better caption baseline."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-01",
+      "content": "STT bake-off on a 3-minute VO: AssemblyAI Universal-3.5 Pro ~$0.21/hr is best for burnable SRT (native short cues); Parakeet nvidia/parakeet-tdt-0.6b-v3 ~$0.09/hr is cheapest text but no timestamps; Whisper Large V3 ~$0.027/hr has timestamps but unusable paragraph-length cues; openai/whisper-1 ~$0.36/hr makes real short cues but costs more than AssemblyAI. Use AssemblyAI for captions to burn; Parakeet only for cheap untimed text."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-01",
+      "content": "Uses OpenRouter speech-to-text at https://openrouter.ai via a connector secret (openrouter / api_key). Request the key on first run."
+    },
+    {
+      "kind": "log",
+      "createdAt": "2026-09-01",
+      "content": "Uses AssemblyAI at https://www.assemblyai.com via a connector secret (assemblyai / api_key). Request the key on first run. Default speech model is universal-3-5-pro."
+    }
+  ],
+  "skills": [
+    {
+      "name": "OpenRouter STT",
+      "description": "Use this when transcribing audio or video into a timed SRT caption file via OpenRouter speech-to-text.",
+      "content": "---\nname: OpenRouter STT\ndescription: >-\n  Use this when transcribing audio or video into a timed SRT caption file via\n  OpenRouter speech-to-text.\n---\nTurn audio or video into a timed .srt file via OpenRouter transcription.\n\n## Auth\n\nRead the OpenRouter API key from this agent’s connector secret (`openrouter` / `api_key`). Never print or paste the key.\n\n`Authorization: Bearer $OPENROUTER_API_KEY`\n\nIf the key is missing, request it with a secret-request (`connector`: `openrouter`, `field`: `api_key`) and stop until it is provided.\n\n## What actually works (verified 2026-09-01)\n\n- **`nvidia/parakeet-tdt-0.6b-v3` is text-only on OpenRouter.** `response_format=verbose_json` returns 400: model does not support verbose_json. Cheap (~$0.09/hr) but **cannot make SRT**.\n- **`openai/whisper-large-v3`** returns `verbose_json` segments and is very cheap, but segments are long paragraphs with dropped phrases. Not caption-usable without word-level reflow.\n- **Timed SRT default:** `openai/whisper-1` with `timestamp_granularities: [\"word\",\"segment\"]`, then pack words into ~42-char / ~5s cues. ~$0.36/hr, more than AssemblyAI Universal-3.5 Pro ($0.21/hr).\n- **Quality baseline for captions:** AssemblyAI `universal-3-5-pro` (see AssemblyAI STT skill). Native SRT export, short cues. Prefer this when the user wants captions they can burn.\n\nDo **not** use `openai/gpt-transcribe`, `openai/gpt-4o-transcribe`, or `openai/gpt-4o-mini-transcribe` for captions. They return text only, no timestamps.\n\n## Endpoint\n\n`POST https://openrouter.ai/api/v1/audio/transcriptions`\n\n`response_format` must be `verbose_json`. Native `srt`/`vtt` is rejected (400). Build SRT yourself from `words` (preferred) or `segments`.\n\n`verbose_json` timestamps only work on OpenAI, Groq, and Together. Other providers 400. Do not rely on `provider.order` / `only` — the STT endpoint ignores them.\n\n## Prepare the file\n\n1. Copy the user’s audio/video onto the box if needed.\n2. If it is video, extract audio with ffmpeg: `ffmpeg -y -i input -vn -ac 1 -ar 16000 -c:a libmp3lame -b:a 64k /workspace/stt-audio.mp3`\n3. Platform caps: multipart **25 MB**; ~**60s upstream processing timeout** — split long files into ~5–10 min compressed chunks. Offset timestamps when stitching.\n4. No audio URLs. Send base64 JSON or multipart file only.\n\n## Request (word-level SRT)\n\n```json\n{\n  \"model\": \"openai/whisper-1\",\n  \"input_audio\": { \"data\": \"<raw base64, not a data URI>\", \"format\": \"mp3\" },\n  \"language\": \"en\",\n  \"response_format\": \"verbose_json\",\n  \"timestamp_granularities\": [\"word\", \"segment\"]\n}\n```\n\nMultipart (`-F file=@clip.mp3`) is fine under 25 MB. Pass `language` only if the user named one.\n\n## SRT from `words`\n\nPack `words` into cues of ~32–42 characters or ~4–7 seconds, or a pause >0.6s. Cue start = first word `start`, end = last word `end`.\n\n```python\ndef srt_ts(sec: float) -> str:\n    ms = int(round(float(sec) * 1000))\n    h, ms = divmod(ms, 3_600_000)\n    m, ms = divmod(ms, 60_000)\n    s, ms = divmod(ms, 1000)\n    return f\"{h:02d}:{m:02d}:{s:02d},{ms:03d}\"\n```\n\nIf only `segments` exist, emit those but warn the user if cues are longer than ~7s.\n\nWrite `/workspace/<stem>.srt` and attach that file in chat. Mention model, duration, and `usage.cost` if present.\n\n## Compare with AssemblyAI\n\nWhen asked to compare, run AssemblyAI Universal-3.5 Pro on the same file (see AssemblyAI STT skill) and report cue count, cost, and wording diffs. Do not claim Parakeet produced the SRT.\n\n## Errors\n\n401 invalid key, 402 no credits, 400 `verbose_json` unsupported on that model/provider, 404 unknown model, 413 file too large, 429 rate limit, 502 upstream. Retry 429/502 with backoff. Never leak the key in error text.\n"
+    },
+    {
+      "name": "AssemblyAI STT",
+      "description": "Use this when transcribing audio or video to a timed SRT via AssemblyAI, or when comparing AssemblyAI quality against OpenRouter.",
+      "content": "---\nname: AssemblyAI STT\ndescription: >-\n  Use this when transcribing audio or video to a timed SRT via AssemblyAI, or\n  when comparing AssemblyAI quality against OpenRouter.\n---\nTurn audio or video into a timed .srt file via AssemblyAI. Use this as the quality baseline, and when comparing against OpenRouter.\n\n## Auth\n\nRead the API key from this agent’s connector secret (`assemblyai` / `api_key`). Never print or paste the key.\n\nHeader: `Authorization: $ASSEMBLYAI_API_KEY` (raw key, not Bearer).\n\nIf the key is missing, request it with a secret-request (`connector`: `assemblyai`, `field`: `api_key`) and stop until it is provided.\n\n## Default model\n\n- **Default:** `universal-3-5-pro` (flagship, ~$0.21/hour). Word timestamps included. Native SRT export.\n- **Cheaper:** `universal-2` (~$0.15/hour) only if the user asks to save cost.\n\nSpeech understanding extras (diarization, keyterms, medical) cost extra. Do not enable them unless asked.\n\n## Flow\n\n1. Upload local audio: `POST https://api.assemblyai.com/v2/upload` with the raw file bytes and `Authorization` header. Response `upload_url`.\n2. Create transcript: `POST https://api.assemblyai.com/v2/transcript` JSON `{\"audio_url\": \"<upload_url>\", \"speech_models\": [\"universal-3-5-pro\"]}`. Response `id`.\n3. Poll `GET https://api.assemblyai.com/v2/transcript/<id>` until `status` is `completed` or `error`. Sleep 2–3s between polls.\n4. Export SRT: `GET https://api.assemblyai.com/v2/transcript/<id>/srt?chars_per_caption=42`\n5. Plain text is `text` on the completed transcript. Word timings are in `words[]` (`text`, `start`, `end` in milliseconds).\n\nWrite `/workspace/<stem>.srt` and `/workspace/<stem>.txt`. Attach the SRT in chat. Mention duration and that the model was AssemblyAI.\n\n## Compare with OpenRouter\n\nWhen the user wants a comparison, run AssemblyAI on the same file as OpenRouter (Parakeet for cheap text, whisper-1 for timed SRT). Report side by side: model, $/hour estimate, cue count, and obvious quality diffs. Do not claim WER unless both transcripts are scored.\n\n## Errors\n\n401 bad key, 400 bad request, 429 rate limit. Never leak the key in error text.\n"
+    }
+  ],
+  "routines": [],
+  "plugins": []
+}

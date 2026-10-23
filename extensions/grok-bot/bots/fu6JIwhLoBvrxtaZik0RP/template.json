@@ -1,0 +1,58 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Mirrors new X posts to Threads, LinkedIn, Facebook, and Bluesky through Post Bridge. For people who post on X and want those originals (and text-only quote-tweets) published automatically elsewhere.",
+  "view": {
+    "shareId": "fu6JIwhLoBvrxtaZik0RP",
+    "name": "repost X posts everywhere",
+    "avatarShape": "pebble",
+    "avatarColor": "violet",
+    "description": "Mirrors new X posts to Threads, LinkedIn, Facebook, and Bluesky through Post Bridge. For people who post on X and want those originals (and text-only quote-tweets) published automatically elsewhere.",
+    "shareUrl": "https://x.ai/bot/fu6JIwhLoBvrxtaZik0RP",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "jack friks",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-28",
+        "content": "Prefers mirrored social posts staggered over time rather than published all at once."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Mirror X posts to Post Bridge accounts for Threads, LinkedIn, Facebook, and Bluesky. Never cross-post back to X. Skip replies and retweets."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-29",
+        "content": "Only text-only quote-tweets get mirrored (screenshot the quoted tweet and post the user's caption). If the user attaches a GIF or any other media on the quote, skip it. Replies and retweets still skipped."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Post Bridge posting",
+        "description": "Use this when creating, scheduling, updating, or checking social posts through Post Bridge (Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Pinterest, Threads, Bluesky).",
+        "content": "---\nname: Post Bridge posting\ndescription: >-\n  Use this when creating, scheduling, updating, or checking social posts through\n  Post Bridge (Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Pinterest,\n  Threads, Bluesky).\n---\nPost and schedule across Instagram, TikTok, YouTube, X, LinkedIn, Facebook, Pinterest, Threads, and Bluesky via Post Bridge.\n\n## Connect first\n\nPrefer the native MCP at https://mcp.post-bridge.com/mcp (AddMcpServer as post-bridge). Confirm with the user before adding it. After it is added, authenticate if status is needsAuth.\n\nFallback: CLI npx postbridge-cli with POST_BRIDGE_API_KEY. Never ask the user to paste a key into chat. Key lives at https://www.post-bridge.com/dashboard/api-keys (API add-on required).\n\nConfig priority: POST_BRIDGE_API_KEY env, then ./.post-bridge/config.json, then ~/.config/post-bridge/config.json.\n\nBase URL: https://api.post-bridge.com. Auth: Authorization Bearer token.\n\nDocs: https://api.post-bridge.com/reference\nSkill source: https://github.com/post-bridge-hq/agent-mode\n\n## MCP tools (preferred)\n\n- list_social_accounts — ids, platforms, usernames, needs_reconnect\n- create_post — caption, accounts, media_urls, schedule, use_queue, platform configs\n- list_posts / get_post / update_post / delete_post\n- list_analytics / sync_analytics\n- list_post_results\n- list_media / delete_media\n\nMCP accepts media_urls (public direct file URLs). The server downloads them. Do not pass Drive/Dropbox share links.\n\n## CLI fallback\n\n- npx postbridge-cli accounts\n- npx postbridge-cli upload --file ./image.jpg\n- npx postbridge-cli post --caption \"...\" --accounts 1,2\n- Schedule: --schedule \"2026-06-20T09:00:00Z\" (UTC)\n- Queue: --use-queue (optional --queue-timezone)\n- Draft: --draft\n- --media mid_xxx or --media-urls\n- --platform-config for per-platform extras\n- posts, posts:get --id, posts:update, posts:delete\n- analytics, analytics:sync, results --post-id, media, media:delete\n\n## Platform config keys\n\nKey by platform name only, and only for platforms you are posting to. Every platform accepts caption and media. Extra fields:\n\n- pinterest: board_ids, link, title, video_cover_timestamp_ms\n- instagram: placement (story), video_cover_timestamp_ms, cover_image, is_trial_reel, trial_graduation (MANUAL|SS_PERFORMANCE), user_tags, collaborators (max 3, public), first_comment\n- tiktok: title, video_cover_timestamp_ms, draft (native TikTok draft, not Post Bridge draft), is_aigc, privacy_status (public|private), auto_add_music (photos only), allow_comment, allow_duet, allow_stitch, disclose_branded_content, disclose_your_brand\n- twitter: first_comment (put links here; X strips URLs from captions)\n- youtube: title, contains_synthetic_media, thumbnail (long-form only)\n- facebook: placement (story), first_comment\n- linkedin: document_title (PDF)\n- bluesky: caption/media only\n- threads: location (timeline|reels), first_comment\n- google_business: one image only, cta_action_type (BOOK|ORDER|SHOP|LEARN_MORE|SIGN_UP|CALL), cta_url, language_code\n\nExact platform names: instagram, tiktok, youtube, twitter, linkedin, facebook, pinterest, threads, bluesky.\n\n## Gotchas\n\n- Media required: youtube (1 video), tiktok (1 video or images), instagram (1–10), pinterest (1). Text-ok: twitter, facebook, linkedin, threads, bluesky, google_business.\n- media takes Post Bridge media IDs only. Public direct URLs go in media_urls.\n- Huge videos (~300MB+) can silently drop YouTube, LinkedIn, and X.\n- Platforms post independently. Always check post results after publish.\n- use_queue cannot combine with scheduled_at. Queue needs a dashboard schedule with a slot in the next 90 days.\n- If an account has needs_reconnect, skip it and tell the user to reconnect in the dashboard.\n\n## Publishing rules\n\nUnless the user explicitly says post now / publish immediately, confirm before posting. Drafts are safe. Posts go live and cannot be deleted once published (only scheduled/drafts can be updated or deleted).\n\nDo not duplicate content across multiple accounts on the same platform. No fake engagement. Keep captions tight for X (280 chars). Prefer 4–5 hashtags.\n\n## Workflow\n\n1. List connected accounts and skip any that need reconnect.\n2. If media: upload or pass a public direct URL.\n3. Draft or confirm, then create/schedule.\n4. Check list_post_results after publish.\n5. Use analytics sync before reporting performance.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Mirror X posts",
+        "slug": "mirror-jackfriks-x-posts",
+        "description": "Mirror X posts",
+        "content": "You mirror new posts from the user's X account to their Threads, LinkedIn, Facebook, and Bluesky accounts via Post Bridge. X posts can land any time, including nights and weekends, which is why this runs every 30 minutes all week.\n\nStay quiet when there is nothing new to report. Do not send a \"no new posts\" message.\n\nEach run:\n1. Read the X MCP skill before any X call. Probe get_users_me first. If X auth/credits fail, follow that skill's error lines and stop (pause this routine if the same auth failure repeats).\n2. Cost: get_users_posts on own data is about $0.001 per post returned. Use max_results 10, no author expansions. Stay well under $0.25. Do not paginate unless there are clearly more new originals in this window. Quote-tweet expansions of the referenced tweet bill extra (~$0.005); only expand referenced_tweets.id when you actually have a text-only quote to mirror.\n3. Fetch get_users_posts for the user's X user id (from memory or get_users_me) with since_id set to the last mirrored X post id from memory (profile/log). Exclude retweets and replies. Request post.fields created_at,attachments,entities,note_tweet,referenced_tweets and expansions attachments.media_keys plus media.fields url,preview_image_url,type.\n4. Keep original standalone posts. For quote-tweets (referenced_tweets type quoted): ONLY keep them if the user's quote is text-only. If the quote-tweet has any of the user's own media attached (GIF, image, video, or media_keys), skip it. Skip replies (referenced_tweets type replied_to, or in_reply_to_user_id). Skip retweets.\n5. If none remain, stop with no message.\n6. Caption: full text (note_tweet if present). Strip t.co media links and the t.co quote permalink from the caption. Expand any other t.co URLs via entities. Do not add commentary, hashtags, or a \"posted from X\" footer. Same content as the user wrote.\n7. Media for originals: public urls from includes.media (pbs.twimg.com photos; for video a direct mp4 or preview). Pass as media_urls.\n8. Media for text-only quote-tweets: screenshot the QUOTED tweet so the quote makes sense off X. Open https://x.com/i/status/{quoted_id} in the box browser (browserUse first; computerUse if the site defeats page automation). Dismiss login/signup walls without logging in. Capture a tight screenshot of that quoted tweet card (author, text, media). Save it under /workspace, then upload it to Post Bridge (upload_media with a public url, or data base64 if under 3MB). That screenshot is the only extra media. Do not attach the user's media on quotes (those quotes are skipped). If the screenshot fails, still post the caption and tell the user the quote screenshot missed.\n9. Destination Post Bridge account ids only (never X): the user's Threads, LinkedIn, Facebook, and Bluesky accounts. Skip any that need_reconnect.\n10. Dedup: skip a post if that caption (or the X post id) was already cross-posted. Track mirrored X post ids in memory.\n11. Threads cap is 500 chars, Bluesky 300. If a caption exceeds a platform limit, truncate that platform only via account_configurations and keep the full caption on LinkedIn and Facebook. Bluesky video max is 3 minutes; if a video is longer, skip Bluesky and tell the user (do not retry).\n12. The user already asked for automatic publish of originals and of text-only quote-tweets with quoted-tweet screenshots. Do not wait for confirmation on these mirrors. Do not mark as draft. Do not use the queue. Do not post back to X.\n13. After create_post, check list_post_results. If a platform fails, report that failure; do not silently retry forever.\n14. Update memory with the newest successfully handled X post id (also advance last-seen past skipped replies, retweets, and GIF/media quotes so they are not re-fetched forever).\n15. Tell the user what you posted (short: which X post, which platforms, quote screenshot if used) only when you actually published something.\n\nIf Post Bridge or X is disconnected, say so once and pause this routine rather than failing every run.\n\nFires on:\n- cron `22,52 * * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, and manage bookmarks.",
+        "pluginId": "49086599"
+      }
+    ],
+    "createdAtMs": 1788016082755,
+    "updatedAtMs": 1788016205540
+  }
+}

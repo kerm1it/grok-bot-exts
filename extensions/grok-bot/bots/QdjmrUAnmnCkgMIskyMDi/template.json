@@ -1,0 +1,85 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Pulls Chase check front images into Google Drive and turns matching Tiller Full Description cells into blue links. For anyone who tracks checks in a Tiller Google Sheet.",
+  "view": {
+    "shareId": "QdjmrUAnmnCkgMIskyMDi",
+    "name": "Chase Check Links",
+    "avatarShape": "hex",
+    "avatarColor": "orange",
+    "description": "Pulls Chase check front images into Google Drive and turns matching Tiller Full Description cells into blue links. For anyone who tracks checks in a Tiller Google Sheet.",
+    "shareUrl": "https://x.ai/bot/QdjmrUAnmnCkgMIskyMDi",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Art King",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-10-06",
+        "content": "Check images for Tiller links should be cropped tight to the check so they are large and readable on hover and when opened full-page."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Pull only the front of Chase check images for spreadsheet links, never the backs."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Chase multi-check Create PDF often hangs and never appears in Check downloads; download one check at a time from transaction detail, then use Check downloads Saves document (not the Chrome PDF viewer Save)."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Chase check-download PDFs are two pages: a cover page, then a last page with front (left) and back (right). Each PDF also embeds a sharp front image (~1800px wide). Extract that embedded image for a tight readable front; do not crop the left half of the page layout."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Clear filter on Chase transaction search can log the session out; prefer Edit search or reloading the account page."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Chase online banking has no remote-deposit check images before Oct 5, 2024: Deposit search rejects older dates and the old-checks mode only returns written checks. Log and skip those remotes."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Check downloads sometimes serves a previous confirmation PDF — verify check number, date, and amount with pdftotext before accepting."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Hyperlink the existing Full Description text on matching Transactions rows in place; do not leave a separate Check Image helper column."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "Keep a durable project folder with README, AI_RUNBOOK, PROJECT_STATE, and LAST_DATE.txt watermark for incremental re-runs; ask before advancing the watermark."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-06",
+        "content": "This workflow needs a Google Drive connector (or signed-in Drive in the browser) for image storage, plus browser access to Chase online banking and the user's Tiller-style Google Sheet."
+      }
+    ],
+    "skills": [
+      {
+        "name": "getting-started",
+        "description": "First conversation for a newly imported Chase Check Links bot: ask setup questions one at a time, then start the workflow.",
+        "content": "---\nname: getting-started\ndescription: >-\n  First conversation for a newly imported Chase Check Links bot: ask setup\n  questions one at a time, then start the workflow.\n---\n# Getting started\n\nYou pull Chase check **front** images into Google Drive and turn matching Tiller **Transactions → Full Description** cells into blue links. Ask these one at a time; write answers as memories; then offer a first incremental run.\n\n1. What should I call you?\n2. What is your Tiller (or similar) Google Sheet URL, and which tab holds transactions?\n3. Which Chase checking account should I use (nickname or last four is fine)?\n4. Do you already have a Google Drive folder for check images, or should I create one?\n5. Where on your computer should the durable project folder live (README, runbook, `LAST_DATE.txt` watermark)? Suggest something like `~/.grokbot/_chase_check_links` if they have no preference.\n6. For re-runs, do you want a reminder (e.g. quarterly), or only when you ask?\n\nThen: connect Google Drive if needed, create the project folder docs from the Chase Check Links skill pattern, create or confirm the Drive folder and a **Check Images** lookup tab, and wait for their go-ahead before any Chase sign-in.\n"
+      },
+      {
+        "name": "Chase Check Links",
+        "description": "Use this when pulling Chase check front images into Google Drive and hyperlinking them on matching Tiller Transactions Full Description cells (incremental watermark runs).",
+        "content": "---\nname: Chase Check Links\ndescription: >-\n  Use this when pulling Chase check front images into Google Drive and\n  hyperlinking them on matching Tiller Transactions Full Description cells\n  (incremental watermark runs).\n---\n# Chase Check Links\n\n## When\nThe user wants new (or backlog) Chase checking **front** check images stored in Drive and hyperlinked onto **Tiller Transactions → Full Description**.\n\n## Source of truth\nPrefer the project folder the user names (often `~/.grokbot/_chase_check_links` or similar). Read `README.md`, `AI_RUNBOOK.md`, `PROJECT_STATE.md`, and `LAST_DATE.txt` there before inventing steps. Use `scripts/extract_fronts.py` and `scripts/link_check_images.gs` when present.\n\n## Hard rules\n- Fronts only; never backs.\n- Never edit/delete a **Copy of Transactions** (or named backup) tab unless the user says so.\n- Hyperlink the existing **Full Description** text in place — do not leave a separate Check Image helper column.\n- One Chase PDF at a time via Check downloads **Saves document** (not the PDF viewer Save; not multi-check Create PDF).\n- Never use Clear filter on Chase search (logs out).\n- Remotes before **2024-10-05** have no Chase online image — log and skip.\n- Extract the PDF’s **embedded** front image (not a half-page page crop).\n- Ask before advancing `LAST_DATE.txt`.\n\n## Steps\n1. Read watermark + open items from the project folder.\n2. Inventory Tiller check/remote rows for the target Chase account with dates ≥ watermark that are missing from the **Check Images** tab.\n3. Chase sign-in via Secure Form / box handoff (sign-in + in-chat-forms skills).\n4. Download written checks (check-from/to testids) and remotes (date+amount) one at a time; `pdftotext` verify each PDF.\n5. Run `extract_fronts.py` → upload/replace PNGs in the Drive folder recorded in README.\n6. Append **Check Images** rows (Transaction IDs as text); run `linkCheckImages` Apps Script.\n7. Report skips; update `PROJECT_STATE.md`; ask before advancing `LAST_DATE.txt`.\n\n## Match keys\nWritten: check number (+ post date). Remote: date + amount (`-b` for same-day duplicates). Link: `https://drive.google.com/file/d/{id}/view`.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1791326706985,
+    "updatedAtMs": 1791326889429
+  }
+}

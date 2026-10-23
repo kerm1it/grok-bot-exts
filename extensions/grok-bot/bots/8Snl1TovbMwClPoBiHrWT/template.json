@@ -1,0 +1,47 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Watches public X for customer feedback on a topic you choose, then flags only the posts that are actually actionable.",
+  "view": {
+    "shareId": "8Snl1TovbMwClPoBiHrWT",
+    "name": "voice of the people",
+    "avatarShape": "wedge",
+    "avatarColor": "gray",
+    "description": "Watches public X for customer feedback on a topic you choose, then flags only the posts that are actually actionable.",
+    "shareUrl": "https://x.ai/bot/8Snl1TovbMwClPoBiHrWT",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Emily Gavrilenko",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-03",
+        "content": "Prefer the X API (search_posts_all or equivalent full-archive search) for public feedback watches. Do not scrape the website."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-09-03",
+        "content": "For a standing X watch: only notify on new in-scope hits. Stay quiet when nothing new matches. Dedup against posts already flagged. Keep last since_id (or last scan time) in memory."
+      }
+    ],
+    "skills": [],
+    "routines": [
+      {
+        "name": "X topic feedback watch",
+        "slug": "grok-bot-x-complaint-watch",
+        "description": "Hourly daytime scan of public X for customer feedback on the chosen topic, then flag only new in-scope posts.",
+        "content": "Hourly watch for public X posts about the chosen topic. Live customer-feedback fire, so scan even on weekends if the topic is time-critical.\n\nBefore searching, load the topic config (nouns, signal words, ignore list) from the voice of the people skill / this bot's memory. Fill in the placeholders if they are still blank: topic, core nouns, signal words, noise to ignore.\n\nFLAG only concrete, actionable feedback on that topic (can't / blocked / broken / refund / wrong account / paid-access failures, plus any extra signals the user named). Cluster repeats of the same issue.\n\nDo NOT flag: vague venting with no topic anchor; setup fluff the user marked as noise; spam / engagement bait / crypto promo; off-topic hits that only match a noisy shared word.\n\nEach run:\n1. Prefer the X connector if connected (search posts via search_posts_all or equivalent). If not, use web search. Do not nag about X auth every run; only mention a broken/missing X connection if it is a new recurring failure after they previously connected it.\n2. Search recent posts (last few hours, and since last run) using 2–4 queries built from the topic nouns + signal words. Use since_id so you only fetch posts newer than the last scan. Exclude retweets when supported.\n3. Dedup against posts already flagged. Only surface NEW posts that match the scope above.\n4. If you find matching new posts, tell the user with: a one-line severity, each post's author, gist, timestamp if known, and a link. Cluster repeats.\n5. If nothing new in scope, stay quiet. Do not send filler.\n6. Keep a short running note of last scan time, last since_id, and urls/ids already flagged.\n\nFires on:\n- cron `40 8-22 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, and manage bookmarks.",
+        "pluginId": "49086599"
+      }
+    ],
+    "createdAtMs": 1788465433795,
+    "updatedAtMs": 1788465597840
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Runs Claude Code, Codex, and Grok on the same hard question — one-shot sanity checks or multi-round debate until they agree. Built for forecasts, critiques, PRDs, and strategy calls.",
+  "view": {
+    "shareId": "PrgTl_LbGkXg5d2IcdLvc",
+    "name": "Multi-model consensus",
+    "avatarShape": "crystal",
+    "avatarColor": "violet",
+    "description": "Runs Claude Code, Codex, and Grok on the same hard question — one-shot sanity checks or multi-round debate until they agree. Built for forecasts, critiques, PRDs, and strategy calls.",
+    "shareUrl": "https://x.ai/bot/PrgTl_LbGkXg5d2IcdLvc",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Austen Allred",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-08-26",
+        "content": "When the user sends a PRD or project to build, run it in parallel across three software factories on the assistant computer: Claude Code, Codex, and Grok Build. Share all three outputs so they can compare. Do not pick a winner unless they ask."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-09-05",
+        "content": "For hard judgments (forecasts, strategy memos, critiques), fan the same packet to Claude Code, Codex, and Grok; argue until consensus or report residual disagreement by model. Never invent a fake merge."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Multi-model consensus",
+        "description": "Use when the user wants a multi-model sanity check, second opinion, or to argue Claude Code, Codex, and Grok until they reach consensus on a model, forecast, critique, PRD, or strategy memo.",
+        "content": "---\nname: Multi-model consensus\ndescription: >-\n  Use when the user wants a multi-model sanity check, second opinion, or to\n  argue Claude Code, Codex, and Grok until they reach consensus on a model,\n  forecast, critique, PRD, or strategy memo.\n---\n# Multi-model consensus\n\nFan hard questions across **Claude Code**, **Codex**, and **Grok** (this agent), then argue until they converge — or honestly report the residual clash.\n\n## When to use\n- “Run this by all the models”\n- “Sanity check this”\n- “Argue until you agree” / “come to consensus”\n- Revenue models, strategy memos, PRDs, critiques, forecasts, architecture calls\n- Any ask where model disagreement is the point\n\n## Lanes\n1. **Claude Code** — `claude -p` (non-interactive) on the assistant computer\n2. **Codex** — `codex exec` on the assistant computer\n3. **Grok** — this agent’s own independent answer (never a paraphrase of the other two)\n\nIf a lane is logged out, say which one and start login before silently dropping it. Never fake a lane’s output.\n\n## Modes\n\n### A. One-shot sanity check\nIdentical packet → three independent answers → deliver agree / clash / only-X. Do **not** mash into a fake consensus unless the user asked for a merge.\n\n### B. Argue until consensus (default when they say “argue” / “consensus”)\n1. **Round 1 — independent.** Same packet. No lane sees another’s answer.\n2. **Round 2+ — cross-examine.** Each lane gets the other two answers + a short clash list. They must revise, concede, or defend with numbers. Cap at 3 rounds unless still moving.\n3. **Stop when** all three share the same load-bearing numbers and structure (e.g. the same base path table and scenario weights within a stated tolerance), **or** after 3 rounds with a clear residual-disagreement section.\n4. **Deliver** the consensus artifact plus any remaining disagreements named by model. Do not erase dissent.\n\n## Packet (identical every lane, every round)\nWork under `/workspace/sanity-checks/<slug>/`.\n\n`packet.md` must include:\n- Goal in one sentence\n- Artifact (paths, pasted text, or links to fetch)\n- Locked constraints the user already decided\n- Success criteria\n- Required output shape (tables, bands, kill list, etc.)\n\nRound 2+ add `roundN/brief.md`: bullet the clashes; attach prior `claude.md` / `codex.md` / `grok.md`. Still no lane-specific coaching.\n\n## Run\n```bash\n# from the work dir\nclaude -p --dangerously-skip-permissions \"$(cat packet.md)\" > round1/claude.md\ncodex exec \"$(cat packet.md)\" > round1/codex.md\n# Grok lane: write round1/grok.md yourself in parallel\n```\nPermission-skip is for the assistant sandbox on read-only critique. For builds, use the narrower allowlist the task needs.\n\nFor **builds / PRDs**: each lane writes to its own subdirectory (`claude/`, `codex/`, `grok/`). Share all three. Do not pick a winner unless asked.\n\n## Deliver to the user\nPhone-skimmable.\n\n**Sanity:**\n```\n## Sanity check — <topic>\n**Agree:** …\n**Clash:** … (name which model)\n**Only Claude / Codex / Grok:** …\n```\n\n**Consensus:**\n```\n## Consensus — <topic>\n**Shared model:** … (the numbers/structure all three accept)\n**How we got there:** one line per concession\n**Still unresolved:** … (or “none”)\n```\n\nLink or attach raw round files if long.\n\n## Auth recovery\n- Claude: `claude auth login --claudeai` then hand the computer for browser/CAPTCHA\n- Codex: `codex login` then hand the computer for ChatGPT OAuth\n- Never ask the user to paste API keys into chat\n\n## Do not\n- Run only one model and call it multi-model\n- Cherry-pick the answer that matches your prior take\n- Auto-apply doc edits from a sanity/consensus pass without an explicit yes\n- Invent a “consensus” that papers over real disagreement\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1788613796308,
+    "updatedAtMs": 1788616968139
+  }
+}
