@@ -31,7 +31,7 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 
 - Initial GitHub CI: https://github.com/kerm1it/grok-bot-exts/actions/runs/39821509762 (passed).
 - Catalog validation: 5,786 entries; no OpenMausBot contributions submitted yet.
-- Unit suite: 11 tests passed, including contribution validation, missing-root detection, native-resource coverage, and explicit deployment-script invocation regressions.
+- Unit suite: 12 tests passed, including contribution validation, missing-root detection, native-resource coverage, explicit deployment-script invocation, and production-origin configuration regressions.
 - Astro check: zero errors, warnings, or hints.
 - Biome: passed.
 - Production build: 11,577 pages.
@@ -45,5 +45,6 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 - Resource-backed production deployment: `1044b3e5-e290-4b5d-b772-7348a48ff2ad`; deployed browser suite passed again.
 - First complete automatic release: https://github.com/kerm1it/grok-bot-exts/actions/runs/39950705249 (verification, deployment, and production smoke checks passed).
 - Automatically deployed Cloudflare version: `ccba22a8-2bf9-4018-8368-c2f56d6521d0`.
+- Unified-layout release: https://github.com/kerm1it/grok-bot-exts/actions/runs/39951482127 (verification and automatic deployment passed); the remote tree contains no legacy contribution directory.
 
 Automatic deployment uses GitHub Actions, not Cloudflare Workers Builds. The account-owned token is limited to Individual Workers Editor for `bot-extensions` and expires on January 21, 2027. Every subsequent main-branch change, including resource-layout updates, passes through the same verified-artifact deployment pipeline.

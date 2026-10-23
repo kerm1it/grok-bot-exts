@@ -7,4 +7,12 @@ describe("deployment workflow", () => {
     expect(workflow).toMatch(/run: pnpm run deploy\s/);
     expect(workflow).not.toMatch(/run: pnpm deploy\s/);
   });
+
+  it("keeps the environment example aligned with the configured production origin", () => {
+    const config = readFileSync(new URL("../astro.config.mjs", import.meta.url), "utf8");
+    const example = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
+    const origin = config.match(/process\.env\.PUBLIC_SITE_URL \|\| "([^"]+)"/)?.[1];
+    expect(origin).toBeDefined();
+    expect(example.trim()).toBe(`PUBLIC_SITE_URL=${origin}`);
+  });
 });
