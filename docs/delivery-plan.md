@@ -22,13 +22,12 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 
 1. Connect the repository and configure automatic production deployment from `main`.
 2. Verify a subsequent Git push triggers deployment and the latest CI passes.
-3. Finish verification of the production canonical URLs, sitemap, and missing-page behavior after the origin update deploys.
 
 ## Verification evidence
 
 - Initial GitHub CI: https://github.com/kerm1it/grok-bot-exts/actions/runs/39821509762 (passed).
 - Catalog validation: 5,786 entries; no OpenMausBot contributions submitted yet.
-- Unit suite: 8 tests passed, including contribution validation regressions.
+- Unit suite: 9 tests passed, including contribution validation and native-resource coverage regressions.
 - Astro check: zero errors, warnings, or hints.
 - Biome: passed.
 - Production build: 11,577 pages.
@@ -37,5 +36,8 @@ Ship a bilingual, static marketplace for Grok Bot and OpenMausBot bots and plugi
 - Production URL: https://bot-extensions.kermitlx.workers.dev.
 - Deployed browser suite: 9 passed, 1 desktop-only skip for a mobile-only assertion.
 - Production origin configured in Astro canonical URLs, sitemap, and robots metadata.
+- Production HTTP verification: English and Chinese home pages, sitemap, and robots return 200 with the production origin; an unknown route returns 404.
+- Native resource publication: commit `7bf0fff6`; the complete GitHub tree confirms 21,300 bot files and 461 plugin records.
+- Resource-backed production deployment: `1044b3e5-e290-4b5d-b772-7348a48ff2ad`; deployed browser suite passed again.
 
 Automatic GitHub deployment remains a release gate. The initial production deployment was performed with Wrangler from the local checkout.
