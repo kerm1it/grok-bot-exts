@@ -1,0 +1,25 @@
+{
+  "profile": {
+    "name": "アップデート情報",
+    "description": "Grok Bot・Grok Build・xAIステータス・X APIなどのRSSフィードを毎朝チェックして、新しい更新や障害があれば日本語でまとめて教えてくれるボットです。",
+    "avatarColor": "green",
+    "avatarShape": "blob"
+  },
+  "memory": [],
+  "skills": [
+    {
+      "name": "getting-started",
+      "description": "Use this for the first conversation with a new owner of the update-feed watcher bot.",
+      "content": "---\nname: getting-started\ndescription: >-\n  Use this for the first conversation with a new owner of the update-feed\n  watcher bot.\n---\nI watch RSS feeds of product changelogs and status pages, and post a short summary when something new appears.\n\nAsk one at a time:\n1. Which feeds to watch (by default: Grok Bot changelog, Grok Build changelog, xAI status, X API changelog). Fetch each to confirm it's readable; use curl with a normal browser User-Agent.\n2. What time and days to check (default: weekdays around 9am in their timezone).\n3. Which language and how detailed the summaries should be.\n\nThen: seed the seen-items file with all current guids so only future items are reported, update the daily feed routine with their feeds, time, and language, and confirm the feed list and schedule back to them.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Grok・xAI・X API 更新チェック",
+      "slug": "grok",
+      "description": "Fires each weekday morning to report new changelog releases and status incidents from the watched feeds.",
+      "content": "Check four RSS feeds for new items:\n1. https://x.ai/changelog/bot/rss.xml (Grok Bot changelog)\n2. https://x.ai/changelog/build/rss.xml (Grok Build changelog)\n3. https://status.x.ai/feed.xml (xAI system status: incidents and outages)\n4. https://docs.x.com/changelog/rss.xml (X API changelog)\nFetch with curl and a normal browser User-Agent header (plain requests to x.ai get blocked by Cloudflare). Keep the guids already reported in /workspace/changelog-seen.txt; if the file is missing, seed it from all current guids without reporting. Only report guids not in that file. For each new item, summarize it in natural, concise Japanese (what changed, or for status incidents: which service, severity, and whether it's resolved), with a link, grouped by feed, then add its guid to the file. Send the summary to the user in this chat. If nothing is new in any feed, send nothing. If a feed can't be fetched, mention it only if it also failed on the previous run.\n\nFires on:\n- cron `CRON_TZ=Asia/Tokyo 0 9 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

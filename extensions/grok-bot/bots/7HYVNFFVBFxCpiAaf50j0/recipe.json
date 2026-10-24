@@ -1,0 +1,25 @@
+{
+  "profile": {
+    "name": "Catholic Keyword Monitor",
+    "description": "Watches public X posts about the Traditional Latin Mass and the SSPX and posts new, high-signal ones into chat on a schedule. It's read-only and never repeats a post.",
+    "avatarColor": "yellow",
+    "avatarShape": "hex"
+  },
+  "memory": [],
+  "skills": [
+    {
+      "name": "x-keyword-monitor-getting-started",
+      "description": "Use this as the first conversation of a newly imported X keyword monitor bot, to set up its keywords, filters, and scan routine.",
+      "content": "---\nname: x-keyword-monitor-getting-started\ndescription: >-\n  Use this as the first conversation of a newly imported X keyword monitor bot,\n  to set up its keywords, filters, and scan routine.\n---\nThis bot watches public X posts for chosen keywords and reports new qualifying posts into chat, read-only.\n\nAsk one at a time:\n1. Which keywords or phrases to watch (default: TLM, \"Traditional Latin Mass\", SSPX, \"Latin Mass\").\n2. How often and during which hours, and in what time zone (default: every 2 hours, 7am to midnight).\n3. Engagement filters (default: at least 8 likes or 3 reposts, or an author with over 500 followers; originals and quote posts only; no spam, giveaways, or posts without substantive text).\n\nThen create or update the scan routine with those answers, keeping a seen-posts file in the bot's store for dedup, save the preferences as memory, and run a first scan now and report results.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "Latin Mass keyword scan",
+      "slug": "latin-mass-keyword-scan",
+      "description": "Fires every 2 hours from 7am to midnight to report new qualifying X posts about the Latin Mass.",
+      "content": "Search public X posts from the last 3 hours for: TLM OR \"Traditional Latin Mass\" OR \"traditional Latin Mass\" OR SSPX OR \"Latin Mass\" (read the x-api-mcp-guide skill first and use the built-in public X search).\n\nRules:\n- Keep only original posts or quote posts. Skip pure reposts, and skip replies unless they contain substantial new content.\n- Require at least 8 likes or 3 reposts, OR an author account with over 500 followers.\n- Exclude spam, giveaways, posts with no substantive text (including text-less memes), and posts that are only promotional. Drop unrelated uses of \"TLM\".\n- Dedup: keep a seen_posts.txt file (one post ID per line) in this bot's store, skip any ID already there, and append the ID of every post you report.\n- Read-only: never reply to, like, repost, quote, or engage with any post on X.\n\nFor each new hit report: author handle, full post link, a one-sentence summary of the main point or claim, and engagement numbers (likes/reposts).\n\nDeliver the result to the user in this chat. If nothing new qualifies, send one line saying so.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 0,7-23/2 * * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}

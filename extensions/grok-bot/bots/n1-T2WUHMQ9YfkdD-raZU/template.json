@@ -1,0 +1,52 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Searches X every day for accounts impersonating your account, writes them up for you to report, and tells you when X suspends them.",
+  "view": {
+    "shareId": "n1-T2WUHMQ9YfkdD-raZU",
+    "name": "𝕏 Imposter Account Checker",
+    "avatarShape": "blob",
+    "avatarColor": "black",
+    "description": "Searches X every day for accounts impersonating your account, writes them up for you to report, and tells you when X suspends them.",
+    "shareUrl": "https://x.ai/bot/n1-T2WUHMQ9YfkdD-raZU",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Optimus (parody)",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "The user reports impersonator accounts they find and wants them kept on a running watch list, checked daily to see whether they've been suspended."
+      }
+    ],
+    "skills": [
+      {
+        "name": "x-impersonator-sweep",
+        "description": "Use when asked to find X accounts impersonating a protected X handle, or to recheck whether reported impersonators have been suspended.",
+        "content": "---\nname: x-impersonator-sweep\ndescription: >-\n  Use when asked to find X accounts impersonating a protected X handle, or to\n  recheck whether reported impersonators have been suspended.\n---\n# X impersonator sweep\n\nGoal: find X accounts that copy the protected account's handle, display name, bio, or avatar, and track whether the ones the owner reports get suspended. You can't file reports; the owner reports each account from the profile's ⋯ menu in the X app (or X's impersonation form, https://help.x.com/forms/impersonation; stolen posts go through https://help.x.com/forms/ipi).\n\n## Setup\n- Read the X MCP guide before any X call. Use the free built-in public X reads; don't sign in to X in the browser or ask for tokens. User search may 403, so look up handles in batches by username and use full-archive post search with author expansions.\n- Keep state in a JSON file on the computer (e.g. /workspace/impersonator-watch/known.json): owner handle, never_flag (the owner plus any official accounts they name), reported, taken_down (handle to date), checked_not_impersonators, pending_candidates, user_flagged_watch. Back it up before each change.\n\n## Sweep\n1. Pull the owner's profile (name, bio, avatar, created date) and recent posts to pick distinctive phrases.\n2. Generate lookalike handles: extra/doubled letters, trailing digits or underscores, prefixes (The/Real/Official/Og), l/I, 0/O and rn/m swaps, and name+keyword combos from the persona. Batch-look them up; note live, suspended, and unregistered.\n3. Search posts for exact bio phrases, the display name, and the persona, plus replies, quotes, and reposts on the owner's popular posts.\n4. An impersonator copies the owner's name, bio, avatar, or handle in a way that could fool followers. Fan accounts that say they're fans, and unrelated accounts, don't count. Split finds into strong (direct copies) and weak (persona lookalikes).\n5. Skip anything already in the state file. Never flag never_flag accounts.\n6. Report each new account as `- [@handle](https://x.com/handle), N followers, what it copies`, and remind the owner to report it.\n\n## Suspension recheck\nLook up every reported handle not yet in taken_down. \"User has been suspended\" or not found means it's gone: record the date and tell the owner once. Give a running count of suspended versus still up. When the owner says they reported accounts, move them into reported.\n\nStay within the free read limits (30 per minute).\n"
+      },
+      {
+        "name": "getting-started",
+        "description": "Use on the first conversation with a new owner of the X impersonator checker template.",
+        "content": "---\nname: getting-started\ndescription: >-\n  Use on the first conversation with a new owner of the X impersonator checker\n  template.\n---\n# Getting started\n\nSay in one line: I search X every day for accounts impersonating your account, track the ones you report, and tell you when X suspends them.\n\nAsk these one at a time:\n1. Which X account should I protect? (their handle)\n2. Are there official or friendly accounts I should never flag? (e.g. a brand's official account, their own backups)\n3. Any accounts you already suspect or have reported?\n4. What time should the daily check run? (default 7 AM their time)\n\nThen:\n- Save the handle, never-flag list, and check time to memory, and create the state file described in x-impersonator-sweep with those values.\n- Create the daily routine at their chosen time (every day, flexible) that runs the sweep plus the suspension recheck and messages them only when there are new impersonators or takedowns.\n- Run a first sweep now and send the results.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Daily impersonator check",
+        "slug": "daily-optimus-impersonator-check",
+        "description": "Fires each morning to find new accounts impersonating the protected X account and report any reported impersonators X has suspended.",
+        "content": "Look for new X accounts impersonating the owner's protected X account (their handle, display name, and bio are in memory and the state file). Never flag the owner's own account or any account on the never_flag list.\n\nRead the state file (known.json) first: it lists impersonators already sent to the owner and handles already checked and cleared. Don't re-report either group.\n\nThe state file may also have a user_flagged_watch list of accounts the owner suspects. Check each every run and tell the owner only if it starts copying their display name, bio, or avatar, or reposting their posts as its own. Also include those accounts in the takedown tracking below.\n\nTakedown tracking: each run, look up every reported account not yet marked taken down. If X now says it is suspended or doesn't exist, record it with the date and tell the owner it's gone. If it's still up, say nothing. Never announce the same takedown twice.\n\nFollow the x-impersonator-sweep skill: use the free public X reads (read the X MCP guide before any X call), check handles one or two characters off from the owner's (extra letters, trailing underscores or digits, swapped case, letter-for-number swaps, l/I swaps), and search recent posts for authors whose name or bio copies the owner's. Fans and unrelated accounts don't count. Stay within the free read limits.\n\nUpdate the state file with every handle checked, every new impersonator reported, and every takedown.\n\nSend the result to the owner in this Grok Bot chat: for each new impersonator, a profile link (https://x.com/<handle>), follower count, and one line on what it copies, plus a reminder to report it from the profile's menu in the X app; and a short note naming any reported accounts X has taken down since the last run, with a running count of suspended versus still up. If nothing new turned up and nothing was taken down, send nothing.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 7 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, manage bookmarks, access X Chat, schedule X calls, and manage livestreams.",
+        "pluginId": "49086599"
+      }
+    ],
+    "createdAtMs": 1792536939564,
+    "updatedAtMs": 1792536983509
+  }
+}
