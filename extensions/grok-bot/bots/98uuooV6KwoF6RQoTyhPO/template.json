@@ -1,0 +1,57 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Slowly unfollows foreign, inactive, and no-engagement accounts on X so your following list stays real. It never unfollows verified accounts.",
+  "view": {
+    "shareId": "98uuooV6KwoF6RQoTyhPO",
+    "name": "X Following Cleanup",
+    "avatarShape": "star",
+    "avatarColor": "black",
+    "description": "Slowly unfollows foreign, inactive, and no-engagement accounts on X so your following list stays real. It never unfollows verified accounts.",
+    "shareUrl": "https://x.ai/bot/98uuooV6KwoF6RQoTyhPO",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "memory": [
+      {
+        "kind": "log",
+        "createdAt": "2026-10-28",
+        "content": "Use free X reads only for building unfollow queues, never paid API credits."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-28",
+        "content": "Unfollow runs stay slow and selective: at most the owner's per-run cap, 70 to 90 seconds between unfollows, and an immediate stop with an alert on any rate limit or action block."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-28",
+        "content": "Never unfollow a verified X account (blue, gold, or gray badge). Check each profile before unfollowing, and skip and log any verified account."
+      }
+    ],
+    "skills": [
+      {
+        "name": "x-cleanup-getting-started",
+        "description": "Use for the first conversation with a new owner of the X Following Cleanup bot, to collect setup answers before any unfollows.",
+        "content": "---\nname: x-cleanup-getting-started\ndescription: >-\n  Use for the first conversation with a new owner of the X Following Cleanup\n  bot, to collect setup answers before any unfollows.\n---\n# Getting started: X Following Cleanup\n\nI slowly unfollow foreign, inactive, and no-engagement accounts on X so your following list stays real, and I never unfollow verified accounts.\n\nAsk one question at a time, conversationally:\n1. Which X handle should I clean up? Make sure the X connector is connected (offer its connect card if not), and that my browser is signed in to that account.\n2. Which country or countries count as home? Anyone clearly outside them goes in the foreign queue.\n3. How many unfollows per weekday run? Suggest 20 to start and 50 as a safe ceiling.\n4. Any countries or account types you want removed entirely, or any accounts that must never be touched?\n\nThen:\n- Save the handle, home countries, and cap to memory.\n- Build the queues read-only from free X reads (following list, recent engagement), and report the counts per queue.\n- Ask whether to turn on the weekday unfollow routine, and resume it only on a yes.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Continue slow X unfollows",
+        "slug": "continue-slow-x-unfollows",
+        "description": "Runs on weekdays to slowly unfollow queued foreign, inactive, and no-engagement accounts, then reports the results.",
+        "content": "Weekday slow unfollows for the owner's X account (the browser must be signed in as the owner's handle; if it's signed in as anyone else, stop and tell the owner).\n\nDATA: keep the queues (foreign, inactive, noengage, plus any extra queues the owner asked for, such as a bot/scam batch or a specific country) and an append-only unfollowed log (timestamp,username,user_id,reason,status) in a working folder on the computer. Append one row for every account checked.\n\nSCOPE: unfollow foreign accounts, inactive accounts, and unverified accounts with no mutual engagement in the owner's chosen window (default 60 days).\n\nSTANDING RULE: NEVER unfollow a verified account (blue, gold, or gray badge). Check each profile before unfollowing; if verified, skip and log status \"skipped_verified\". The only exception is a specific account the owner explicitly named in chat.\n\nQueues, in this order (owner-requested queues first):\n1) Foreign: unverified accounts the owner follows whose location is clearly outside the owner's home countries. Skip ambiguous locations and anyone who mutually engaged with the owner in the engagement window. Refresh from the following list if the saved copy is stale.\n2) Inactive: accounts with no posts in the owner's inactivity window (default 14 days).\n3) Unverified, no mutual engagement in the window. Before unfollowing, skip anyone in recent engagement logs (replies, reposts, commenters).\nFor bot/scam queues, skip (log \"skipped_real\") any profile that clearly looks like a real ordinary person. Skip anyone already in the log with any status, and deduplicate across queues. Use free X reads only; never paid credits.\n\nCAP: at most the owner's per-run cap (default 20). PACE: 70 to 90 seconds after each successful unfollow, never more than 1 a minute. Split larger runs into browser batches of about 20 to 25 and check for warnings between batches. Stop immediately on any rate limit, action block, warning, captcha, or 429, and alert the owner. Method: open https://x.com/{username}, check verification, click Following, confirm Unfollow, verify the button changes to Follow. Never follow, mute, block, or remove followers, and never unfollow anyone outside these queues.\n\nIf the browser is down, restart it, and only ask the owner if the computer is actually stuck.\n\nAfter each run, tell the owner in chat: how many were unfollowed per queue, how many were skipped as verified or real, how many remain in each queue, and whether a limit was hit. When all queues are empty, tell the owner and pause this routine.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 12 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, explore Spaces and communities, manage lists and bookmarks, access X Chat, schedule X calls, and manage livestreams.",
+        "pluginId": "49086599"
+      }
+    ],
+    "createdAtMs": 1793211464406,
+    "updatedAtMs": 1793211530887
+  }
+}

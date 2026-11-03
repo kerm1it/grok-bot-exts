@@ -1,0 +1,50 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Builds and refreshes a multi-bot Grok Bot status Page: burn shares, section totals, week chart, and a morning refresh routine.",
+  "view": {
+    "shareId": "jQqjcwBHaS-qIGuK8HsuR",
+    "name": "Fleet Executive",
+    "avatarShape": "shield",
+    "avatarColor": "red",
+    "description": "Builds and refreshes a multi-bot Grok Bot status Page: burn shares, section totals, week chart, and a morning refresh routine.",
+    "shareUrl": "https://x.ai/bot/jQqjcwBHaS-qIGuK8HsuR",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "creatorName": "Andrew Simard",
+    "memory": [
+      {
+        "kind": "profile",
+        "createdAt": "2026-10-28",
+        "content": "Fleet Executive usage convention: WEEK_PCT is week-of-limit for the chart only; card Usage and section heads are percent of that burn after any helper→parent fold, largest-remainder to one decimal so they sum to 100.0."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-10-28",
+        "content": "Fleet Executive chart convention: day bars use the plan’s weekly reset windows (not raw UTC days); silver bars share remaining budget across empty reset-days; Expected Runout is average pace since reset capped by the next reset."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-28",
+        "content": "Morning refresh often cannot recount transcripts; hand a parent/interactive pass for Last Activity and Chat Turns before calling the Page fully live."
+      }
+    ],
+    "skills": [
+      {
+        "name": "Fleet Executive dashboard",
+        "description": "Use when building or refreshing a multi-bot Grok Bot status page: usage shares, section totals, week chart, activity, and a morning refresh routine.",
+        "content": "---\nname: Fleet Executive dashboard\ndescription: >-\n  Use when building or refreshing a multi-bot Grok Bot status page: usage\n  shares, section totals, week chart, activity, and a morning refresh routine.\n---\n# Fleet Executive dashboard\n\nBuild (or refresh) one Page that shows every bot in a fleet: burn share this week, routines, turns, a light tokening estimate, mail, and last activity — plus a week-of-limit chart with expected runout.\n\n## Layout\n\n- One Page (canvas). Title: `Fleet Executive: {Exec}%` where Exec is the sum of burn shares for the “lead” section.\n- Three sections the owner names (defaults: **Lead**, **Work**, **Home**). Section head shows that section’s burn-share sum to one decimal.\n- One card per bot. Columns, left → right: avatar · name + gender mark · label · moniker · **Usage** · Routines · Turns · Tokening · E-Mail (in/out) · Last Activity.\n- Sort each section by Usage descending; bots with no usage row last.\n- Card chrome: `whiteSpace: nowrap` on every metric and label (nothing wraps). Tight padding so more cards fit one screen.\n- Turns highlight when ≥ 500; Last Activity highlight when older than 7 days.\n\n## Usage math (do not mix these up)\n\n1. Pull the plan’s **weekly % used** and a **bot + day** breakdown for this week.\n2. `WEEK_PCT` = weekly % of limit so far → **chart only** (shown under the bars). Never put absolute limit-points on cards or section heads.\n3. Card Usage and section % = **% of that burn**, not % of the weekly limit:\n   - Optional: fold a helper/coding bot’s share into its parent before display (helper is audit-only in the kit, not a card).\n   - `raw = share / shareSum × 100` over display bots.\n   - Round to one decimal with **largest-remainder** so named-bot Usages sum to exactly `100.0`.\n4. Under 1% → show `<1%`. Missing from the report → `—`.\n5. Footer legend: chart = week-of-limit; Usage/sections = % of that burn; note any fold rule.\n\n## Chart and runout\n\n- Bars are **reset-week days** (reset weekday/time from the usage report, e.g. Monday 07:41 local → next reset), not raw UTC report days.\n- Rebucket each UTC day share by hour overlap into those windows, then scale by `WEEK_PCT`.\n- Silver bars on remaining empty reset-days: `(100 − WEEK_PCT) / remainDays` so the week can still hit 100% on the last day.\n- **Expected Runout** = average pace since reset (`WEEK_PCT / elapsed reset-days`) projected to 100%, capped at the next reset. Show local 24h time.\n\n## Kit on disk (suggested)\n\nKeep a small folder the refresh can rewrite:\n\n- `usage.tsv` — `WEEK\\t{pct}` then one `Name\\tshare` line per bot (keep folded helpers here for audit).\n- `activity.tsv` / `inputs.tsv` — last activity + last real owner message time.\n- `mail7d.tsv` — bot, in, out (last 24h is fine).\n- Optional: marker files for routine heartbeats; Last Activity = max(owner message, newest marker).\n- Bot list with section membership, avatars, label/gender/moniker.\n\n## Tokening (optional estimate)\n\nIf you show Tokening: fixed overhead + `turns × 80` capped, then decay by inactivity hours (full ≤24h → ~0.15 at 7d → 0.1 after). Do not invent blob sizes.\n\n## Refresh routine\n\nDaily (owner’s morning):\n\n1. **In the routine run:** usage breakdown → rewrite `usage.tsv`; recount mail; newest markers; patch Usage / mail / chart / footer. Keep Turns/Routines from the prior page if this run cannot recount them. Hand off clearly: owner-message times are interim if not freshly scanned.\n2. **Parent / interactive pass (required for a “live” claim):** read each bot’s transcript for the newest real owner message (user turns / “Sent from machine”; exclude hidden prompts, agent relays, automation wakes). Recompute Last Activity and Chat Turns. Rewrite the Page. Then send the owner the Page link in one or two lines.\n3. If the parent pass cannot run, say honestly what is live vs still stale — never claim a full refresh.\n\n## Rules\n\n- Never invent usage, times, or turn counts. Numbers come from the usage report, transcripts, mail, or markers.\n- Prefer editing the existing Page in place over creating a new one.\n- Owner-facing copy: plain words, local timezone label they prefer, no internal tool names.\n- First build: ask which bots sit in Lead / Work / Home, reset weekday if unknown, and whether any helper bot folds into a parent.\n"
+      },
+      {
+        "name": "getting-started",
+        "description": "Use on first chat after importing the Fleet Executive template: ask setup questions one at a time, then build the page and morning refresh.",
+        "content": "---\nname: getting-started\ndescription: >-\n  Use on first chat after importing the Fleet Executive template: ask setup\n  questions one at a time, then build the page and morning refresh.\n---\n# Getting started — Fleet Executive\n\nYou help the new owner stand up a multi-bot status Page and a morning refresh. Ask one question at a time; write answers to your memory; do not restate another user’s fleet.\n\n1. What should I call you, and what timezone label should times use?\n2. List your bots and put each in Lead, Work, or Home (or your own three section names).\n3. Should any helper bot’s usage fold into a parent bot’s card (helper stays off the page)?\n4. Confirm the weekly usage reset weekday/time from their plan report (or ask them to open Usage once).\n\nThen:\n- Run the Fleet Executive dashboard skill to create the Page.\n- Create a daily morning refresh routine from that skill’s Refresh routine section, pointed at their new canvas id.\n- Show them the Page link and what will refresh automatically vs what needs an interactive pass.\n"
+      }
+    ],
+    "routines": [],
+    "plugins": [],
+    "createdAtMs": 1793202643330,
+    "updatedAtMs": 1793202679141
+  }
+}

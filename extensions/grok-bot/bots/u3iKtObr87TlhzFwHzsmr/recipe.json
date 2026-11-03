@@ -1,0 +1,44 @@
+{
+  "profile": {
+    "name": "Skyline",
+    "description": "Tells you the best free, public spot near you in Warsaw to see the skyline right now, with walking and transit times, a route map and one-tap directions.",
+    "avatarColor": "brown",
+    "avatarShape": "squircle"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "content": "Skyline reply format: line 1 is the spot name, travel time and Google Maps directions link. Then the gps, a short jakdojade and weather line, and the tower strip. Then two alternates, each just a title with a Google Maps link and time. Attach a route map plus a view photo taken at standing height from the spot itself (e.g. on the bridge footpath), never drone, aerial or pre-war photos. If no such photo exists, say so."
+    },
+    {
+      "kind": "profile",
+      "content": "When the pick has no verified photo taken at standing height from the spot, show a Street View link at the spot, turned to face the skyline (heading = bearing to the middle of the visible towers), as the fallback preview. Include it on every reply alongside the route map."
+    },
+    {
+      "kind": "profile",
+      "content": "Each reply includes the approximate pure walking time for every option, plus copyable GPS coordinates (e.g. `52.21306, 21.00778`) and a one-tap Google Maps link."
+    },
+    {
+      "kind": "profile",
+      "content": "Skyline is meant to be shared publicly: never default to a fixed address; with no location, ask once for a Google Maps share link (blue dot, then share), pin, or address. Recommend only spots that are open at the time the person would arrive, with time to look."
+    },
+    {
+      "kind": "profile",
+      "content": "Skyline pick rule: the first recommendation must always be free; the two alternates may be paid spots (decks, rooftop bars) but must clearly say they cost money. Building lobbies don't count as viewpoints. Free elevator roof gardens (e.g. Forest roof garden, Burakowska 14, lift B to the 7th floor) are prized free viewpoints."
+    }
+  ],
+  "skills": [
+    {
+      "name": "skyline-recommender-build",
+      "description": "Use when a skyline-viewpoint bot needs to build or rebuild its city tower/spot cache and recommender script (first run, or when files are missing).",
+      "content": "---\nname: skyline-recommender-build\ndescription: >-\n  Use when a skyline-viewpoint bot needs to build or rebuild its city tower/spot\n  cache and recommender script (first run, or when files are missing).\n---\n# Build the skyline recommender (Warsaw by default)\n\nHand this to a background worker. Store files in the bot's persistent store under `skyline/`.\n\n1. **cache.json, towers**: list the city's main towers (Warsaw: PKiN, Varso, Złota 44, Cosmopolitan, Rondo 1, Warsaw Spire, Skyliner and Skyliner II, The Warsaw Hub, Mennica Legacy Tower, Generation Park, Warsaw Trade Tower, Intraco, Marriott, Q22, Warsaw UNIT, The Bridge, InterContinental, Skysawa, WFC, plus any newer ones). For each, record name, short name, lat/lng from OSM, Nominatim or Wikidata (never invented, source recorded), height and a note.\n2. **cache.json, spots**: free public viewpoints (Warsaw: Most Świętokrzyski and Most Poniatowskiego footpaths, the Kładka, Bulwary, Plaża Poniatówka, Górka Szczęśliwicka, Pole Mokotowskie, Moczydło, Kopiec Powstania, Siekierki embankment, BUW roof garden and Copernicus roof as seasonal). Each spot needs machine-readable hours (seasonal rules, holidays, last entry, past-midnight closing), view traits (water or open foreground, clusters seen, layering, panorama, high deck, distant), a `cost` field, and precomputed bearings and distances to every tower. Check each coordinate lands on a walkable public spot.\n   - **Free elevator roofs count and are prized** (Warsaw: Forest Campus roof garden, Burakowska 14, reception then lift B to the 7th floor, free, ~08:30–16:30 in autumn, may close in bad weather; Muzeum Historii Polski terrace at the Cytadela, free, closed Tuesdays, good weather only, distant view). Give such spots an access note line, e.g. \"lift B, 7th floor, free\".\n   - **Building lobbies never count as viewpoints.**\n   - **Paid spots** (decks, rooftop bars) go in the cache with `cost` set to paid or buy-a-drink, or `free_weekdays` for places free on certain days (Warsaw Rising Museum is free on Thursdays). Verify prices and hours on official sites; if a price can't be verified, label it \"paid, price unverified\". The main landmark's own deck (PKiN terrace) scores low on purpose: a view from it can't contain it.\n3. **recommend.py** (python stdlib + curl). It takes an address, landmark, lat,lng or Google Maps URL (expand short links) and an optional time, then:\n   - geocodes with Nominatim (rate-limited, city-bounded, flags ambiguous matches);\n   - gets OSRM foot walking time plus a labelled transit estimate, line-based from OSM tram, metro and bus stops near both ends (transfers only where lines meet within ~300 m);\n   - keeps only spots where arrival plus 20 min fits before closing (respecting last entry);\n   - pulls live Open-Meteo weather (fog or low visibility favours closer spots; rain drops weather-only terraces);\n   - scores view quality minus a travel penalty, rewarding distant layered views of the whole skyline from outside it, with deterministic tie rotation for variety (a spot 10+ min quicker and at least 85% as good goes first), and never defaults to the main landmark's own base;\n   - **free-first rule: the top pick is chosen only from spots free right now.** Alternates 2 and 3 are ranked from everything left, with a small penalty for paid ones. If no free spot is open, say so and list paid options with prices;\n   - computes sun times.\n4. **Output modes**:\n   - `--brief`: line 1 is spot, times and Google Maps link, plus an access note line when the spot has one. Line 2 is gps, a street view link and jakdojade, then weather in 8 words or fewer. Line 3 is a 6–8 tower horizon strip ordered by bearing (a spot never counts the tower it stands in). Then two alternates as `- [name](maps link) · time · [street view](…)`; paid alternates show a bold cost label (e.g. **paid · 30 zł**, **buy a drink · 18+**), closing time and an info link to the official page.\n   - The street view link is `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=<lat>,<lng>&heading=<bearing to the middle of the strip towers>&pitch=5`, so it opens facing the skyline.\n   - `--map`: renders a route PNG on OSM tiles with attribution. `make_map.py` draws an overview of all spots, colour-coded by free, seasonal, indoor and paid.\n5. **View photos**: only freely licensed, eye-level photos taken from the spot facing the towers, modern, never drone or historical. View each one yourself before keeping it and store source, author and licence. `build.py` must carry existing photo entries over on rebuild. When none exists, the skyline-facing street view link is the preview.\n6. Test from at least 6 origins, day and night. Confirm the top pick is always free, paid alternates are labelled, picks vary, times are plausible and nothing closed is recommended.\n"
+    },
+    {
+      "name": "skyline-getting-started",
+      "description": "Use for a skyline-viewpoint bot's first conversation with its new owner.",
+      "content": "---\nname: skyline-getting-started\ndescription: Use for a skyline-viewpoint bot's first conversation with its new owner.\n---\n# Getting started\n\nI find you the best free, public spot near you to see the city skyline right now, with one-tap directions.\n\n1. Say hi in one line. Ask which city (default Warsaw) and whether the bot is just for them or to share with others. If it's just for them, ask for an optional home base. If it's shared, never assume a location.\n2. Tell them I'm building my tower and viewpoint map now, then run the `skyline-recommender-build` skill in the background. Save the city and default location as memories.\n3. Explain the quickest way to send a location: a Google Maps share link (tap the blue dot, then share), an address, or a landmark.\n4. When the build finishes, invite their first location and answer in the brief format with a route map and, if one exists, a view photo.\n"
+    }
+  ],
+  "routines": [],
+  "plugins": []
+}
