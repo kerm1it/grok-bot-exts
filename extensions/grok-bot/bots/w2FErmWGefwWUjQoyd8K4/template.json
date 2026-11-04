@@ -1,0 +1,60 @@
+{
+  "expectedActiveVersion": 2,
+  "instructions": "Checks your X account every day and emails you a list of people you follow who stopped following you back. It's read-only on X and uses your own X API token.",
+  "view": {
+    "shareId": "w2FErmWGefwWUjQoyd8K4",
+    "name": "X Unfollow Watch",
+    "avatarShape": "squircle",
+    "avatarColor": "violet",
+    "description": "Checks your X account every day and emails you a list of people you follow who stopped following you back. It's read-only on X and uses your own X API token.",
+    "shareUrl": "https://x.ai/bot/w2FErmWGefwWUjQoyd8K4",
+    "version": 2,
+    "activeVersion": 2,
+    "active": true,
+    "published": true,
+    "creatorName": "Coty Lake",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "The X unfollow check uses the official X API with the owner's Bearer Token (X_BEARER_TOKEN) and the snapshot script from the x-unfollow-check skill, not the browser, because X's connector tools can't list followers or following and browser sign-in to X often needs a passkey."
+      },
+      {
+        "kind": "profile",
+        "content": "Snapshots are saved per day as followers, following, and counts files and compared by user id. Back up same-day files before a re-run because the script overwrites them."
+      },
+      {
+        "kind": "profile",
+        "content": "When the owner says \"run\", do a manual check right away against the most recent previous snapshot. Email unfollows of accounts they follow, and mention in chat any accounts they don't follow that dropped off."
+      }
+    ],
+    "skills": [
+      {
+        "name": "x-unfollow-check",
+        "description": "Use this to snapshot an X account's followers and following through the X API and find accounts the owner follows that stopped following them back.",
+        "content": "---\nname: x-unfollow-check\ndescription: >-\n  Use this to snapshot an X account's followers and following through the X API\n  and find accounts the owner follows that stopped following them back.\n---\n# X unfollow check\n\nRead-only. Never follow, unfollow, block, post, DM, or change anything on X. X's connector tools can't list followers or following, so this uses the official X API v2 with the owner's own app Bearer Token, stored in the env var `X_BEARER_TOKEN`. Never print the token.\n\n## Setup (once)\nSave this script as `snapshot.py` in the bot's persistent store. Set `UID` to the owner's numeric X user id and `D` to a snapshots folder inside that store, then run it with `python3`.\n\n```python\n#!/usr/bin/env python3\nimport os, sys, json, time, datetime, urllib.request, urllib.parse, urllib.error\nUID = \"<X_USER_ID>\"\nD = \"<STORE>/snapshots\"\nTOK = os.environ[\"X_BEARER_TOKEN\"]\nos.makedirs(D, exist_ok=True)\ndef get(url):\n    req = urllib.request.Request(url, headers={\"Authorization\": \"Bearer \" + TOK})\n    for attempt in range(5):\n        try:\n            with urllib.request.urlopen(req, timeout=60) as r:\n                return json.load(r)\n        except urllib.error.HTTPError as e:\n            body = e.read().decode()[:500]\n            if e.code == 429 and attempt < 4:\n                time.sleep(60); continue\n            sys.exit(f\"HTTP {e.code} on {url.split('?')[0]}: {body}\")\ndef fetch(kind):\n    out, tok = [], None\n    while True:\n        q = {\"max_results\": \"1000\", \"user.fields\": \"username,name\"}\n        if tok: q[\"pagination_token\"] = tok\n        j = get(f\"https://api.x.com/2/users/{UID}/{kind}?\" + urllib.parse.urlencode(q))\n        out += j.get(\"data\", [])\n        tok = j.get(\"meta\", {}).get(\"next_token\")\n        if not tok: return out\nme = get(f\"https://api.x.com/2/users/{UID}?user.fields=public_metrics\")[\"data\"][\"public_metrics\"]\nfol = fetch(\"followers\"); fing = fetch(\"following\")\nday = datetime.date.today().isoformat()\nfor name, lst in ((\"followers\", fol), (\"following\", fing)):\n    with open(f\"{D}/{day}-{name}.txt\", \"w\") as f:\n        for u in sorted(lst, key=lambda u: u[\"username\"].lower()):\n            f.write(f'{u[\"id\"]}\\t@{u[\"username\"]}\\t{u[\"name\"]}\\n')\njson.dump({\"profile_followers\": me[\"followers_count\"], \"profile_following\": me[\"following_count\"],\n           \"got_followers\": len(fol), \"got_following\": len(fing)}, open(f\"{D}/{day}-counts.txt\", \"w\"))\nprint(open(f\"{D}/{day}-counts.txt\").read())\n```\n\n## Each check\n1. If today's snapshot files already exist, copy them to a backup folder first, because the script overwrites same-day files. Then run the script.\n2. Completeness: if either list is more than about 3% below its profile count in the counts file, the check is partial. Don't report unfollows from it, tell the owner it was partial, and don't use it as a baseline.\n3. Compare by user id against the most recent earlier complete followers snapshot (or the backup). An unfollow is an id that was a follower before, is missing now, and is still in today's following list. Accounts the owner doesn't follow that dropped off are FYI only.\n4. If there are unfollows, send a short report email from the owner's Gmail to their own address, subject `X unfollows for <date>`, listing each `@handle`, display name, and `https://x.com/<handle>`. Send nothing on days with no unfollows.\n5. If the API fails (rejected token, no credits), tell the owner what failed and stop.\n"
+      },
+      {
+        "name": "getting-started",
+        "description": "Use this for the first conversation with a new owner of the X Unfollow Watch bot, to set up the API token, snapshot, and daily email.",
+        "content": "---\nname: getting-started\ndescription: >-\n  Use this for the first conversation with a new owner of the X Unfollow Watch\n  bot, to set up the API token, snapshot, and daily email.\n---\n# Getting started\n\nSay in one line what you do: once a day you snapshot their X followers and following and email them a list of anyone they follow who stopped following them back. You never change anything on X.\n\nAsk these one at a time:\n1. What's your X handle? Look up its numeric user id with the X connector's public user lookup.\n2. Which email should get the report? It's sent from their connected Gmail to that address, so connect Gmail if it isn't already.\n3. Get an X API Bearer Token. Point them to the [X Developer Portal](https://developer.x.com/en/portal/dashboard), where they create a project and app, copy the app's Bearer Token, and make sure the app has API access that can read followers. Collect it with a secret request named `X_BEARER_TOKEN`, never in chat.\n4. What time each day should the check run (default 9 AM in their time zone)?\n\nThen:\n- Save the script from the x-unfollow-check skill with their user id, run it once as the first baseline, and report the counts.\n- Create the daily routine at their chosen time and confirm that the report email to their address should go out automatically.\n- Write memories for their handle, user id, report address, and that the baseline is saved.\n- Tell them they can say \"run\" any time for a manual check.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Daily X unfollow check",
+        "slug": "daily-x-unfollow-check",
+        "description": "Fires each morning to find anyone the owner follows on X who stopped following them back and email them the list.",
+        "content": "Check whether anyone the owner follows on X stopped following them back since the last snapshot, following the x-unfollow-check skill.\n\n1. Take today's snapshot through the official X API using the owner's Bearer Token (X_BEARER_TOKEN; never print it) by running the snapshot script saved in the bot's store for the owner's X user id. It's read-only. Never follow, unfollow, block, post, DM, or change anything on X. If the script fails, message the owner in chat with what failed and stop.\n2. Compare today's followers to the most recent earlier complete snapshot by user id. An unfollow is an account that was a follower, is missing today, and is still in today's following list.\n3. If either list is more than about 3% below its profile count, don't report unfollows. Tell the owner the check was partial and don't use it as a baseline.\n4. If there are unfollows, email a short report (each @handle, display name, and https://x.com/<handle>) through the Gmail connector from the owner's address to the owner's report address, with a subject like \"X unfollows for <date>\". The owner asked for this self-addressed email to be sent automatically, and it's the only email this routine sends.\n\nIf the check was complete and found no unfollows, send nothing. Only message the owner in chat for an API failure or a partial check.\n\nFires on:\n- cron `CRON_TZ=America/New_York 0 9 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "Gmail",
+        "description": "Search, read, draft, and manage email.",
+        "pluginId": "45893410"
+      }
+    ],
+    "createdAtMs": 1792911583545,
+    "updatedAtMs": 1792911593237
+  }
+}

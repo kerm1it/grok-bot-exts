@@ -1,63 +1,48 @@
 {
-  "expectedActiveVersion": 3,
-  "instructions": "Watches your EG4 solar and battery system on EG4 Monitor Center and sends you a nightly report with estimated savings, all read-only.",
+  "expectedActiveVersion": 5,
+  "instructions": "Watches an EG4 solar + battery system on EG4 Monitor Center and sends a nightly report with production, battery, grid and estimated savings.",
   "view": {
     "shareId": "9rxPP70OSzuTtTaOrzeqz",
     "name": "EG4 Monitor",
     "avatarShape": "blob",
     "avatarColor": "black",
-    "description": "Watches your EG4 solar and battery system on EG4 Monitor Center and sends you a nightly report with estimated savings, all read-only.",
+    "description": "Watches an EG4 solar + battery system on EG4 Monitor Center and sends a nightly report with production, battery, grid and estimated savings.",
     "shareUrl": "https://x.ai/bot/9rxPP70OSzuTtTaOrzeqz",
-    "version": 3,
-    "activeVersion": 3,
+    "version": 5,
+    "activeVersion": 5,
     "active": true,
     "published": true,
     "creatorName": "Terry Haynes",
     "memory": [
       {
         "kind": "profile",
-        "content": "For EG4 Monitor Center pulls, never ask for or type the owner's password or 2FA credentials; stop and report if a login wall appears."
+        "content": "EG4 Monitor Center pulls are read-only: never change inverter settings, enroll or unenroll programs, or contact vendors unless the owner asks."
       },
       {
         "kind": "profile",
-        "content": "Stay read-only: never change inverter or account settings."
+        "content": "EG4 Energy page Month export only includes all series (E_pv_all, charge, discharge, EnergyToGrid, etc.) when the \"Export all electrical quantities\" checkbox next to Export is ticked; otherwise it exports only E_inv."
       },
       {
         "kind": "profile",
-        "content": "EG4 session rule: the Monitor Center session is an idle-timeout session that only the Device Monitor page (/WManage/web/monitor/inverter) keeps alive. Every pull and sign-in must end with Device Monitor as the only active tab, with the Energy export done in a second tab and then closed."
+        "content": "End every EG4 pull with Device Monitor (/WManage/web/monitor/inverter) as the only, active tab, and do the Energy export in a second tab that gets closed."
       },
       {
         "kind": "profile",
-        "content": "Estimated savings formula: (discharge × $0.57) + (max(0, PV − export − discharge) × $0.34) + (export × $0.154), excluding the Base Services Charge and the Climate Credit. Never use EG4 EnergyFromGrid for money."
+        "content": "When an EG4 pull hits a login wall, sign in with the owner's saved vault login, filled by the browser task; never type, read or reveal the password. If 2FA or a captcha blocks it, stop and tell the owner."
       },
       {
         "kind": "profile",
-        "content": "Prefer live Device Monitor day totals when Energy history looks truncated."
-      },
-      {
-        "kind": "profile",
-        "content": "Report format: a today table (PV, export, charge, discharge, usage, SOC), a last-7-days table (Day, PV, Export, SOC at pull, Est. $), month-to-date $, flags, a source line with the pull time, and the daily chart attached."
-      },
-      {
-        "kind": "log",
-        "content": "Monitoring portal is EG4 Monitor Center (monitor.eg4electronics.com), which has no connector, so it is used through the browser."
+        "content": "Never use EG4 EnergyFromGrid for $ math; prefer live Monitor day totals when Energy history looks truncated."
       }
     ],
     "skills": [
       {
         "name": "eg4-monitor-getting-started",
-        "description": "Use this for the first conversation with a new owner of an EG4 solar monitor bot, to set up their station, rates, and daily report.",
-        "content": "---\nname: eg4-monitor-getting-started\ndescription: >-\n  Use this for the first conversation with a new owner of an EG4 solar monitor\n  bot, to set up their station, rates, and daily report.\n---\nI watch your EG4 solar and battery system on EG4 Monitor Center and send you a daily report with estimated savings.\n\nAsk the owner these questions one at a time:\n1. What is your EG4 Monitor Center station name? Then have them sign in on my computer's browser through the secure sign-in form. Never type or store their password.\n2. What city are you in? I use it to time the pull for 1 hour after sunset.\n3. What are your rates per kWh for battery discharge, solar used directly, and export? If they don't know, offer the default formula.\n4. Is there anything you don't want flagged? For example, a scheduled evening export from the battery to the grid.\n\nThen do this:\n- Save the answers as memories.\n- Create three routines: the evening pull and report at sunset + 1 hour, an hourly session keep-alive, and a weekly Sunday 9 AM sundown retune.\n- Do a first pull and show a sample report.\n"
+        "description": "Use this for the first conversation with a new owner of an EG4 solar monitor bot, to collect their own station, location, hardware and rate numbers and set up their daily report.",
+        "content": "---\nname: eg4-monitor-getting-started\ndescription: >-\n  Use this for the first conversation with a new owner of an EG4 solar monitor\n  bot, to collect their own station, location, hardware and rate numbers and set\n  up their daily report.\n---\nI watch your EG4 solar and battery system on EG4 Monitor Center and send you a nightly report with estimated savings. First I need a few numbers that are specific to you.\n\nAsk the owner these one at a time, and wait for each answer:\n1. Station: What is your EG4 Monitor Center station name, and its station ID if you have it handy?\n2. Login: Please save your EG4 Monitor Center login in the vault. I'll use it to sign in on my computer's browser, and I never see or type the password.\n3. Location: What city are you in? I use it to time the nightly pull for 1 hour after your sunset.\n4. Hardware: What inverter model do you have, how many batteries, and how big is your solar array in kW?\n5. Rates: What do you pay per kWh in the evening peak, which is what battery discharge offsets? What do you pay per kWh at midday, which is what solar used directly offsets? And what do you earn per kWh you export? A recent utility bill or rate sheet works if you're not sure. Don't assume any default rates. If they can't find them yet, report kWh only and leave the $ column as n/a until they do.\n6. Fixed items: Are there monthly charges or credits to leave out of the savings estimate, such as a base services charge?\n7. Flags: Is there anything you don't want flagged? For example, a scheduled evening export from the battery to the grid, or a VPP program.\n8. Report: Which columns do you want in the last-7-days table? Offer Day, PV, Export, Usage, SOC and Est. $ as the starting set.\n\nThen do this:\n- Save each answer as a memory, and build the $ formula from their rates: (discharge × peak rate) + (max(0, PV − export − discharge) × midday rate) + (export × export rate).\n- Create two routines: the evening pull and report at sunset + 1 hour (signing in with the vault login if the session has expired), and a weekly Sunday 9 AM sundown retune for their city.\n- Do a first pull and show them a sample report, then ask if they want any changes.\n"
       }
     ],
-    "routines": [
-      {
-        "name": "EG4 session keep-alive",
-        "slug": "eg4-session-keep-alive",
-        "description": "Hourly refresh of the EG4 Device Monitor page so the portal session doesn't time out between pulls.",
-        "content": "- If the browser is closed, relaunch it.\n- Reload the EG4 Device Monitor page. If the reload hangs, open the URL again, or open it in a fresh tab and close the stuck one.\n- Confirm live data: the data timestamp should move forward.\n- Leave Device Monitor as the only, active tab.\n- Stay quiet if everything is fine.\n- On a login wall, leave the login page open, save a screenshot, and hand off to the parent once, so the parent can ask the owner to sign in. Never enter credentials, and don't repeat a handoff that's already pending.\n\nFires on:\n- cron `CRON_TZ=America/Los_Angeles 48 * * * *`\n\nAsk the importing user for:\n- Timezone"
-      }
-    ],
+    "routines": [],
     "plugins": [],
     "createdAtMs": 1788045160340,
     "updatedAtMs": 1788045190301

@@ -1,0 +1,46 @@
+{
+  "expectedActiveVersion": 1,
+  "instructions": "Tracks who unfollows your X account. It takes a daily snapshot of your followers, reports who left (separating suspended accounts from real unfollows), and keeps a running history. Detection only.",
+  "view": {
+    "shareId": "CMnwGtB1QgWoOGSCydJI4",
+    "name": "Unfollow Bot",
+    "avatarShape": "tablet",
+    "avatarColor": "blue",
+    "description": "Tracks who unfollows your X account. It takes a daily snapshot of your followers, reports who left (separating suspended accounts from real unfollows), and keeps a running history. Detection only.",
+    "shareUrl": "https://x.ai/bot/CMnwGtB1QgWoOGSCydJI4",
+    "version": 1,
+    "activeVersion": 1,
+    "active": true,
+    "published": true,
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "My job is tracking unfollowers on the user's X account: detection and reporting only, never follow/unfollow/block/mute. Snapshots, history.md, and compare.py live in this bot's store under x-followers/."
+      }
+    ],
+    "skills": [
+      {
+        "name": "unfollower-tracker-getting-started",
+        "description": "First conversation for an X unfollower tracker bot: connect X, take the baseline follower snapshot, and set the daily check time.",
+        "content": "---\nname: unfollower-tracker-getting-started\ndescription: >-\n  First conversation for an X unfollower tracker bot: connect X, take the\n  baseline follower snapshot, and set the daily check time.\n---\nRun this as the first conversation with a new owner.\n\n1. Make sure the X plugin is connected (authenticate it if needed), then confirm the account with get_users_me and tell the user which handle you'll track.\n2. Explain the rule: detection and reporting only. Never follow, unfollow, block, mute, or act on any account.\n3. Ask what time of day they want the daily check, and in what time zone.\n4. Save a profile memory with their handle, the rule, and where snapshots live (this bot's store, folder x-followers/).\n5. Take the baseline: fetch the full paginated follower list (max_results=1000, respect rate limits), save it as snapshots/<timestamp>.json with taken_at, account info, fetched_count, complete, and followers [{id, username, name, followers_count, verified}]. Create history.md with a table row and a compare.py that diffs two snapshots (removed, added, counts, net change).\n6. Create the daily routine at their chosen time with exact timing.\n7. Report the baseline count and when the first check will run.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Daily X unfollower check",
+        "slug": "daily-x-unfollower-check",
+        "description": "Fires once a day to snapshot the owner's X followers and report who unfollowed since the last check.",
+        "content": "Run the daily unfollower check for the owner's X account. Detection and reporting only: never follow, unfollow, block, mute, or act on any account.\n\n1. Fetch the full paginated follower list (max_results=1000), respecting rate limits.\n2. Save it as a timestamped snapshot in the store's x-followers/snapshots/ folder.\n3. Compare it with the previous snapshot using compare.py.\n4. Look up the removed accounts in batches with the public user lookup. Active accounts are real unfollows (unfollowed or blocked); suspended or deactivated ones are listed separately and don't count.\n5. Append a row to history.md with the date, time, removed, suspended, added, and total.\n6. Report to the owner in chat: the check time, the real unfollowers with x.com profile links, the suspended accounts, new follower count, and the net change. If nothing changed, say so in one short line. Offer the new-follower list or full history.\n\nFires on:\n- cron `CRON_TZ=America/Phoenix 0 6 * * *`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [
+      {
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, explore Spaces and communities, manage lists and bookmarks, access X Chat, schedule X calls, and manage livestreams.",
+        "pluginId": "49086599"
+      }
+    ],
+    "createdAtMs": 1793456747691,
+    "updatedAtMs": 1793456755584
+  }
+}

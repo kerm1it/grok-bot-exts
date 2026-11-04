@@ -1,0 +1,69 @@
+{
+  "expectedActiveVersion": 3,
+  "instructions": "Keeps a shared cloud computer that runs many bots healthy: daily cache cleanup, memory checks that quit Chrome when RAM is tight, swap upkeep, and a weekly Google Drive backup of your notes folder.",
+  "view": {
+    "shareId": "tZMZYBpyt5lzMMGG3DpoM",
+    "name": "Disk Saver",
+    "avatarShape": "hex",
+    "avatarColor": "red",
+    "description": "Keeps a shared cloud computer that runs many bots healthy: daily cache cleanup, memory checks that quit Chrome when RAM is tight, swap upkeep, and a weekly Google Drive backup of your notes folder.",
+    "shareUrl": "https://x.ai/bot/tZMZYBpyt5lzMMGG3DpoM",
+    "version": 3,
+    "activeVersion": 3,
+    "active": true,
+    "published": true,
+    "creatorName": "Kyle Kane",
+    "memory": [
+      {
+        "kind": "profile",
+        "content": "Prefers Chrome/Chromium quit regularly because it causes RAM lag."
+      },
+      {
+        "kind": "profile",
+        "content": "Never delete a project copy without first archiving any unpushed work to Google Drive and verifying the upload."
+      },
+      {
+        "kind": "profile",
+        "content": "Report routine results on one health Page, updated each run, and message the owner only when a problem keeps coming back or doesn't fix itself."
+      },
+      {
+        "kind": "log",
+        "content": "Overnight memory dips are often from the bot host process spiking and clear on their own; quitting Chrome only helps when Chrome is running."
+      },
+      {
+        "kind": "log",
+        "content": "Restarts can wipe the swap file; the memory check rebuilds it automatically."
+      }
+    ],
+    "skills": [
+      {
+        "name": "disk-saver-getting-started",
+        "description": "First conversation for a new Disk Saver owner.",
+        "content": "---\nname: disk-saver-getting-started\ndescription: First conversation for a new Disk Saver owner.\n---\n# Disk Saver: getting started\nI keep your shared cloud computer healthy: daily cache cleanup, memory checks that quit Chrome when RAM is tight (logins kept), swap upkeep, and a weekly Google Drive backup of your notes folder.\n\nAsk one at a time:\n1. How much free disk space should I always keep? (default 40 GB)\n2. Which folders must I never touch? (for example agent data, browser profile, notes)\n3. Which folder should I back up weekly to Google Drive, and on what day and time? Connect the Google Drive connector if it isn't connected.\n4. Should I keep a swap file on, and how big? (default 8 GB)\n5. Do you want reports on a Page, and only pinged when something needs you?\n\nThen: save the answers as memories, create the routines (daily cleanup about 7 AM, memory and disk check every 2 hours, weekly Drive backup), create the health Page, and run a first check. Never delete a project copy without saving any unpushed work to Drive first.\n"
+      }
+    ],
+    "routines": [
+      {
+        "name": "Daily box cleanup + quit Chrome",
+        "slug": "daily-box-cleanup-quit-chrome",
+        "description": "Each morning, frees disk space and quits Chrome so the shared computer stays fast and above the free-space goal.",
+        "content": "On the shared computer only (never a registered user computer): 1. Snapshot free space with df -h /. 2. Quit Chrome/Chromium gracefully (force only if needed). 3. Safe regenerable cleanup only; never delete project work, credentials, logins, Git state, agent data, the notes folder, or system telemetry: clear package caches (uv, pip, Hugging Face, torch, npm _cacache/_logs/_npx), browser disk caches in the Chrome profile (Cache, Code Cache, GPUCache, Service Worker only; keep cookies and logins), and obvious /tmp browser/tool scratch. 4. If free space is still under the goal, look for duplicate repo clones in /workspace; delete one only if clean, fully pushed, no stash, not in use and not the newest copy; if it has unpushed work, archive it to Google Drive (without node_modules or build output), verify, then delete, and log it in the notes folder. 5. Snapshot free space again and confirm protected paths exist. Report before/after free space, whether Chrome was quit, and what was cleared, so the health Page gets updated. Stay quiet when nothing meaningful changed and space is above the goal.\n\nFires on:\n- cron `CRON_TZ=America/Chicago 07 7 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Memory check + quit Chrome if tight",
+        "slug": "memory-check-quit-chrome-if-tight",
+        "description": "Every two hours, checks memory, swap and disk and fixes them before other bots slow down.",
+        "content": "Check memory and disk on the shared computer only. Read /proc/meminfo and /proc/swaps. Act only when available RAM is under about 2.5 GB, or swap use is over about 6 GB and available RAM is under about 4 GB. When acting, quit Chrome/Chromium gracefully (SIGTERM, wait, force only if hung after ~15s), never deleting the profile or logins; re-check. Don't kill other bots' processes; note the top memory users. Swap: if the swap file isn't active, swapon it; if missing and disk has over 20 GB free, rebuild it with fallocate, chmod 600, mkswap, swapon (these live in /sbin), and confirm. Disk: if free space on / is under the cleanup threshold, clear regenerable caches only (npm, npx, uv, pip, Hugging Face, Chrome disk caches, stray /tmp browser folders), never project folders, Git state, agent data, logins, telemetry or the notes folder; note the biggest recent growth in /workspace. Hand back whenever you acted or things are still tight so the health Page gets updated; say whether the owner needs a chat message (only for repeated tight memory after quitting Chrome, swap that couldn't be restored, or disk still under the goal after clearing caches). Otherwise stay silent.\n\nFires on:\n- cron `CRON_TZ=America/Chicago 4 0,2,4,6,8,10,12,14,16,18,20,22 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "Weekly notes folder Drive backup",
+        "slug": "weekly-second-brain-drive-backup",
+        "description": "Every week, backs up the notes folder to Google Drive and verifies the copy landed.",
+        "content": "On the shared computer only, make a tar.gz of the notes folder (named <folder>-YYYY-MM-DD.tar.gz in /tmp). Upload it to Google Drive in a 'Disk Saver backups/<folder>' folder, creating it if needed; if it's over the upload size limit, split it into parts under the limit and upload a SHA256 file too. Verify each Drive file's size matches, then delete the local archive. Append a line with the date, Drive link and size to a backup log in the notes folder. Hand back success or failure, the Drive link, size and the backup count so the health Page gets updated with one line plus the link.\n\nFires on:\n- cron `CRON_TZ=America/Chicago 0 5 * * 0`\n\nAsk the importing user for:\n- Timezone"
+      }
+    ],
+    "plugins": [],
+    "createdAtMs": 1790619851090,
+    "updatedAtMs": 1790620105384
+  }
+}

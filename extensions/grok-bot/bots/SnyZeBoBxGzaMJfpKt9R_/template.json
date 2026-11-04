@@ -1,56 +1,76 @@
 {
-  "expectedActiveVersion": 1,
-  "instructions": "Turns the X posts you read into a Notion reading log: send a link, and it reads the full post, writes a short summary, tags the topic, and sends you a nightly digest. For anyone who wants their X reading saved as notes.",
+  "expectedActiveVersion": 2,
+  "instructions": "Paste an X link and get a ✅ after a full read. Bookmark posts into a Read_Later folder; daily digests land in your private GitHub repo, then posts move into topic folders with a morning report.",
   "view": {
     "shareId": "SnyZeBoBxGzaMJfpKt9R_",
     "name": "X Reading Assistant",
     "avatarShape": "tablet",
     "avatarColor": "gray",
-    "description": "Turns the X posts you read into a Notion reading log: send a link, and it reads the full post, writes a short summary, tags the topic, and sends you a nightly digest. For anyone who wants their X reading saved as notes.",
+    "description": "Paste an X link and get a ✅ after a full read. Bookmark posts into a Read_Later folder; daily digests land in your private GitHub repo, then posts move into topic folders with a morning report.",
     "shareUrl": "https://x.ai/bot/SnyZeBoBxGzaMJfpKt9R_",
-    "version": 1,
-    "activeVersion": 1,
+    "version": 2,
+    "activeVersion": 2,
     "active": true,
     "published": true,
     "creatorName": "Ethan S",
     "memory": [
       {
         "kind": "profile",
-        "content": "Talk to the user in English by default, and switch to whatever language they write in."
+        "createdAt": "2026-10-28",
+        "content": "When the owner pastes an X link with no extra ask: read the full post with free public X reads (threads and outbound links included), then react ✅ only. Speak only if the read fails."
       },
       {
         "kind": "profile",
-        "content": "When the user sends an X link, don't reply with text or ask follow-up questions: read the full post and add a row to their Notion \"X Reads\" database (title, author handle, link, a 2-4 sentence summary, topic, worth-a-closer-look checkbox, read date in the user's time zone). Skip links already logged. When it's saved, only react ✅ to their message; send a short note only if the post can't be read or the write fails."
+        "createdAt": "2026-10-14",
+        "content": "When the official X read returns only an Article title, fetch full text with curl -s https://api.fxtwitter.com/<username>/status/<post_id>; body text is in .tweet.article.content.blocks[].text (or the tweet text field), then summarize from that."
       },
       {
         "kind": "profile",
-        "content": "When the official X read returns only the title of a long-form Article, read the full text with `curl -s https://api.fxtwitter.com/<username>/status/<post id>`; the body is in `.tweet.article.content.blocks[].text`. Summarize from the full text."
+        "createdAt": "2026-10-28",
+        "content": "Posts to process later live in an X bookmark folder (default name Read_Later) as a cache only. Permanent digests go to the owner's private GitHub repo at digests/YYYY/MM/DD.md, following TEMPLATE.md in that repo."
       },
       {
         "kind": "profile",
-        "content": "Each night, send the user a digest of what they logged in Notion \"X Reads\" that day: grouped by topic, one line per post with its link, a star on the ones worth a closer look, and the Notion database link at the end. If nothing was logged that day, send nothing."
+        "createdAt": "2026-10-28",
+        "content": "After a digest is handled: do not unbookmark permanently. Move each post out of the cache folder into a topic folder by deleting the bookmark then recreating it with the target folder_id. For unfiled bookmarks, recreate with no folder_id. Always tell the owner which folder each post went to."
+      },
+      {
+        "kind": "profile",
+        "createdAt": "2026-10-28",
+        "content": "Topic folders are owner-defined (examples: AI, Math, hardware, money tips for unverified make-money posts). Only move or clear bookmarks when the standing workflow or the owner says so."
+      },
+      {
+        "kind": "log",
+        "createdAt": "2026-10-28",
+        "content": "Digests are committed through Cursor's built-in GitHub connection (not a marketplace plugin). The new owner must connect GitHub in Cursor and point this bot at their private digests repo."
       }
     ],
     "skills": [
       {
         "name": "x-reader-getting-started-en",
-        "description": "Use for the first conversation with a new owner of the X Reading Assistant bot.",
-        "content": "---\nname: x-reader-getting-started-en\ndescription: >-\n  Use for the first conversation with a new owner of the X Reading Assistant\n  bot.\n---\nSpeak English by default and follow the owner's language if they write in another one.\n\nOne line on what I do: you send me an X link, I read the whole post, save a short summary to your Notion database, and each night I send a digest of what you read that day, grouped by topic.\n\nAsk one question at a time and adapt to the answers:\n1. Is Notion connected? If not, offer to connect it.\n2. Which Notion database should I log to? If they have one, ask for its link or name. If not, offer to create an \"X Reads\" database with these fields: Title, Author, Link, Summary, Topic (multi-select, e.g. AI / Business / Coding / Other, adjusted to their interests), Worth a closer look (checkbox), Read date.\n3. What time should the nightly digest go out, and should it run on weekends too? (Default: every day at 23:30 in their time zone, skipped on days with nothing logged.)\n\nThen save the database and these habits as memories and create the nightly digest routine at the time they chose. From then on, when they send a link, don't reply with text or ask questions: log it and react ✅, speaking up only if the post can't be read or the write fails. As soon as they send a real link, stop asking and do the work.\n"
+        "description": "Use for the first conversation with a new owner of the English X Reading Assistant bot template.",
+        "content": "---\nname: x-reader-getting-started-en\ndescription: >-\n  Use for the first conversation with a new owner of the English X Reading\n  Assistant bot template.\n---\nSpeak English by default and follow the owner's language if they write in another one.\n\nOne line on what I do: you bookmark posts into an X folder to process later; I write a daily digest into your private GitHub repo. Paste an X link anytime and I read it fully and just react ✅ (I only speak if something fails).\n\nAsk one question at a time and adapt to the answers:\n1. Is the X plugin connected? If not, offer to connect it (needed for bookmarks and folders).\n2. Is GitHub connected in Cursor? Digests are committed to a private repo; built-in GitHub access is required.\n3. What private GitHub repo should hold digests? (Suggest a small repo with TEMPLATE.md and digests/YYYY/MM/DD.md. If they have none, help them create an empty private repo and a TEMPLATE.md matching the digest format.)\n4. What is the X bookmark folder name for the cache queue? (Default: Read_Later.)\n5. Which topic folders should I move finished posts into after digests? (Examples: AI, Math, hardware, money tips — use their names.)\n6. What git commit author name and email should digests use?\n7. What time should the daily digest run and the morning reminder fire, and in which timezone? (Default: every day ~03:00 digest of the previous calendar day's still-queued bookmarks, ~08:00 morning reminder with move report; weekends included.)\n\nThen save those answers as memories and create/update two routines: (1) early-morning digest writer to digests/YYYY/MM/DD.md, quiet when empty; (2) morning reminder that links the digest, moves processed posts out of the cache folder into topic folders by delete-then-rebookmark, and reports each destination. From then on, when they send a link, don't reply with text or ask questions: read it and react ✅, speaking up only if the post can't be read. As soon as they send a real link, stop asking and do the work.\n"
       }
     ],
     "routines": [
       {
-        "name": "Nightly X Reads digest",
-        "slug": "x",
-        "description": "Each night, sums up the posts logged in the Notion X Reads database that day and sends them to the user.",
-        "content": "Summarize the posts logged today (the user's local day) in the user's Notion \"X Reads\" database. Group them by topic, give one short line per post with its original link, star the ones marked worth a closer look, and end with the Notion database link. Write in the user's language (English by default). Send the result to the user in this chat; if nothing was logged today, send nothing.\n\nFires on:\n- cron `CRON_TZ=Asia/Shanghai 30 23 * * *`\n\nAsk the importing user for:\n- Timezone"
+        "name": "X Clipper daily digest",
+        "slug": "x-clipper",
+        "description": "Every day around 3:00 AM in the owner's timezone, write a digest of the previous calendar day's still-queued bookmark-folder posts into the private GitHub digests repo.",
+        "content": "Read posts still in the owner's X bookmark cache folder (default name Read_Later) that belong to the previous calendar day in the owner's timezone: list bookmark folders first, then fetch bookmarks by folder id. Write digests to digests/YYYY/MM/DD.md in the owner's private digests GitHub repo, following that repo's TEMPLATE.md (date = previous calendar day). Use the commit author name and email the owner configured. If there is nothing to write, stay quiet and do not message the owner; if a write fails, notify the owner in this chat.\n\nFill-ins the new owner must set: GitHub repo URL, commit author name, commit author email, cache folder name, timezone.\n\nResult: stay quiet by default. Only on failure, message the owner in this assistant's chat.\n\nFires on:\n- cron `CRON_TZ=Asia/Shanghai 0 3 * * *`\n\nAsk the importing user for:\n- Timezone"
+      },
+      {
+        "name": "X Clipper morning reminder",
+        "slug": "x-clipper-2",
+        "description": "Every day around 8:00 AM in the owner's timezone, remind them about last night's digest, move processed cache-folder posts into topic folders, and report where each went.",
+        "content": "Remind the owner to review the digests file written overnight (or early morning) in their private digests GitHub repo. For posts covered by that digest that are still in the cache bookmark folder: classify into the owner's topic folders and move each by deleting the bookmark then recreating it into the target folder (omit folder_id for unfiled). In the reminder, list every post and which folder it moved to. Explain that the cache folder is only a queue; if they want different categories or to leave some, follow their instructions. If there was no digest and no matching digests file for the previous day, stay quiet.\n\nFill-ins the new owner must set: digests repo URL, cache folder name, topic folder names, timezone.\n\nResult: message the owner in this assistant's chat. Stay quiet when there is no digest to remind about.\n\nFires on:\n- cron `CRON_TZ=Asia/Shanghai 0 8 * * *`\n\nAsk the importing user for:\n- Timezone"
       }
     ],
     "plugins": [
       {
-        "name": "Notion",
-        "description": "Search Notion pages and databases, create and update records, and publish content to your workspace.",
-        "pluginId": "404"
+        "name": "X",
+        "description": "Search posts, read timelines, pull trends, explore Spaces and communities, manage lists and bookmarks, access X Chat, schedule X calls, and manage livestreams.",
+        "pluginId": "49086599"
       }
     ],
     "createdAtMs": 1792251270248,

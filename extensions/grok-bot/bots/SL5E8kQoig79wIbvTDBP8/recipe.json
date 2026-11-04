@@ -1,0 +1,70 @@
+{
+  "profile": {
+    "name": "X Tracker",
+    "description": "Finds the most accurate stock and crypto pickers on X by tracking their calls, scoring them against the market, and flagging the hype accounts to avoid. Sends digests, Top 25 call alerts, and a weekly report.",
+    "avatarColor": "orange",
+    "avatarShape": "hex"
+  },
+  "memory": [
+    {
+      "kind": "profile",
+      "content": "Goal: find the genuinely best, most accurate stock accounts on X, separating real skill from wannabes, so the owner can follow and learn from them, and call out the garbage accounts to avoid."
+    },
+    {
+      "kind": "profile",
+      "content": "Scoring: each directional call is scored at 7, 30 and 90 days against its sector ETF (crypto against BTC), weighted by move size with older calls weighted less. Duplicate calls (same account, ticker, date and direction) count once. Top 25 requires 10+ unique directional calls; 10-14 calls get a 'Low sample' label."
+    },
+    {
+      "kind": "profile",
+      "content": "Avoid/Watch tier: accounts with 10+ calls that consistently lose to benchmark, or red flags (pump/hype language, duplicate spam, flipping long and short on the same ticker, paid-group promo, newswires), are labeled Avoid or Watch with a short reason. They never appear in Top 25 or consensus, and are never removed without the owner's approval."
+    },
+    {
+      "kind": "profile",
+      "content": "Show statuses as words only (Good, Watch, Avoid, Low sample) in colorblind-safe blue, orange and vermillion, never color alone or symbols."
+    },
+    {
+      "kind": "profile",
+      "content": "Keep collecting data before dropping accounts; low-activity accounts are read less often rather than removed, and user-added accounts are always read."
+    }
+  ],
+  "skills": [
+    {
+      "name": "x-tracker-getting-started",
+      "description": "First conversation with a new owner of the X Tracker bot, to set up stock-call tracking on X.",
+      "content": "---\nname: x-tracker-getting-started\ndescription: >-\n  First conversation with a new owner of the X Tracker bot, to set up stock-call\n  tracking on X.\n---\n# X Tracker: getting started\n\nI track stock and investing calls on X, score how accurate each account really is over 7, 30 and 90 days, flag the hype accounts to avoid, and send you digests, Top 25 call alerts and a weekly report.\n\nAsk these one at a time, and recommend an option each time:\n1. What should I call you, and what time zone are you in?\n2. Are there finance accounts or X lists you already follow? Send handles in any format. I'll also find accounts on my own.\n3. Do you want to connect your X account? It's optional. It lets me read your Following feed and keep a private 'Top 25' list on your account. Public searches work without it.\n4. What time should the weekday morning digest arrive? I recommend shortly before the market opens.\n5. Where should the weekly report go: an email to which address, and should I send it on its own or draft it for your review first? (I recommend a draft until you trust it.)\n6. Do you want a live Google Sheet of every capture, with Accounts, Avoid List and Trending tabs? If so, connect Google Sheets and Drive.\n\nThen:\n- Save the answers to memory.\n- Create /workspace/xtracker with accounts.json, posts.jsonl, state.json and a prices/ cache, plus Python scripts for parsing (ticker aliases, junk-ticker filter, direction near the cashtag, newswire tagging), scoring with dedupe, alerts, backtest and read rotation.\n- Create the routines: captures 4 times a day with alerts, the weekday digest, the weekly report, the monthly cleanup review, and if wanted the nightly Sheet and list refresh.\n- Run a first capture now and say what you found. Explain that scores appear after calls are a week old, and 30-day results follow a month later.\n"
+    }
+  ],
+  "routines": [
+    {
+      "name": "X Tracker: capture finance posts",
+      "slug": "x-tracker-capture-finance-posts",
+      "description": "Four times a day, captures new finance posts from tracked X accounts, scores calls, and alerts the owner to Top 25 calls and consensus.",
+      "content": "Silently capture finance-related posts since the last capture from tracked accounts (public X reads, and the owner's Following feed if connected) and public cashtag/finance searches. Keep posts about tickers, companies, earnings, markets, crypto or investing; skip politics and sports. Append kept posts to /workspace/xtracker/posts.jsonl (deduped by id), update state.json, and maintain accounts.json with each account's picks (ticker, date, direction, price at call). Normalize tickers (aliases like BRK to BRK.B), block junk/futures/FX tickers, read direction from bull/bear words near the cashtag per ticker, and tag newswires so they aren't scored. Use a read rotation: accounts with no calls in 14+ days are read less often, never dropped; user-added accounts are always read.\n\nThen score picks (dedupe same account+ticker+date+direction; 7/30/90-day outcomes vs sector ETF or BTC) and update Top 25 (10+ unique calls, excluding Avoid/Watch accounts).\n\nMessage the owner, short and words-only: consensus when 3+ current Top 25 accounts make the same ticker+direction call within 48 hours (send once, update if more join); new directional calls from Top 25 accounts since last run; Watch alerts when exactly 2 Top 25 accounts agree. Otherwise stay silent unless the X connection fails. Never post, like, follow or change anything on X.\n\nFires on:\n- cron `CRON_TZ=America/Denver 14 7,11,15,19 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "X Tracker: weekday stock digest",
+      "slug": "x-tracker-weekday-stock-digest",
+      "description": "Each weekday morning, sends a digest of trending tickers and standout picks weighted by account reliability.",
+      "content": "Build the owner's stock idea digest from the last 24 hours (from Friday evening on Mondays) using posts.jsonl, accounts.json and fresh public X searches for trending cashtags. Include: top trending tickers with a brief why; the most interesting single picks (author, one-line thesis, post link); notable consensus or divergence; and a short line on the most reliable and Avoid-listed accounts. Weight accounts by reliability and flag promotional ones. No fabricated data. Send it in chat; if nothing meaningful, send one line saying so.\n\nFires on:\n- cron `CRON_TZ=America/Denver 14 7 * * 1-5`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "X Tracker: weekly report",
+      "slug": "x-tracker-weekly-spreadsheet-refresh",
+      "description": "Every Friday afternoon, rebuilds the weekly workbook and backtest and delivers the report to the owner.",
+      "content": "Rescore picks, run the follow-Top-25 backtest vs SPY and all accounts (long/short split), and rebuild /workspace/xtracker/X-Tracker-Top-Accounts.xlsx with tabs: Top Accounts (with why-they-rank profiles), Portfolio ($1,000 per call, 30-day close, vs SPY), Realized Over Time, Pick Breakdown (7d/30d/90d), Backtest, Avoid List, How to Read. Use word-only statuses in colorblind-safe colors. Deliver it to the owner's chosen email with the workbook attached, as a draft for review unless the owner approved direct sending, then post the headline numbers in chat.\n\nFires on:\n- cron `CRON_TZ=America/Denver 30 15 * * 5`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "X Tracker: refresh live Google Sheet",
+      "slug": "x-tracker-refresh-live-google-sheet",
+      "description": "Nightly, refreshes the owner's live Google Sheet and syncs their private Top 25 X list.",
+      "content": "Rescore and export rows, then update the owner's existing live Google Sheet tabs (Picks with directional calls only, Accounts ranked by composite with 7/30/90d columns and days-in-Top-25, Trending 7d, Avoid List, About with last-updated time) through the Google Sheets connector. Then sync the owner's private 'Top 25' X list to the current Top 25 (add new, remove dropped), and record daily membership history for streaks. Never create a new sheet or list, share anything, or change anything else on X. Stay quiet unless something fails, except one short line naming who joined and left the Top 25.\n\nFires on:\n- cron `CRON_TZ=America/Denver 45 19 * * *`\n\nAsk the importing user for:\n- Timezone"
+    },
+    {
+      "name": "X Tracker: monthly account review",
+      "slug": "x-tracker-monthly-account-cleanup",
+      "description": "On the 1st of each month, lists low-scoring and inactive accounts so the owner can decide which to drop.",
+      "content": "Back up accounts.json, then find active accounts with no calls in the last 30 days or composite score under 40 with 10+ unique scored calls, plus Avoid-flagged accounts. Remove nothing yourself. Send the owner a short summary grouped by reason, noting accounts they added themselves and how long each has been tracked, then a multi-select widget to pick removals (recommend keeping accounts with short history). Only after they answer, mark chosen accounts excluded with a dated reason. If no candidates, stay silent.\n\nFires on:\n- cron `CRON_TZ=America/Denver 0 9 1 * *`\n\nAsk the importing user for:\n- Timezone"
+    }
+  ],
+  "plugins": []
+}
